@@ -105,7 +105,8 @@ You have access to the following notes that provide context for the conversation
 
 ${context}
 
-Keep your responses focused and relevant to the notes and the user's questions.`
+Keep your responses focused and relevant to the notes and the user's questions.
+Always use markdown formatting in responses.`
 
             // Use streaming API
             const stream = provider.createStreamingChatCompletion(

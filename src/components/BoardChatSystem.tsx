@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import type { Store } from '../Store'
 import { useCards, useChats } from '../Store'
-import type { Chat, Card, ChatMessage, RichTextCard } from '../types'
+import type { Chat, RichTextCard } from '../types'
 import { ModelId, getDefaultModel, isModelAvailable } from '../api/llm'
 import { v4 as uuidv4 } from 'uuid'
 import { ChatInterface } from './ChatInterface'

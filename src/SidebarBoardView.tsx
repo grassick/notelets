@@ -31,7 +31,7 @@ interface NoteCardHeaderProps {
 const getCardPreview = (card: RichTextCard): string => {
   if (card.title) return card.title
   const preview = card.content.markdown.trim()
-  if (!preview) return '(empty note)'
+  if (!preview) return '—'
   return preview.slice(0, 30) + (preview.length > 30 ? '...' : '')
 }
 
@@ -336,6 +336,11 @@ interface ListPanelProps {
 }
 
 function ListPanel({ cards, selectedCardId, onCardSelect, onCreateCard, isExpanded, width, onToggle, viewMode, onViewModeChange, showAllNotes, onShowAllNotesChange }: ListPanelProps) {
+  // Sort cards by creation date, newest first
+  const sortedCards = [...cards].sort((a, b) => 
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  )
+
   return (
     <div 
       className={`flex flex-col border-r border-gray-200 dark:border-gray-700 transition-all duration-200
@@ -433,7 +438,7 @@ function ListPanel({ cards, selectedCardId, onCardSelect, onCreateCard, isExpand
                        dark:[::-webkit-scrollbar-thumb]:bg-slate-500/10
                        dark:hover:[::-webkit-scrollbar-thumb]:bg-slate-500/20
                        [::-webkit-scrollbar-track]:bg-transparent">
-          {cards.map(card => (
+          {sortedCards.map(card => (
             <CardListItem
               key={card.id}
               card={card}
@@ -459,6 +464,11 @@ interface ContentPanelProps {
 }
 
 function ContentPanel({ cards, selectedCard, onUpdateCard, onUpdateCardTitle, onDelete, viewMode, onViewModeChange, showAllNotes }: ContentPanelProps) {
+  // Sort cards by creation date, newest first
+  const sortedCards = [...cards].sort((a, b) => 
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  )
+
   if (cards.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center flex-1 p-8 text-center">
@@ -519,7 +529,7 @@ function ContentPanel({ cards, selectedCard, onUpdateCard, onUpdateCardTitle, on
   return (
     <div className="flex flex-col border-r border-gray-200 dark:border-gray-700 flex-1">
       <div className="flex-1 overflow-auto p-4">
-        {cards.map(card => (
+        {sortedCards.map(card => (
           <NoteCard
             key={card.id}
             card={card}

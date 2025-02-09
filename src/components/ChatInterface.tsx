@@ -6,6 +6,7 @@ export function ChatInterface({
   chat, 
   onSendMessage,
   onEditMessage,
+  onSaveToNotes,
   className = '', 
   isLoading = false,
   selectedModel,
@@ -82,6 +83,7 @@ export function ChatInterface({
             message={msg} 
             index={i}
             onEdit={onEditMessage}
+            onSaveToNotes={!msg.role || msg.role === 'assistant' ? onSaveToNotes : undefined}
           />
         ))}
         {/* {isLoading && (
@@ -139,13 +141,19 @@ interface ChatInterfaceProps {
   chat: Chat | null
   onSendMessage: (content: string, modelConfig: ModelId) => Promise<void>
   onEditMessage: (messageIndex: number, newContent: string) => Promise<void>
+  onSaveToNotes?: (content: string) => Promise<void>
   className?: string
   isLoading?: boolean
   selectedModel: ModelId
   error?: Error | null
 }
 
-function ChatMessage({ message, index, onEdit }: { message: ChatMessage, index: number, onEdit: (index: number, content: string) => Promise<void> }) {
+function ChatMessage({ message, index, onEdit, onSaveToNotes }: { 
+  message: ChatMessage, 
+  index: number, 
+  onEdit: (index: number, content: string) => Promise<void>,
+  onSaveToNotes?: (content: string) => Promise<void>
+}) {
   const isUser = message.role === 'user'
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(message.content)
@@ -194,13 +202,13 @@ function ChatMessage({ message, index, onEdit }: { message: ChatMessage, index: 
   
   return (
     <div className={`flex gap-3 mb-4 ${isUser ? 'justify-end' : 'justify-start'} group`}>
-      <div className={`max-w-[80%] rounded-lg p-3 relative ${isEditing ? 'w-full' : ''}
+      <div className={`max-w-[80%] rounded-lg relative ${isEditing ? 'w-full' : ''}
         ${isUser 
           ? 'bg-blue-500 text-white rounded-br-none' 
           : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-none'}`}
       >
         {isEditing ? (
-          <>
+          <div className="p-3">
             <textarea
               ref={editInputRef}
               value={editContent}
@@ -215,7 +223,7 @@ function ChatMessage({ message, index, onEdit }: { message: ChatMessage, index: 
                   setIsEditing(false)
                   setEditContent(message.content)
                 }}
-                className="px-2 py-1 rounded hover:bg-white/10"
+                className="px-2 pt-1 rounded hover:bg-white/10"
               >
                 Cancel
               </button>
@@ -226,28 +234,38 @@ function ChatMessage({ message, index, onEdit }: { message: ChatMessage, index: 
                 Save (Ctrl+Enter)
               </button>
             </div>
-          </>
+          </div>
         ) : (
           <>
-            <div className="text-sm whitespace-pre-wrap break-words">
-              {message.content}
-            </div>
-            {/* {message.llm && (
-              <div className="text-[10px] mt-1 opacity-40">
-                {message.llm}
+            <div className="px-3 pt-3">
+              <div className="text-sm whitespace-pre-wrap break-words">
+                {message.content}
               </div>
-            )} */}
-            {isUser && (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="absolute top-1 right-1 p-1 rounded-full opacity-0 group-hover:opacity-40 hover:opacity-100 hover:bg-white/10"
-                title="Edit message"
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                </svg>
-              </button>
-            )}
+              {/* {message.llm && (
+                <div className="text-[10px] mt-1 opacity-40">
+                  {message.llm}
+                </div>
+              )} */}
+            </div>
+            <div className="flex gap-2 justify-end px-2">
+              {isUser ? (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="text-[10px] opacity-0 group-hover:opacity-40 hover:!opacity-100 hover:bg-white/10 px-1.5 py-0.5 rounded-sm transition-opacity duration-150"
+                  title="Edit message"
+                >
+                  Edit
+                </button>
+              ) : onSaveToNotes && (
+                <button
+                  onClick={() => onSaveToNotes(message.content)}
+                  className="text-[10px] opacity-0 group-hover:opacity-40 hover:!opacity-100 hover:bg-black/5 dark:hover:bg-white/10 px-1.5 py-0.5 rounded-sm transition-opacity duration-150"
+                  title="Save to notes"
+                >
+                  Save as note
+                </button>
+              )}
+            </div>
           </>
         )}
       </div>

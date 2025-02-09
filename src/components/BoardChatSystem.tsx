@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import type { Store } from '../Store'
 import { useCards, useChats } from '../Store'
-import type { Chat, Card, ChatMessage } from '../types'
+import type { Chat, Card, ChatMessage, RichTextCard } from '../types'
 import { ModelId, getDefaultModel, isModelAvailable } from '../api/llm'
 import { v4 as uuidv4 } from 'uuid'
 import { ChatInterface } from './ChatInterface'
@@ -53,6 +53,7 @@ export function BoardChatSystem({
   const { settings } = useSettings()
   const { cards } = useCards(store, boardId)
   const { chats, setChat: storeSetChat, removeChat } = useChats(store, boardId)
+  const { setCard } = useCards(store, boardId)
   const [chat, setChat] = useState<Chat | null>(null)
   const [error, setError] = useState<Error | null>(null)
   const [selectedModel, setSelectedModel] = usePersist<ModelId>('selectedModel', getDefaultModel(settings.llm))
@@ -164,6 +165,25 @@ export function BoardChatSystem({
     }
   }, [chat, editMessage, selectedModel])
 
+  const handleSaveToNotes = useCallback(async (content: string) => {
+    try {
+      const newCard: RichTextCard = {
+        id: uuidv4(),
+        boardId,
+        type: 'richtext',
+        title: 'Chat Note',
+        content: {
+          markdown: content
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+      await setCard(newCard)
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to save note'))
+    }
+  }, [boardId, setCard])
+
   // Show API key missing message if no keys are set
   if (!Object.values(settings.llm).some(key => key)) {
     return (
@@ -225,6 +245,7 @@ export function BoardChatSystem({
           chat={chat}
           onSendMessage={handleSendMessage}
           onEditMessage={handleEditMessage}
+          onSaveToNotes={handleSaveToNotes}
           className="flex-1"
           isLoading={isLoading}
           selectedModel={selectedModel}

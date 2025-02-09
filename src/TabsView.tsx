@@ -38,7 +38,7 @@ export function TabsView(props: {
     const newPages = pages.filter(id => id !== pageId)
     onPagesChange(newPages)
     if (index <= activeTabIndex) {
-      onActiveTabIndexChange(Math.max(0, activeTabIndex - 1))
+      onActiveTabIndexChange(Math.max(-1, activeTabIndex - 1))
     }
   }
 

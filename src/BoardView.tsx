@@ -1,7 +1,6 @@
 import React from "react"
 import type { Store } from "./Store"
 import { useBoard } from "./Store"
-import type { Board } from "./types"
 import { SidebarBoardView } from "./SidebarBoardView"
 
 export function BoardView(props: {

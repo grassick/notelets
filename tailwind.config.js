@@ -34,6 +34,17 @@ module.exports = {
               color: 'var(--tw-prose-headings)',
               lineHeight: '1.3',
             },
+            // Remove margins from paragraphs inside list items
+            'li p': {
+              margin: '0',
+            },
+            // Ensure list items themselves have proper spacing
+            'li': {
+              margin: '0',
+              '&:not(:first-child)': {
+                marginTop: '0.25em',
+              },
+            },
           },
         },
         sm: {
@@ -58,6 +69,17 @@ module.exports = {
               marginBottom: '0.5em',
               fontWeight: 500,
               lineHeight: '1.3',
+            },
+            // Remove margins from paragraphs inside list items
+            'li p': {
+              margin: '0',
+            },
+            // Ensure list items themselves have proper spacing
+            'li': {
+              margin: '0',
+              '&:not(:first-child)': {
+                marginTop: '0.25em',
+              },
             },
           },
         },

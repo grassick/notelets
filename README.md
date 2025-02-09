@@ -18,6 +18,7 @@ A modern note-taking application with integrated AI chat capabilities, built wit
 - Bubble menu for quick formatting
 - Copy content as Markdown or formatted text
 - Dark mode support
+- Markdown editing
 
 ### 🤖 AI Chat Integration
 - Chat with AI models about your notes

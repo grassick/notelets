@@ -322,7 +322,17 @@ function NoteCard({ card, isSingleView = false, onUpdateCard, onUpdateCardTitle,
           content={card.content.markdown}
           onChange={onUpdateCard}
           isMarkdownMode={isMarkdownMode}
-          className="flex-1 overflow-auto p-4"
+          className="flex-1 overflow-auto p-4
+                    [scrollbar-width:thin] 
+                    [scrollbar-color:rgba(148,163,184,0.2)_transparent] 
+                    dark:[scrollbar-color:rgba(148,163,184,0.15)_transparent]
+                    [::-webkit-scrollbar]:w-1.5
+                    [::-webkit-scrollbar-thumb]:rounded-full
+                    [::-webkit-scrollbar-thumb]:bg-slate-300/50
+                    hover:[::-webkit-scrollbar-thumb]:bg-slate-400/50
+                    dark:[::-webkit-scrollbar-thumb]:bg-slate-500/25
+                    dark:hover:[::-webkit-scrollbar-thumb]:bg-slate-400/25
+                    [::-webkit-scrollbar-track]:bg-transparent"
         />
       </div>
     )
@@ -496,14 +506,14 @@ function ListPanel({ cards, selectedCardId, onCardSelect, onCreateCard, isExpand
       {isExpanded && (
         <div className="flex-1 overflow-auto
                        [scrollbar-width:thin] 
-                       [scrollbar-color:rgba(100,116,139,0.1)_transparent] 
-                       dark:[scrollbar-color:rgba(100,116,139,0.1)_transparent]
+                       [scrollbar-color:rgba(148,163,184,0.2)_transparent] 
+                       dark:[scrollbar-color:rgba(148,163,184,0.15)_transparent]
                        [::-webkit-scrollbar]:w-1.5
                        [::-webkit-scrollbar-thumb]:rounded-full
-                       [::-webkit-scrollbar-thumb]:bg-slate-500/10
-                       hover:[::-webkit-scrollbar-thumb]:bg-slate-500/20
-                       dark:[::-webkit-scrollbar-thumb]:bg-slate-500/10
-                       dark:hover:[::-webkit-scrollbar-thumb]:bg-slate-500/20
+                       [::-webkit-scrollbar-thumb]:bg-slate-300/50
+                       hover:[::-webkit-scrollbar-thumb]:bg-slate-400/50
+                       dark:[::-webkit-scrollbar-thumb]:bg-slate-500/25
+                       dark:hover:[::-webkit-scrollbar-thumb]:bg-slate-400/25
                        [::-webkit-scrollbar-track]:bg-transparent">
           {sortedCards.map(card => (
             <CardListItem
@@ -597,7 +607,16 @@ function ContentPanel({ cards, selectedCard, onUpdateCard, onUpdateCardTitle, on
   // Multi-note view
   return (
     <div className="flex flex-col border-r border-gray-200 dark:border-gray-700 flex-1">
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto p-4
+                     [scrollbar-color:rgba(148,163,184,0.2)_transparent] 
+                     dark:[scrollbar-color:rgba(148,163,184,0.15)_transparent]
+                     [::-webkit-scrollbar]:w-1.5
+                     [::-webkit-scrollbar-thumb]:rounded-full
+                     [::-webkit-scrollbar-thumb]:bg-slate-300/50
+                     hover:[::-webkit-scrollbar-thumb]:bg-slate-400/50
+                     dark:[::-webkit-scrollbar-thumb]:bg-slate-500/25
+                     dark:hover:[::-webkit-scrollbar-thumb]:bg-slate-400/25
+                     [::-webkit-scrollbar-track]:bg-transparent">
         {sortedCards.map(card => (
           <NoteCard
             key={card.id}

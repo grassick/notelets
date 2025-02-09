@@ -20,6 +20,30 @@ const turndown = new TurndownService({
   codeBlockStyle: 'fenced'
 })
 
+/**
+ * Unwraps paragraph tags inside list items while preserving their content
+ */
+function cleanupListItemParagraphs(html: string): string {
+  // Create a DOM parser
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
+  
+  // Find all paragraphs inside list items
+  const paragraphsInLists = doc.querySelectorAll('li p')
+  
+  // Unwrap each paragraph (keep its contents but remove the p tag)
+  paragraphsInLists.forEach(p => {
+    const parent = p.parentNode
+    while (p.firstChild) {
+      parent?.insertBefore(p.firstChild, p)
+    }
+    parent?.removeChild(p)
+  })
+  
+  // Return the cleaned HTML
+  return doc.body.innerHTML
+}
+
 interface RichTextEditorProps {
   content: string
   onChange: (markdown: string) => void
@@ -35,9 +59,19 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   // Debounce the markdown conversion and onChange callback
   const debouncedOnChange = useDebouncedCallback((html: string) => {
-    const markdown = turndown.turndown(html)
+    // console.log('=== DEBUG: HTML before cleanup ===')
+    // console.log(html)
+    
+    const cleanedHtml = cleanupListItemParagraphs(html)
+    // console.log('=== DEBUG: HTML after cleanup ===')
+    // console.log(cleanedHtml)
+    
+    const markdown = turndown.turndown(cleanedHtml)
+    // console.log('=== DEBUG: Markdown after turndown ===')
+    // console.log(markdown)
+    
     onChange(markdown)
-  }, 150) // 150ms debounce
+  }, 150)
 
   const editor = useEditor({
     extensions: [
@@ -59,15 +93,23 @@ export function RichTextEditor({
         placeholder: placeholder || 'Start typing...'
       })
     ],
-    content: md.render(content),
+    content: (() => {
+      // console.log('=== DEBUG: Input markdown ===')
+      // console.log(content)
+      const renderedHtml = md.render(content)
+      // console.log('=== DEBUG: HTML after markdown-it render ===')
+      // console.log(renderedHtml)
+      return renderedHtml
+    })(),
     editorProps: {
       attributes: {
         class: 'prose prose-sm dark:prose-invert max-w-none focus:outline-none'
       }
     },
     onUpdate: ({ editor }) => {
-      const html = editor.getHTML()
-      debouncedOnChange(html)
+      // console.log('=== DEBUG: Raw editor HTML ===')
+      // console.log(editor.getHTML())
+      debouncedOnChange(editor.getHTML())
     }
   })
 
@@ -77,8 +119,16 @@ export function RichTextEditor({
 
     const currentContent = turndown.turndown(editor.getHTML())
     if (content !== currentContent) {
+      // console.log('=== DEBUG: Content prop changed ===')
+      // console.log('New content:', content)
+      // console.log('Current editor content:', currentContent)
+      
       const selection = editor.state.selection
-      editor.commands.setContent(md.render(content))
+      const renderedHtml = md.render(content)
+      // console.log('=== DEBUG: New HTML to set ===')
+      // console.log(renderedHtml)
+      
+      editor.commands.setContent(renderedHtml)
       editor.commands.setTextSelection(selection)
     }
   }, [editor, content])

@@ -29,6 +29,8 @@ interface NoteCardHeaderProps {
   onMarkdownModeChange: (isMarkdown: boolean) => void
   /** Optional class name for styling */
   className?: string
+  /** Whether to always show actions */
+  alwaysShowActions: boolean
 }
 
 /** Get a preview of the card content */
@@ -40,7 +42,7 @@ const getCardPreview = (card: RichTextCard): string => {
 }
 
 /** Header component for a note card with title editing and actions */
-function NoteCardHeader({ card, onUpdateTitle, onDelete, isMarkdownMode, onMarkdownModeChange, className = '' }: NoteCardHeaderProps) {
+function NoteCardHeader({ card, onUpdateTitle, onDelete, isMarkdownMode, onMarkdownModeChange, alwaysShowActions, className = '' }: NoteCardHeaderProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
   const [showCopyMenu, setShowCopyMenu] = useState(false)
@@ -172,7 +174,7 @@ function NoteCardHeader({ card, onUpdateTitle, onDelete, isMarkdownMode, onMarkd
           </h3>
         )}
       </div>
-      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+      {!alwaysShowActions && <div className={`flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150`}>
         <button
           onClick={() => onMarkdownModeChange(!isMarkdownMode)}
           className="text-[10px] text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400"
@@ -210,14 +212,14 @@ function NoteCardHeader({ card, onUpdateTitle, onDelete, isMarkdownMode, onMarkd
         </div>
         <button
           onClick={onDelete}
-          className="p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400"
+          className={`p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 ${alwaysShowActions ? 'hover:bg-red-50 dark:hover:bg-red-900/30 rounded' : ''}`}
           title="Delete note"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-      </div>
+      </div>}
     </div>
   )
 }
@@ -314,10 +316,148 @@ interface NoteCardProps {
 /** A component that renders a note card in either single or multi view mode */
 function NoteCard({ card, isSingleView = false, onUpdateCard, onUpdateCardTitle, onDelete, className = '' }: NoteCardProps) {
   const [isMarkdownMode, setIsMarkdownMode] = useState(false)
+  const [showCopyMenu, setShowCopyMenu] = useState(false)
+  const copyMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    // Close menu when clicking outside
+    function handleClickOutside(event: MouseEvent) {
+      if (copyMenuRef.current && !copyMenuRef.current.contains(event.target as Node)) {
+        setShowCopyMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleCopyText = (format: 'markdown' | 'html') => {
+    if (format === 'markdown') {
+      navigator.clipboard.writeText(card.content.markdown)
+        .then(() => {
+          console.log('Copied as markdown')
+          setShowCopyMenu(false)
+        })
+        .catch(err => {
+          console.error('Failed to copy text:', err)
+        })
+    } else {
+      // For HTML, we'll use markdown-it to render the markdown to HTML
+      const md = new MarkdownIt({
+        html: true,
+        breaks: true,
+        linkify: true
+      })
+      const html = md.render(card.content.markdown)
+
+      // Create a temporary element to handle the copy
+      const tempDiv = document.createElement('div')
+      tempDiv.innerHTML = html
+      const plainText = tempDiv.innerText
+
+      // Create a temporary textarea for the copy operation
+      const textarea = document.createElement('textarea')
+      textarea.setAttribute('readonly', '') // Prevent mobile keyboard from showing
+      textarea.style.position = 'absolute'
+      textarea.style.left = '-9999px'
+      document.body.appendChild(textarea)
+
+      // Set up the copy operation
+      const listener = (e: ClipboardEvent) => {
+        e.preventDefault()
+        if (e.clipboardData) {
+          e.clipboardData.setData('text/html', html)
+          e.clipboardData.setData('text/plain', plainText)
+        }
+      }
+
+      try {
+        // Add listener and select text
+        document.addEventListener('copy', listener)
+        textarea.value = plainText
+        textarea.select()
+        
+        // Execute copy command
+        const success = document.execCommand('copy')
+        if (success) {
+          console.log('Copied as formatted text')
+        } else {
+          // Fallback to just copying plain text
+          navigator.clipboard.writeText(plainText)
+            .then(() => console.log('Copied as plain text (fallback)'))
+            .catch(err => console.error('Failed to copy text:', err))
+        }
+      } finally {
+        // Clean up
+        document.removeEventListener('copy', listener)
+        document.body.removeChild(textarea)
+        setShowCopyMenu(false)
+      }
+    }
+  }
 
   if (isSingleView) {
     return (
       <div className={`flex flex-col flex-1 ${className}`}>
+        <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex justify-between items-center">
+            <div className="flex-1 min-w-0">
+              <NoteCardHeader
+                card={card}
+                onUpdateTitle={onUpdateCardTitle}
+                onDelete={onDelete}
+                isMarkdownMode={isMarkdownMode}
+                onMarkdownModeChange={setIsMarkdownMode}
+                alwaysShowActions={true}
+              />
+            </div>
+            <div className="flex items-center gap-2 ml-4">
+              <button
+                onClick={() => setIsMarkdownMode(!isMarkdownMode)}
+                className="text-[10px] text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400"
+                title={isMarkdownMode ? "Switch to rich text mode" : "Switch to markdown mode"}
+              >
+                {isMarkdownMode ? "Rich" : "MD"}
+              </button>
+              <div className="relative" ref={copyMenuRef}>
+                <button
+                  onClick={() => setShowCopyMenu(!showCopyMenu)}
+                  className={`p-1 text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400
+                    ${showCopyMenu ? 'text-blue-500 dark:text-blue-400' : ''}`}
+                  title="Copy note text"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                  </svg>
+                </button>
+                {showCopyMenu && (
+                  <div className="absolute right-0 mt-1 py-1 w-32 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-10 flex flex-col">
+                    <button
+                      onClick={() => handleCopyText('markdown')}
+                      className="px-3 py-1 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      Copy&nbsp;Markdown
+                    </button>
+                    <button
+                      onClick={() => handleCopyText('html')}
+                      className="px-3 py-1 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      Copy&nbsp;Formatted
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={onDelete}
+                className="p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
+                title="Delete note"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
         <NoteCardBody
           content={card.content.markdown}
           onChange={onUpdateCard}
@@ -347,6 +487,7 @@ function NoteCard({ card, isSingleView = false, onUpdateCard, onUpdateCardTitle,
           onDelete={onDelete}
           isMarkdownMode={isMarkdownMode}
           onMarkdownModeChange={setIsMarkdownMode}
+          alwaysShowActions={false}
         />
       </div>
       <NoteCardBody
@@ -359,20 +500,7 @@ function NoteCard({ card, isSingleView = false, onUpdateCard, onUpdateCardTitle,
   )
 }
 
-interface PanelHeaderProps {
-  title: React.ReactNode
-  rightContent?: React.ReactNode
-  className?: string
-}
 
-function PanelHeader({ title, rightContent, className = '' }: PanelHeaderProps) {
-  return (
-    <div className={`h-8 px-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center ${className}`}>
-      <div className="text-sm text-gray-600 dark:text-gray-400">{title}</div>
-      {rightContent}
-    </div>
-  )
-}
 
 interface CardListItemProps {
   card: Card
@@ -560,7 +688,6 @@ function ContentPanel({ cards, selectedCard, onUpdateCard, onUpdateCardTitle, on
         </p>
         <button
           onClick={() => {
-            // Find the create button in the ListPanel and click it
             const createButton = document.querySelector('[title="New card"]') as HTMLButtonElement
             if (createButton) createButton.click()
           }}
@@ -580,17 +707,6 @@ function ContentPanel({ cards, selectedCard, onUpdateCard, onUpdateCardTitle, on
     // Single note view
     return (
       <div className="flex flex-col border-r border-gray-200 dark:border-gray-700 flex-1">
-        <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700">
-          {selectedCard && (
-            <NoteCardHeader
-              card={selectedCard}
-              onUpdateTitle={(title) => onUpdateCardTitle(selectedCard.id, title)}
-              onDelete={() => onDelete(selectedCard.id)}
-              isMarkdownMode={false}
-              onMarkdownModeChange={(isMarkdown) => {}}
-            />
-          )}
-        </div>
         {selectedCard && (
           <NoteCard
             card={selectedCard}
@@ -608,6 +724,7 @@ function ContentPanel({ cards, selectedCard, onUpdateCard, onUpdateCardTitle, on
   return (
     <div className="flex flex-col border-r border-gray-200 dark:border-gray-700 flex-1">
       <div className="flex-1 overflow-auto p-4
+                     [scrollbar-width:thin] 
                      [scrollbar-color:rgba(148,163,184,0.2)_transparent] 
                      dark:[scrollbar-color:rgba(148,163,184,0.15)_transparent]
                      [::-webkit-scrollbar]:w-1.5

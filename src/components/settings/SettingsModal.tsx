@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import { useSettings } from '../../hooks/useSettings'
+import ChangePasswordForm from '../../modules/auth/components/ChangePasswordForm'
 
 interface SettingsModalProps {
   isOpen: boolean
   onClose: () => void
 }
 
-type SettingsTab = 'appearance' | 'llm'
+type SettingsTab = 'appearance' | 'llm' | 'account'
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { settings, updateSettings } = useSettings()
@@ -63,6 +64,16 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   }`}
               >
                 Appearance
+              </button>
+              <button
+                onClick={() => setActiveTab('account')}
+                className={`w-full px-3 py-2 text-sm rounded-md text-left
+                  ${activeTab === 'account'
+                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}
+              >
+                Account
               </button>
             </nav>
           </div>
@@ -152,6 +163,16 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         ${settings.appearance.darkMode ? 'translate-x-6' : 'translate-x-1'}`}
                     />
                   </button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'account' && (
+              <div className="space-y-6">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Account Settings</h3>
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Change Password</h4>
+                  <ChangePasswordForm onSuccess={onClose} onCancel={() => setActiveTab('llm')} />
                 </div>
               </div>
             )}

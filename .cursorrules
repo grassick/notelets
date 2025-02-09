@@ -1,0 +1,21 @@
+Use pnpm. No semicolons.
+
+User interfaces should start with the exported component at the top and then ones they depend on lower down in the file.
+
+Don't add semicolons for Typescript. For functional React components, use this style:
+
+```
+interface SomeComponentProps {
+
+}
+
+function SomeComponent(props: SomeComponentProps) {
+   const { someProp, otherProp } = props
+   ...
+```
+
+Don't use React.FC! Import useState etc, don't use React.useState
+
+CSS is TailwindCSS. Make sure there is dark and light mode.
+
+Always as TSDoc comments on interfaces, interface items, functions and classes.

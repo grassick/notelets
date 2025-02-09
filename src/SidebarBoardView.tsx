@@ -555,19 +555,30 @@ function ListPanel({ cards, selectedCardId, onCardSelect, onCreateCard, isExpand
       <div className="p-2 border-b border-gray-200 dark:border-gray-700">
         {isExpanded ? (
           <div className="flex items-center justify-between gap-1">
-            <button
-              onClick={() => onShowAllNotesChange(!showAllNotes)}
-              className={`p-1 rounded ${
-                showAllNotes 
-                  ? 'text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' 
-                  : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'
-              }`}
-              title={showAllNotes ? "Show single note" : "Show all notes"}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={onToggle}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-400"
+                title="Toggle card list"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                onClick={() => onShowAllNotesChange(!showAllNotes)}
+                className={`p-1 rounded ${
+                  showAllNotes 
+                    ? 'text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' 
+                    : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'
+                }`}
+                title={showAllNotes ? "Show single note" : "Show all notes"}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+              </button>
+            </div>
             <div className="flex items-center justify-center gap-1">
               <button
                 onClick={() => onViewModeChange('notes')}

@@ -76,20 +76,17 @@ export function BoardChatSystem({
   // Initialize chat if none exists
   useEffect(() => {
     if (chats.length > 0 && !chat) {
-      setChat(chats[0])
-    } else if (chats.length === 0) {
-      const newChat: Chat = {
-        id: uuidv4(),
-        boardId,
-        title: 'Chat',
-        messages: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+      // Find first non-empty chat or null
+      const nonEmptyChat = chats.find(c => c.messages.length > 0)
+      if (nonEmptyChat) {
+        setChat(nonEmptyChat)
+      } else if (chats[0].messages.length === 0) {
+        // If we have an empty chat but no messages, use it
+        setChat(chats[0])
       }
-      storeSetChat(newChat)
-      setChat(newChat)
     }
-  }, [chats, chat, boardId, storeSetChat])
+    // Don't automatically create a chat - wait for user action
+  }, [chats, chat])
 
   const { sendMessage, editMessage, isLoading, error: chatError } = useChat({
     chat,
@@ -140,19 +137,22 @@ export function BoardChatSystem({
     try {
       await removeChat(chatId)
       
-      // If we deleted the active chat, switch to another one or create new
+      // If we deleted the active chat, switch to another one
       if (chat?.id === chatId) {
         const remainingChats = chats.filter((c: Chat) => c.id !== chatId)
-        if (remainingChats.length > 0) {
+        const nonEmptyChat = remainingChats.find(c => c.messages.length > 0)
+        if (nonEmptyChat) {
+          setChat(nonEmptyChat)
+        } else if (remainingChats.length > 0) {
           setChat(remainingChats[0])
         } else {
-          handleNewChat()
+          setChat(null) // Don't automatically create a new chat
         }
       }
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to delete chat'))
     }
-  }, [chat, chats, removeChat, handleNewChat])
+  }, [chat, chats, removeChat])
 
   const handleEditMessage = useCallback(async (messageIndex: number, newContent: string) => {
     if (!chat) return
@@ -219,11 +219,29 @@ export function BoardChatSystem({
     )
   }
 
-  // Show loading state
+  // Show empty state when no chats exist
   if (!chat) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-500"></div>
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+        <div className="w-16 h-16 mb-6 text-gray-400 dark:text-gray-500">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+        </div>
+        <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">Start a New Chat</h3>
+        <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-sm">
+          Begin a conversation with your AI assistant. Your chat history will be saved here.
+        </p>
+        <button
+          onClick={handleNewChat}
+          className="inline-flex items-center px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 
+                   text-white transition-colors duration-150"
+        >
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Start New Chat
+        </button>
       </div>
     )
   }

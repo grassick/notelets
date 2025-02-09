@@ -27,6 +27,14 @@ interface NoteCardHeaderProps {
   className?: string
 }
 
+/** Get a preview of the card content */
+const getCardPreview = (card: RichTextCard): string => {
+  if (card.title) return card.title
+  const preview = card.content.markdown.trim()
+  if (!preview) return '(empty note)'
+  return preview.slice(0, 30) + (preview.length > 30 ? '...' : '')
+}
+
 /** Header component for a note card with title editing and actions */
 function NoteCardHeader({ card, onUpdateTitle, onDelete, className = '' }: NoteCardHeaderProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
@@ -156,7 +164,7 @@ function NoteCardHeader({ card, onUpdateTitle, onDelete, className = '' }: NoteC
             onClick={handleTitleClick}
             className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-200"
           >
-            {card.title || 'Untitled'}
+            {getCardPreview(card)}
           </h3>
         )}
       </div>
@@ -296,6 +304,8 @@ interface CardListItemProps {
 }
 
 function CardListItem({ card, isSelected, onClick }: CardListItemProps) {
+  if (card.type !== 'richtext') return null
+
   return (
     <div
       onClick={onClick}
@@ -305,7 +315,7 @@ function CardListItem({ card, isSelected, onClick }: CardListItemProps) {
           : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
     >
       <div className="text-gray-800 dark:text-gray-200">
-        {card.title || 'Untitled'}
+        {getCardPreview(card)}
       </div>
     </div>
   )
@@ -608,7 +618,7 @@ export function SidebarBoardView(props: {
       id: uuidv4(),
       boardId,
       type: 'richtext',
-      title: 'New Card',
+      title: '',  // Empty title by default
       content: {
         markdown: ''
       },

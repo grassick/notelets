@@ -171,7 +171,7 @@ export function BoardChatSystem({
         id: uuidv4(),
         boardId,
         type: 'richtext',
-        title: 'Chat Note',
+        title: '',  // Empty title by default
         content: {
           markdown: content
         },

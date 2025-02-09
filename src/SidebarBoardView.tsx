@@ -23,6 +23,10 @@ interface NoteCardHeaderProps {
   onUpdateTitle: (title: string) => void
   /** Callback when the card is deleted */
   onDelete: () => void
+  /** Whether markdown mode is enabled */
+  isMarkdownMode: boolean
+  /** Callback when markdown mode is toggled */
+  onMarkdownModeChange: (isMarkdown: boolean) => void
   /** Optional class name for styling */
   className?: string
 }
@@ -36,7 +40,7 @@ const getCardPreview = (card: RichTextCard): string => {
 }
 
 /** Header component for a note card with title editing and actions */
-function NoteCardHeader({ card, onUpdateTitle, onDelete, className = '' }: NoteCardHeaderProps) {
+function NoteCardHeader({ card, onUpdateTitle, onDelete, isMarkdownMode, onMarkdownModeChange, className = '' }: NoteCardHeaderProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
   const [showCopyMenu, setShowCopyMenu] = useState(false)
@@ -168,7 +172,14 @@ function NoteCardHeader({ card, onUpdateTitle, onDelete, className = '' }: NoteC
           </h3>
         )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+        <button
+          onClick={() => onMarkdownModeChange(!isMarkdownMode)}
+          className="text-[10px] text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400"
+          title={isMarkdownMode ? "Switch to rich text mode" : "Switch to markdown mode"}
+        >
+          {isMarkdownMode ? "Rich" : "MD"}
+        </button>
         <div className="relative" ref={copyMenuRef}>
           <button
             onClick={() => setShowCopyMenu(!showCopyMenu)}
@@ -211,25 +222,75 @@ function NoteCardHeader({ card, onUpdateTitle, onDelete, className = '' }: NoteC
   )
 }
 
+/** Simple markdown editor component */
+function MarkdownEditor({ content, onChange, placeholder }: { 
+  content: string
+  onChange: (content: string) => void
+  placeholder?: string 
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    const adjustHeight = () => {
+      textarea.style.height = 'auto'
+      textarea.style.height = `${textarea.scrollHeight}px`
+    }
+
+    // Initial adjustment
+    adjustHeight()
+
+    // Adjust on content change
+    textarea.addEventListener('input', adjustHeight)
+    return () => textarea.removeEventListener('input', adjustHeight)
+  }, [content]) // Re-run when content changes
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={content}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full resize-none bg-transparent text-gray-900 dark:text-gray-100 
+                 placeholder-gray-400 dark:placeholder-gray-500
+                 focus:outline-none"
+      style={{ overflow: 'hidden' }}
+    />
+  )
+}
+
 /** Props for the NoteCardBody component */
 interface NoteCardBodyProps {
   /** The content of the card */
   content: string
   /** Callback when the content changes */
   onChange: (content: string) => void
+  /** Whether markdown mode is enabled */
+  isMarkdownMode: boolean
   /** Optional class name for styling */
   className?: string
 }
 
 /** Body component for a note card containing the rich text editor */
-function NoteCardBody({ content, onChange, className = '' }: NoteCardBodyProps) {
+function NoteCardBody({ content, onChange, isMarkdownMode, className = '' }: NoteCardBodyProps) {
   return (
-    <div className={className}>
-      <RichTextEditor
-        content={content}
-        onChange={onChange}
-        placeholder="Start typing..."
-      />
+    <div className={`relative ${className}`}>
+      {isMarkdownMode ? (
+        <MarkdownEditor
+          content={content}
+          onChange={onChange}
+          placeholder="Start typing..."
+        />
+      ) : (
+        <RichTextEditor
+          content={content}
+          onChange={onChange}
+          placeholder="Start typing..."
+        />
+      )}
     </div>
   )
 }
@@ -252,12 +313,15 @@ interface NoteCardProps {
 
 /** A component that renders a note card in either single or multi view mode */
 function NoteCard({ card, isSingleView = false, onUpdateCard, onUpdateCardTitle, onDelete, className = '' }: NoteCardProps) {
+  const [isMarkdownMode, setIsMarkdownMode] = useState(false)
+
   if (isSingleView) {
     return (
       <div className={`flex flex-col flex-1 ${className}`}>
         <NoteCardBody
           content={card.content.markdown}
           onChange={onUpdateCard}
+          isMarkdownMode={isMarkdownMode}
           className="flex-1 overflow-auto p-4"
         />
       </div>
@@ -271,11 +335,14 @@ function NoteCard({ card, isSingleView = false, onUpdateCard, onUpdateCardTitle,
           card={card}
           onUpdateTitle={onUpdateCardTitle}
           onDelete={onDelete}
+          isMarkdownMode={isMarkdownMode}
+          onMarkdownModeChange={setIsMarkdownMode}
         />
       </div>
       <NoteCardBody
         content={card.content.markdown}
         onChange={onUpdateCard}
+        isMarkdownMode={isMarkdownMode}
         className="p-4 flex-1"
       />
     </div>
@@ -509,6 +576,8 @@ function ContentPanel({ cards, selectedCard, onUpdateCard, onUpdateCardTitle, on
               card={selectedCard}
               onUpdateTitle={(title) => onUpdateCardTitle(selectedCard.id, title)}
               onDelete={() => onDelete(selectedCard.id)}
+              isMarkdownMode={false}
+              onMarkdownModeChange={(isMarkdown) => {}}
             />
           )}
         </div>

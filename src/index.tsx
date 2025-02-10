@@ -56,12 +56,20 @@ function MainContent() {
     const [store] = useState<Store>(() => new FirestoreStore())
     useSettings() // Initialize settings and dark mode
 
+    // Ensure activeTabIndex is valid
+    useEffect(() => {
+        if (activeTabIndex >= tabIds.length && activeTabIndex !== -1) {
+            // If active tab index is out of bounds, set to last tab or -1
+            setActiveTabIndex(tabIds.length > 0 ? tabIds.length - 1 : -1)
+        }
+    }, [tabIds, activeTabIndex, setActiveTabIndex])
+
     return (
         <TabsView
             store={store}
             pages={tabIds}
             onPagesChange={setTabIds}
-            activeTabIndex={activeTabIndex}
+            activeTabIndex={Math.max(-1, activeTabIndex)}
             onActiveTabIndexChange={setActiveTabIndex}
         />
     )

@@ -6,7 +6,6 @@ import type { Store } from "./Store";
 import { useBoards } from "./Store";
 import { BoardView } from "./BoardView";
 import { SettingsButton } from "./components/settings/SettingsButton";
-import { usePersist } from "./hooks/usePersist";
 
 export function TabsView(props: {
   store: Store

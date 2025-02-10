@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import type { Store } from '../Store'
 import { useCards, useChats } from '../Store'
 import type { Chat, RichTextCard } from '../types'
@@ -268,6 +268,18 @@ export function BoardChatSystem({
 function ChatHeader({ chat, chats, onNewChat, selectedModel, onModelChange, onChatSelect, onChatDelete, onOpenSettings }: ChatHeaderProps) {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
   const { settings } = useSettings()
+  const historyRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (historyRef.current && !historyRef.current.contains(event.target as Node)) {
+        setIsHistoryOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   /** Get a preview title from chat messages */
   const getChatPreview = (chat: Chat): string => {
@@ -283,7 +295,7 @@ function ChatHeader({ chat, chats, onNewChat, selectedModel, onModelChange, onCh
     <div className="h-8 px-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
       <span className="text-sm text-gray-600 dark:text-gray-400">Chat</span>
       <div className="flex items-center gap-2">
-        <div className="relative">
+        <div className="relative" ref={historyRef}>
           <button
             onClick={() => setIsHistoryOpen(!isHistoryOpen)}
             className="p-1 rounded text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800"
@@ -312,10 +324,7 @@ function ChatHeader({ chat, chats, onNewChat, selectedModel, onModelChange, onCh
                         }}
                         className="flex-1 text-left"
                       >
-                        <div className="truncate">{getChatPreview(historyChat)}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(historyChat.createdAt).toLocaleDateString()}
-                        </div>
+                        <div className="truncate text-gray-900 dark:text-gray-100">{getChatPreview(historyChat)}</div>
                       </button>
                       <button
                         onClick={(e) => {

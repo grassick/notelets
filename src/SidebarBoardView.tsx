@@ -73,10 +73,8 @@ function NoteCardHeader({ card, onUpdateTitle, onDelete, isMarkdownMode, onMarkd
   }
 
   const handleTitleSubmit = () => {
-    if (editedTitle.trim()) {
-      onUpdateTitle(editedTitle.trim())
-      setIsEditingTitle(false)
-    }
+    onUpdateTitle(editedTitle.trim())
+    setIsEditingTitle(false)
   }
 
   const handleTitleKeyDown = (e: React.KeyboardEvent) => {
@@ -163,18 +161,18 @@ function NoteCardHeader({ card, onUpdateTitle, onDelete, isMarkdownMode, onMarkd
             onChange={(e) => setEditedTitle(e.target.value)}
             onBlur={handleTitleSubmit}
             onKeyDown={handleTitleKeyDown}
-            className="w-full px-1 py-0.5 bg-white dark:bg-gray-800 border border-blue-500 dark:border-blue-400 rounded text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400"
+            className="w-full px-1.5 py-1 bg-white dark:bg-gray-800 border border-blue-500 dark:border-blue-400 rounded text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400"
           />
         ) : (
           <h3 
             onClick={handleTitleClick}
-            className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-200"
+            className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer hover:text-gray-900 dark:hover:text-gray-100"
           >
             {card.title || "\u00A0"}
           </h3>
         )}
       </div>
-      {!alwaysShowActions && <div className={`flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150`}>
+      {!alwaysShowActions && <div className={`flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 ml-4`}>
         <button
           onClick={() => onMarkdownModeChange(!isMarkdownMode)}
           className="text-[10px] text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400"
@@ -480,7 +478,7 @@ function NoteCard({ card, isSingleView = false, onUpdateCard, onUpdateCardTitle,
 
   return (
     <div className={`flex flex-col bg-white dark:bg-gray-800 shadow-sm mb-4 last:mb-0 min-h-[60px] border border-gray-200 dark:border-gray-700 group ${className}`}>
-      <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700">
+      <div className="px-4 py-2.5 border-b border-gray-200 dark:border-gray-700">
         <NoteCardHeader
           card={card}
           onUpdateTitle={onUpdateCardTitle}
@@ -494,7 +492,7 @@ function NoteCard({ card, isSingleView = false, onUpdateCard, onUpdateCardTitle,
         content={card.content.markdown}
         onChange={onUpdateCard}
         isMarkdownMode={isMarkdownMode}
-        className="p-4 flex-1"
+        className="px-4 py-3 flex-1"
       />
     </div>
   )

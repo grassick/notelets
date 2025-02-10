@@ -1,24 +1,27 @@
-import React, { useEffect, useCallback, useMemo } from 'react'
+import React, { useEffect, useCallback, useMemo, useRef } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import MarkdownIt from 'markdown-it'
 import TurndownService from 'turndown'
+import { gfm } from 'turndown-plugin-gfm'
 import { RichTextToolbar } from './RichTextToolbar'
 import { RichTextBubbleMenu } from './RichTextBubbleMenu'
 import { useDebouncedCallback } from 'use-debounce'
 
-const md = new MarkdownIt({
+const md = MarkdownIt('commonmark', {
   html: true,
   breaks: true,
-  linkify: true
+  linkify: true,
+  // Enable GitHub-flavored Markdown features
+  typographer: true
 })
 
 const turndown = new TurndownService({
   headingStyle: 'atx',
   codeBlockStyle: 'fenced'
-})
+}).use(gfm)
 
 const debug = true
 
@@ -59,6 +62,8 @@ export function RichTextEditor({
   placeholder,
   showToolbar = false 
 }: RichTextEditorProps) {
+  const lastPushedContent = useRef(content)
+
   // Debounce the markdown conversion and onChange callback
   const debouncedOnChange = useDebouncedCallback((html: string) => {
     if (debug) {
@@ -78,11 +83,19 @@ export function RichTextEditor({
       console.log(markdown)
     }
     
+    lastPushedContent.current = markdown
     onChange(markdown)
   }, 150)
 
   const initialHtml = useMemo(() => {
-    return md.render(content)
+    const html = md.render(content)
+    if (debug) {
+      console.log('=== DEBUG: Initial content ===')
+      console.log(content)
+      console.log('=== DEBUG: Initial HTML ===')
+      console.log(html)
+    }
+    return html
   }, [])
 
   const editor = useEditor({
@@ -120,16 +133,17 @@ export function RichTextEditor({
     }
   })
 
-  // Update editor content when content prop changes significantly
+  // Update editor content when content prop changes significantly and differs from what we last pushed
   useEffect(() => {
     if (!editor) return
 
     const currentContent = turndown.turndown(editor.getHTML())
-    if (content !== currentContent) {
+    if (content !== currentContent && content !== lastPushedContent.current) {
       if (debug) {
-        console.log('=== DEBUG: Content prop changed ===')
+        console.log('=== DEBUG: External content change detected ===')
         console.log('New content:', content)
         console.log('Current editor content:', currentContent)
+        console.log('Last pushed content:', lastPushedContent.current)
       }
       
       const selection = editor.state.selection

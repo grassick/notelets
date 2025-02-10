@@ -8,7 +8,7 @@ interface SettingsModalProps {
   onClose: () => void
 }
 
-type SettingsTab = 'appearance' | 'llm' | 'account'
+type SettingsTab = 'appearance' | 'llm' | 'account' | 'storage'
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { settings, updateSettings } = useSettings()
@@ -21,6 +21,27 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     if (e.target === e.currentTarget) {
       onClose()
     }
+  }
+
+  const handleChange = async (newMode: 'local' | 'cloud') => {
+    if (newMode === 'cloud') {
+      const confirmed = window.confirm(
+        'Switching to Cloud Mode will require signing in. ' +
+        'Your local notes will NOT be automatically migrated. ' +
+        'Export them first if needed.'
+      )
+      if (!confirmed) return
+      // Trigger auth flow
+    } else {
+      const confirmed = window.confirm(
+        'Switching to Local Mode will disconnect from cloud. ' +
+        'Your cloud notes will remain safe but won\'t sync here.'
+      )
+      if (!confirmed) return
+    }
+    
+    await updateSettings('storage', { type: newMode })
+    window.location.reload() // Ensure clean state
   }
 
   return (
@@ -76,6 +97,16 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   }`}
               >
                 Account
+              </button>
+              <button
+                onClick={() => setActiveTab('storage')}
+                className={`w-full px-3 py-2 text-sm rounded-md text-left
+                  ${activeTab === 'storage'
+                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}
+              >
+                Storage
               </button>
             </nav>
           </div>
@@ -190,6 +221,43 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     </button>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'storage' && (
+              <div className="space-y-6">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Storage Mode</h3>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      Current Mode: {settings.storage.type === 'local' ? 'Local' : 'Cloud'}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      {settings.storage.type === 'local' 
+                        ? 'Storing data on this device only'
+                        : 'Syncing data through your account'}
+                    </p>
+                  </div>
+                  
+                  <button
+                    onClick={() => handleChange(
+                      settings.storage.type === 'local' ? 'cloud' : 'local'
+                    )}
+                    className="ml-4 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md"
+                  >
+                    Switch to {settings.storage.type === 'local' ? 'Cloud' : 'Local'}
+                  </button>
+                </div>
+
+                {settings.storage.type === 'local' && (
+                  <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                      ⚠️ Local Mode Notice: Your notes are only saved on this device/browser. 
+                      Back them up regularly to avoid data loss.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>

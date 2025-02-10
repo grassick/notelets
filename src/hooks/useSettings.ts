@@ -11,6 +11,15 @@ interface Settings {
     geminiKey?: string
     deepseekKey?: string
     // Add other LLM keys as needed
+  },
+  storage: {
+    /**
+     * The type of storage to use.
+     * 
+     * - 'local' - Store notes only on this device. No account needed.
+     * - 'cloud' - Sync notes across all devices. Requires free account.
+     */
+    type?: 'local' | 'cloud'
   }
 }
 
@@ -18,7 +27,8 @@ const defaultSettings: Settings = {
   appearance: {
     darkMode: window.matchMedia('(prefers-color-scheme: dark)').matches
   },
-  llm: {}
+  llm: {},
+  storage: {}
 }
 
 export function useSettings() {

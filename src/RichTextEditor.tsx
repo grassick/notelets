@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react'
+import React, { useEffect, useCallback, useMemo } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
@@ -19,6 +19,8 @@ const turndown = new TurndownService({
   headingStyle: 'atx',
   codeBlockStyle: 'fenced'
 })
+
+const debug = true
 
 /**
  * Unwraps paragraph tags inside list items while preserving their content
@@ -59,19 +61,29 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   // Debounce the markdown conversion and onChange callback
   const debouncedOnChange = useDebouncedCallback((html: string) => {
-    // console.log('=== DEBUG: HTML before cleanup ===')
-    // console.log(html)
+    if (debug) {
+      console.log('=== DEBUG: HTML before cleanup ===')
+      console.log(html)
+    }
     
     const cleanedHtml = cleanupListItemParagraphs(html)
-    // console.log('=== DEBUG: HTML after cleanup ===')
-    // console.log(cleanedHtml)
+    if (debug) {
+      console.log('=== DEBUG: HTML after cleanup ===')
+      console.log(cleanedHtml)
+    }
     
     const markdown = turndown.turndown(cleanedHtml)
-    // console.log('=== DEBUG: Markdown after turndown ===')
-    // console.log(markdown)
+    if (debug) {
+      console.log('=== DEBUG: Markdown after turndown ===')
+      console.log(markdown)
+    }
     
     onChange(markdown)
   }, 150)
+
+  const initialHtml = useMemo(() => {
+    return md.render(content)
+  }, [])
 
   const editor = useEditor({
     extensions: [
@@ -93,22 +105,17 @@ export function RichTextEditor({
         placeholder: placeholder || 'Start typing...'
       })
     ],
-    content: (() => {
-      // console.log('=== DEBUG: Input markdown ===')
-      // console.log(content)
-      const renderedHtml = md.render(content)
-      // console.log('=== DEBUG: HTML after markdown-it render ===')
-      // console.log(renderedHtml)
-      return renderedHtml
-    })(),
+    content: initialHtml,
     editorProps: {
       attributes: {
         class: 'prose prose-sm dark:prose-invert max-w-none focus:outline-none'
       }
     },
     onUpdate: ({ editor }) => {
-      // console.log('=== DEBUG: Raw editor HTML ===')
-      // console.log(editor.getHTML())
+      if (debug) {
+        console.log('=== DEBUG: Raw editor HTML ===')
+        console.log(editor.getHTML())
+      }
       debouncedOnChange(editor.getHTML())
     }
   })
@@ -119,14 +126,18 @@ export function RichTextEditor({
 
     const currentContent = turndown.turndown(editor.getHTML())
     if (content !== currentContent) {
-      // console.log('=== DEBUG: Content prop changed ===')
-      // console.log('New content:', content)
-      // console.log('Current editor content:', currentContent)
+      if (debug) {
+        console.log('=== DEBUG: Content prop changed ===')
+        console.log('New content:', content)
+        console.log('Current editor content:', currentContent)
+      }
       
       const selection = editor.state.selection
       const renderedHtml = md.render(content)
-      // console.log('=== DEBUG: New HTML to set ===')
-      // console.log(renderedHtml)
+      if (debug) {
+        console.log('=== DEBUG: New HTML to set ===')
+        console.log(renderedHtml)
+      }
       
       editor.commands.setContent(renderedHtml)
       editor.commands.setTextSelection(selection)

@@ -240,9 +240,7 @@ function ChatMessage({ message, index, onEdit, onSaveToNotes }: {
         ) : (
           <>
             <div className="px-3 pt-3">
-              <div className={`text-sm whitespace-pre-wrap break-words prose dark:prose-invert prose-sm max-w-none
-                           prose-p:my-1 prose-pre:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0 
-                           prose-headings:my-1 prose-hr:my-2
+              <div className={`prose dark:prose-invert prose-sm max-w-none
                            ${isUser ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {message.content}

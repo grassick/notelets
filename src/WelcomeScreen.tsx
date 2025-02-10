@@ -1,4 +1,4 @@
-import { type ReactElement } from 'react'
+import React from 'react'
 
 /**
  * Props for the WelcomeScreen component
@@ -11,7 +11,7 @@ interface WelcomeScreenProps {
 /**
  * Initial welcome screen shown to new users to choose their storage mode
  */
-export function WelcomeScreen({ onChoose }: WelcomeScreenProps): ReactElement {
+export function WelcomeScreen({ onChoose }: WelcomeScreenProps) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
       <div className="max-w-2xl w-full">

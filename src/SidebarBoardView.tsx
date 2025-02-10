@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, forwardRef } from 'react'
 import type { Store } from './Store'
 import { useBoard, useCards } from './Store'
 import type { Board, Card, RichTextCard } from './types'
@@ -312,7 +312,14 @@ interface NoteCardProps {
 }
 
 /** A component that renders a note card in either single or multi view mode */
-function NoteCard({ card, isSingleView = false, onUpdateCard, onUpdateCardTitle, onDelete, className = '' }: NoteCardProps) {
+const NoteCard = React.forwardRef<HTMLDivElement, NoteCardProps>(({ 
+  card, 
+  isSingleView = false, 
+  onUpdateCard, 
+  onUpdateCardTitle, 
+  onDelete, 
+  className = '' 
+}, ref) => {
   const [isMarkdownMode, setIsMarkdownMode] = useState(false)
   const [showCopyMenu, setShowCopyMenu] = useState(false)
   const copyMenuRef = useRef<HTMLDivElement>(null)
@@ -396,107 +403,117 @@ function NoteCard({ card, isSingleView = false, onUpdateCard, onUpdateCardTitle,
   if (isSingleView) {
     return (
       <div className={`flex flex-col flex-1 ${className}`}>
-        <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex justify-between items-center">
-            <div className="flex-1 min-w-0">
-              <NoteCardHeader
-                card={card}
-                onUpdateTitle={onUpdateCardTitle}
-                onDelete={onDelete}
-                isMarkdownMode={isMarkdownMode}
-                onMarkdownModeChange={setIsMarkdownMode}
-                alwaysShowActions={true}
-              />
-            </div>
-            <div className="flex items-center gap-2 ml-4">
-              <button
-                onClick={() => setIsMarkdownMode(!isMarkdownMode)}
-                className="text-[10px] text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400"
-                title={isMarkdownMode ? "Switch to rich text mode" : "Switch to markdown mode"}
-              >
-                {isMarkdownMode ? "Rich" : "MD"}
-              </button>
-              <div className="relative" ref={copyMenuRef}>
+        <div 
+          ref={ref}
+          className="pt-4 -mt-4"
+        >
+          <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex justify-between items-center">
+              <div className="flex-1 min-w-0">
+                <NoteCardHeader
+                  card={card}
+                  onUpdateTitle={onUpdateCardTitle}
+                  onDelete={onDelete}
+                  isMarkdownMode={isMarkdownMode}
+                  onMarkdownModeChange={setIsMarkdownMode}
+                  alwaysShowActions={true}
+                />
+              </div>
+              <div className="flex items-center gap-2 ml-4">
                 <button
-                  onClick={() => setShowCopyMenu(!showCopyMenu)}
-                  className={`p-1 text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400
-                    ${showCopyMenu ? 'text-blue-500 dark:text-blue-400' : ''}`}
-                  title="Copy note text"
+                  onClick={() => setIsMarkdownMode(!isMarkdownMode)}
+                  className="text-[10px] text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400"
+                  title={isMarkdownMode ? "Switch to rich text mode" : "Switch to markdown mode"}
+                >
+                  {isMarkdownMode ? "Rich" : "MD"}
+                </button>
+                <div className="relative" ref={copyMenuRef}>
+                  <button
+                    onClick={() => setShowCopyMenu(!showCopyMenu)}
+                    className={`p-1 text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400
+                      ${showCopyMenu ? 'text-blue-500 dark:text-blue-400' : ''}`}
+                    title="Copy note text"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                    </svg>
+                  </button>
+                  {showCopyMenu && (
+                    <div className="absolute right-0 mt-1 py-1 w-32 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-10 flex flex-col">
+                      <button
+                        onClick={() => handleCopyText('markdown')}
+                        className="px-3 py-1 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        Copy&nbsp;Markdown
+                      </button>
+                      <button
+                        onClick={() => handleCopyText('html')}
+                        className="px-3 py-1 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        Copy&nbsp;Formatted
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={onDelete}
+                  className="p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
+                  title="Delete note"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
-                {showCopyMenu && (
-                  <div className="absolute right-0 mt-1 py-1 w-32 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-10 flex flex-col">
-                    <button
-                      onClick={() => handleCopyText('markdown')}
-                      className="px-3 py-1 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      Copy&nbsp;Markdown
-                    </button>
-                    <button
-                      onClick={() => handleCopyText('html')}
-                      className="px-3 py-1 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      Copy&nbsp;Formatted
-                    </button>
-                  </div>
-                )}
               </div>
-              <button
-                onClick={onDelete}
-                className="p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
-                title="Delete note"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
             </div>
           </div>
+          <NoteCardBody
+            content={card.content.markdown}
+            onChange={onUpdateCard}
+            isMarkdownMode={isMarkdownMode}
+            className="flex-1 overflow-auto p-4
+                      [scrollbar-width:thin] 
+                      [scrollbar-color:rgba(148,163,184,0.2)_transparent] 
+                      dark:[scrollbar-color:rgba(148,163,184,0.15)_transparent]
+                      [::-webkit-scrollbar]:w-1.5
+                      [::-webkit-scrollbar-thumb]:rounded-full
+                      [::-webkit-scrollbar-thumb]:bg-slate-300/50
+                      hover:[::-webkit-scrollbar-thumb]:bg-slate-400/50
+                      dark:[::-webkit-scrollbar-thumb]:bg-slate-500/25
+                      dark:hover:[::-webkit-scrollbar-thumb]:bg-slate-400/25
+                      [::-webkit-scrollbar-track]:bg-transparent"
+          />
         </div>
-        <NoteCardBody
-          content={card.content.markdown}
-          onChange={onUpdateCard}
-          isMarkdownMode={isMarkdownMode}
-          className="flex-1 overflow-auto p-4
-                    [scrollbar-width:thin] 
-                    [scrollbar-color:rgba(148,163,184,0.2)_transparent] 
-                    dark:[scrollbar-color:rgba(148,163,184,0.15)_transparent]
-                    [::-webkit-scrollbar]:w-1.5
-                    [::-webkit-scrollbar-thumb]:rounded-full
-                    [::-webkit-scrollbar-thumb]:bg-slate-300/50
-                    hover:[::-webkit-scrollbar-thumb]:bg-slate-400/50
-                    dark:[::-webkit-scrollbar-thumb]:bg-slate-500/25
-                    dark:hover:[::-webkit-scrollbar-thumb]:bg-slate-400/25
-                    [::-webkit-scrollbar-track]:bg-transparent"
-        />
       </div>
     )
   }
 
   return (
     <div className={`flex flex-col bg-white dark:bg-gray-800 shadow-sm mb-4 last:mb-0 min-h-[60px] border border-gray-200 dark:border-gray-700 group ${className}`}>
-      <div className={`px-4 py-1.5 border-b border-gray-200 dark:border-gray-700 ${!isSingleView ? 'bg-gray-50 dark:bg-gray-700/50' : ''}`}>
-        <NoteCardHeader
-          card={card}
-          onUpdateTitle={onUpdateCardTitle}
-          onDelete={onDelete}
+      <div 
+        ref={ref}
+        className="pt-4 -mt-4" // Add padding top but offset with negative margin to maintain visual spacing
+      >
+        <div className={`px-4 py-1.5 border-b border-gray-200 dark:border-gray-700 ${!isSingleView ? 'bg-gray-50 dark:bg-gray-700/50' : ''}`}>
+          <NoteCardHeader
+            card={card}
+            onUpdateTitle={onUpdateCardTitle}
+            onDelete={onDelete}
+            isMarkdownMode={isMarkdownMode}
+            onMarkdownModeChange={setIsMarkdownMode}
+            alwaysShowActions={false}
+          />
+        </div>
+        <NoteCardBody
+          content={card.content.markdown}
+          onChange={onUpdateCard}
           isMarkdownMode={isMarkdownMode}
-          onMarkdownModeChange={setIsMarkdownMode}
-          alwaysShowActions={false}
+          className="px-4 py-3 flex-1"
         />
       </div>
-      <NoteCardBody
-        content={card.content.markdown}
-        onChange={onUpdateCard}
-        isMarkdownMode={isMarkdownMode}
-        className="px-4 py-3 flex-1"
-      />
     </div>
   )
-}
+})
 
 interface CardListItemProps {
   card: Card
@@ -681,6 +698,19 @@ function ContentPanel({ cards, selectedCard, onUpdateCard, onUpdateCardTitle, on
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   )
 
+  // Add ref map for cards
+  const cardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
+
+  // Add scroll effect when selectedCard changes
+  useEffect(() => {
+    if (selectedCard && showAllNotes) {
+      const cardElement = cardRefs.current[selectedCard.id]
+      if (cardElement) {
+        cardElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }
+  }, [selectedCard?.id, showAllNotes])
+
   if (cards.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center flex-1 p-8 text-center">
@@ -748,6 +778,7 @@ function ContentPanel({ cards, selectedCard, onUpdateCard, onUpdateCardTitle, on
             onUpdateCard={(content) => onUpdateCard(card.id, content)}
             onUpdateCardTitle={(title) => onUpdateCardTitle(card.id, title)}
             onDelete={() => onDelete(card.id)}
+            ref={(el) => cardRefs.current[card.id] = el}
           />
         ))}
       </div>

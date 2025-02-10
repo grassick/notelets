@@ -170,7 +170,7 @@ function NoteCardHeader({ card, onUpdateTitle, onDelete, isMarkdownMode, onMarkd
             onClick={handleTitleClick}
             className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-200"
           >
-            {getCardPreview(card) || <span className="text-gray-400 dark:text-gray-500">—</span>}
+            {card.title || "\u00A0"}
           </h3>
         )}
       </div>
@@ -479,7 +479,7 @@ function NoteCard({ card, isSingleView = false, onUpdateCard, onUpdateCardTitle,
   }
 
   return (
-    <div className={`flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-4 last:mb-0 min-h-[60px] border border-gray-200 dark:border-gray-700 group ${className}`}>
+    <div className={`flex flex-col bg-white dark:bg-gray-800 shadow-sm mb-4 last:mb-0 min-h-[60px] border border-gray-200 dark:border-gray-700 group ${className}`}>
       <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700">
         <NoteCardHeader
           card={card}
@@ -500,8 +500,6 @@ function NoteCard({ card, isSingleView = false, onUpdateCard, onUpdateCardTitle,
   )
 }
 
-
-
 interface CardListItemProps {
   card: Card
   isSelected: boolean
@@ -514,12 +512,12 @@ function CardListItem({ card, isSelected, onClick }: CardListItemProps) {
   return (
     <div
       onClick={onClick}
-      className={`py-2 px-3 cursor-pointer border-b border-gray-200 dark:border-gray-700 
+      className={`py-1.5 px-3 cursor-pointer border-b border-gray-200 dark:border-gray-700 
         ${isSelected 
           ? 'bg-blue-50 dark:bg-blue-900' 
           : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
     >
-      <div className="text-gray-800 dark:text-gray-200">
+      <div className="text-xs text-gray-800 dark:text-gray-200">
         {getCardPreview(card) || <span className="text-gray-400 dark:text-gray-500">—</span>}
       </div>
     </div>

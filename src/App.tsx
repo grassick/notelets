@@ -34,8 +34,6 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
 }
 
 function MainContent() {
-  const [tabIds, setTabIds] = usePersist<string[]>("tabIds", [])
-  const [activeTabIndex, setActiveTabIndex] = usePersist<number>("activeTabIndex", -1)
   const { settings, updateSettings } = useSettings()
   const [store, setStore] = useState<Store | null>(null)
 
@@ -58,21 +56,13 @@ function MainContent() {
     return <WelcomeScreen onChoose={handleStorageModeSelect} />
   }
 
-  const correctedActiveTabIndex = activeTabIndex >= tabIds.length ? tabIds.length - 1 : activeTabIndex
-
   // If store not initialized yet, show loading
   if (!store) {
     return <div>Loading...</div>
   }
 
   return (
-    <TabsView
-      store={store}
-      pages={tabIds}
-      onPagesChange={setTabIds}
-      activeTabIndex={correctedActiveTabIndex}
-      onActiveTabIndexChange={setActiveTabIndex}
-    />
+    <TabsView store={store} />
   )
 }
 

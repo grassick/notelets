@@ -6,23 +6,32 @@ import type { Store } from "./Store";
 import { useBoards } from "./Store";
 import { BoardView } from "./BoardView";
 import { SettingsButton } from "./components/settings/SettingsButton";
+import { usePersist } from "./hooks/usePersist";
 
 export function TabsView(props: {
   store: Store
-  pages: string[]
-  onPagesChange: (pages: string[]) => void
-  activeTabIndex: number
-  onActiveTabIndexChange: (activeTabIndex: number) => void
 }) {
-  const { store, pages, onPagesChange, activeTabIndex, onActiveTabIndexChange } = props
+  const { store } = props
+  const [pages, setPages] = usePersist<string[]>("tabIds", [])
+  const [activeTabIndex, setActiveTabIndex] = usePersist<number>("activeTabIndex", -1)
   const { boards, loading, error, setBoard, removeBoard } = useBoards(store)
+
+  // Filter pages to only include existing boards, but only after loading is complete
+  const validPages = loading ? pages : pages.filter(pageId => boards.some(board => board.id === pageId))
+  
+  // Ensure activeTabIndex doesn't exceed the number of valid pages
+  useEffect(() => {
+    if (!loading && activeTabIndex >= validPages.length) {
+      setActiveTabIndex(Math.max(validPages.length - 1, -1))
+    }
+  }, [loading, validPages.length, activeTabIndex])
 
   function handleTabClick(index: number) {
     if (activeTabIndex !== index) {
-      onActiveTabIndexChange(index)
+      setActiveTabIndex(index)
     } else {
       // Double click - edit title
-      const board = boards.find(b => b.id === pages[index])
+      const board = boards.find(b => b.id === validPages[index])
       if (board) {
         const newTitle = prompt("Enter new title", board.title)
         if (newTitle && newTitle !== board.title) {
@@ -34,10 +43,10 @@ export function TabsView(props: {
 
   function handleRemoveTab(pageId: string, index: number, ev: React.MouseEvent) {
     ev.stopPropagation()
-    const newPages = pages.filter(id => id !== pageId)
-    onPagesChange(newPages)
+    const newPages = validPages.filter(id => id !== pageId)
+    setPages(newPages)
     if (index <= activeTabIndex) {
-      onActiveTabIndexChange(Math.max(-1, activeTabIndex - 1))
+      setActiveTabIndex(Math.max(-1, activeTabIndex - 1))
     }
   }
 
@@ -53,8 +62,8 @@ export function TabsView(props: {
         updatedAt: new Date().toISOString() 
       }
       setBoard(newBoard)
-      onPagesChange([...pages, newBoard.id])
-      onActiveTabIndexChange(pages.length)
+      setPages([...validPages, newBoard.id])
+      setActiveTabIndex(validPages.length)
     }
   }
 
@@ -62,10 +71,10 @@ export function TabsView(props: {
     await removeBoard(boardId)
     
     // Remove the board from open pages if it's open
-    if (pages.includes(boardId)) {
-      const newPages = pages.filter(id => id !== boardId)
-      onPagesChange(newPages)
-      onActiveTabIndexChange(Math.min(newPages.length - 1, activeTabIndex))
+    if (validPages.includes(boardId)) {
+      const newPages = validPages.filter(id => id !== boardId)
+      setPages(newPages)
+      setActiveTabIndex(Math.min(newPages.length - 1, activeTabIndex))
     }
   }
 
@@ -73,7 +82,7 @@ export function TabsView(props: {
     <div className="h-full grid grid-rows-[auto_1fr] bg-white dark:bg-gray-800">
       <div className="px-4 py-1 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
         <div className="flex items-center gap-1">
-          {pages.map((pageId, index) => {
+          {validPages.map((pageId, index) => {
             const board = boards.find(b => b.id === pageId)
             return (
               <Tab 
@@ -88,7 +97,7 @@ export function TabsView(props: {
           })}
           <Tab
             isSelected={activeTabIndex === -1}
-            onClick={() => onActiveTabIndexChange(-1)}
+            onClick={() => setActiveTabIndex(-1)}
           >
             <FaPlus size={12} />
           </Tab>
@@ -101,13 +110,13 @@ export function TabsView(props: {
           <BoardList
             loading={loading}
             boards={boards}
-            pages={pages}
+            pages={validPages}
             onSelectBoard={(boardId, index) => {
-              if (!pages.includes(boardId)) {
-                onPagesChange([...pages, boardId])
-                onActiveTabIndexChange(pages.length)
+              if (!validPages.includes(boardId)) {
+                setPages([...validPages, boardId])
+                setActiveTabIndex(validPages.length)
               } else {
-                onActiveTabIndexChange(index)
+                setActiveTabIndex(index)
               }
             }}
             onCreateBoard={handleCreateBoard}
@@ -116,7 +125,7 @@ export function TabsView(props: {
         ) : (
           <BoardView 
             store={store}
-            boardId={pages[activeTabIndex]}
+            boardId={validPages[activeTabIndex]}
           />
         )}
       </div>

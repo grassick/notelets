@@ -27,7 +27,7 @@ A modern note-taking application with integrated AI chat capabilities, built wit
   - Chat only
   - Split view
 - Support for multiple AI models
-- Contextual understanding of your notes
+- Contextual understanding of your notes (all notes in board are in context)
 - Message editing capabilities
 
 ### 📋 Board Management

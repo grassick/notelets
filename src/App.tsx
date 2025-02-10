@@ -1,79 +1,98 @@
 import React, { useEffect, useState } from 'react';
-import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import "./index.css"
-import { RichTextEditor } from './RichTextEditor'
 
 import { TabsView } from './TabsView'
 import { Store } from './Store'
 import { useSettings } from './hooks/useSettings'
 import { usePersist } from './hooks/usePersist'
-import { AuthProvider } from './modules/auth/AuthContext'
+import { AuthProvider, useAuth } from './modules/auth/AuthContext'
 import { LoginPage } from './modules/auth/LoginPage'
 import { SignupPage } from './modules/auth/SignupPage'
-import { useAuth } from './modules/auth/AuthContext'
+import { WelcomeScreen } from './WelcomeScreen'
 import { FirestoreStore } from './modules/firebase/FirestoreStore'
+import { LocalStore } from './modules/local/LocalStore'
 
 interface ProtectedRouteProps {
-    children: React.ReactNode
+  children: React.ReactNode
 }
 
 function ProtectedRoute({ children }: ProtectedRouteProps) {
-    const { user, loading } = useAuth()
-    
-    if (loading) {
-        return <div>Loading...</div>
-    }
-    
-    if (!user) {
-        return <Navigate to="/login" />
-    }
-    
-    return <>{children}</>
+  const { user, loading } = useAuth()
+  const { settings } = useSettings()
+
+  if (loading) {
+    return <div>Loading...</div>
+  }
+
+  // If we're in cloud mode and not logged in, redirect to login
+  if (settings.storage.type === 'cloud' && !user) {
+    return <Navigate to="/login" />
+  }
+
+  return <>{children}</>
 }
 
 function MainContent() {
-    const [tabIds, setTabIds] = usePersist<string[]>("tabIds", [])
-    const [activeTabIndex, setActiveTabIndex] = usePersist<number>("activeTabIndex", -1)
-    const [store] = useState<Store>(() => new FirestoreStore())
-    useSettings() // Initialize settings and dark mode
+  const [tabIds, setTabIds] = usePersist<string[]>("tabIds", [])
+  const [activeTabIndex, setActiveTabIndex] = usePersist<number>("activeTabIndex", -1)
+  const { settings, updateSettings } = useSettings()
+  const [store, setStore] = useState<Store | null>(null)
 
-    // Ensure activeTabIndex is valid
-    useEffect(() => {
-        if (activeTabIndex >= tabIds.length && activeTabIndex !== -1) {
-            // If active tab index is out of bounds, set to last tab or -1
-            setActiveTabIndex(tabIds.length > 0 ? tabIds.length - 1 : -1)
-        }
-    }, [tabIds, activeTabIndex, setActiveTabIndex])
+  // Initialize store based on storage type
+  useEffect(() => {
+    if (settings.storage.type === 'cloud') {
+      setStore(new FirestoreStore())
+    } else if (settings.storage.type === 'local') {
+      setStore(new LocalStore())
+    }
+  }, [settings.storage.type])
 
-    return (
-        <TabsView
-            store={store}
-            pages={tabIds}
-            onPagesChange={setTabIds}
-            activeTabIndex={Math.max(-1, activeTabIndex)}
-            onActiveTabIndexChange={setActiveTabIndex}
-        />
-    )
+  // Handle storage mode selection
+  const handleStorageModeSelect = (mode: 'local' | 'cloud') => {
+    updateSettings('storage', { type: mode })
+  }
+
+  // If storage type not selected, show welcome screen
+  if (!settings.storage.type) {
+    return <WelcomeScreen onChoose={handleStorageModeSelect} />
+  }
+
+  const correctedActiveTabIndex = activeTabIndex >= tabIds.length ? tabIds.length - 1 : activeTabIndex
+
+  // If store not initialized yet, show loading
+  if (!store) {
+    return <div>Loading...</div>
+  }
+
+  return (
+    <TabsView
+      store={store}
+      pages={tabIds}
+      onPagesChange={setTabIds}
+      activeTabIndex={correctedActiveTabIndex}
+      onActiveTabIndexChange={setActiveTabIndex}
+    />
+  )
 }
 
 export function App() {
-    return (
-        <BrowserRouter>
-            <AuthProvider>
-                <Routes>
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/signup" element={<SignupPage />} />
-                    <Route
-                        path="/*"
-                        element={
-                            <ProtectedRoute>
-                                <MainContent />
-                            </ProtectedRoute>
-                        }
-                    />
-                </Routes>
-            </AuthProvider>
-        </BrowserRouter>
-    )
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route
+            path="/*"
+            element={
+              <ProtectedRoute>
+                <MainContent />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
+  )
 }

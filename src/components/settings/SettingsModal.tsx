@@ -31,7 +31,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         'Export them first if needed.'
       )
       if (!confirmed) return
-      // Trigger auth flow
     } else {
       const confirmed = window.confirm(
         'Switching to Local Mode will disconnect from cloud. ' +
@@ -40,7 +39,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       if (!confirmed) return
     }
     
-    await updateSettings('storage', { type: newMode })
+    updateSettings('storage', { type: newMode })
     window.location.reload() // Ensure clean state
   }
 

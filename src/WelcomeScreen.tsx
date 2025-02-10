@@ -1,0 +1,67 @@
+import { type ReactElement } from 'react'
+
+/**
+ * Props for the WelcomeScreen component
+ */
+interface WelcomeScreenProps {
+  /** Callback when user chooses their storage mode */
+  onChoose: (mode: 'local' | 'cloud') => void
+}
+
+/**
+ * Initial welcome screen shown to new users to choose their storage mode
+ */
+export function WelcomeScreen({ onChoose }: WelcomeScreenProps): ReactElement {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+      <div className="max-w-2xl w-full">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">
+            Welcome to Notelets
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300">
+            Your personal space for notes, thoughts, and ideas.
+          </p>
+        </div>
+        
+        <div className="space-y-6">
+          <button 
+            onClick={() => onChoose('local')}
+            className="w-full p-8 text-left rounded-xl border-2 border-blue-200 dark:border-blue-800 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all transform hover:scale-[1.02]"
+          >
+            <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400 flex items-center">
+              <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              Local Mode
+            </h3>
+            <p className="mt-3 text-gray-600 dark:text-gray-400">
+              Perfect for personal use on a single device. Your notes are stored locally and remain private on this device. 
+              No account required, start taking notes immediately.
+            </p>
+          </button>
+
+          <button
+            onClick={() => onChoose('cloud')}
+            className="w-full p-8 text-left rounded-xl border-2 border-blue-200 dark:border-blue-800 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all transform hover:scale-[1.02]"
+          >
+            <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400 flex items-center">
+              <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+              </svg>
+              Cloud Mode
+            </h3>
+            <p className="mt-3 text-gray-600 dark:text-gray-400">
+              Access your notes from anywhere. Your content syncs automatically across all your devices.
+              Includes secure backup and collaboration features. Requires a free account.
+            </p>
+          </button>
+        </div>
+
+        <p className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
+          Don't worry, you can always change this later in Settings
+        </p>
+      </div>
+    </div>
+  )
+} 

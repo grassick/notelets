@@ -805,7 +805,7 @@ export function SidebarBoardView(props: {
   })
   const [chatPanelState, setChatPanelState] = usePersist<PanelState>("chatPanelWidth", { 
     isExpanded: true, 
-    width: 350 
+    width: 250 
   })
 
   // Select first card if none selected

@@ -1,5 +1,5 @@
 import type { Card, Board, Chat, ChatId } from "./types"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 
 export interface Store {
     /**
@@ -101,16 +101,40 @@ export function useBoard(store: Store, boardId: string) {
     const [board, setBoard] = useState<Board | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<Error | null>(null)
+    const mounted = useRef(true)
+
+    useEffect(() => {
+        mounted.current = true
+        return () => {
+            mounted.current = false
+        }
+    }, [])
 
     useEffect(() => {
         setLoading(true)
         setError(null)
         const unsubscribe = store.getBoard(boardId, (updatedBoard) => {
-            setBoard(updatedBoard)
-            setLoading(false)
+            if (!mounted.current) return
+            try {
+                setBoard(updatedBoard)
+                setLoading(false)
+                setError(null)
+            } catch (e) {
+                setError(e instanceof Error ? e : new Error('Failed to process board update'))
+                setLoading(false)
+            }
         })
-        return unsubscribe
+        return () => {
+            mounted.current = false
+            unsubscribe()
+        }
     }, [store, boardId])
+
+    const safeSetState = useCallback((setter: Function) => {
+        if (mounted.current) {
+            setter()
+        }
+    }, [])
 
     return {
         board,
@@ -118,24 +142,50 @@ export function useBoard(store: Store, boardId: string) {
         error,
         setBoard: async (newBoard: Board) => {
             const previousBoard = board
-            setError(null)
-            setBoard(newBoard) // Optimistic update
+            safeSetState(() => {
+                setError(null)
+                setLoading(true)
+                setBoard(newBoard) // Optimistic update
+            })
+            
             try {
                 await store.setBoard(newBoard)
+                safeSetState(() => {
+                    setError(null)
+                })
             } catch (e) {
-                setBoard(previousBoard) // Rollback on failure
-                setError(e instanceof Error ? e : new Error('Failed to update board'))
+                safeSetState(() => {
+                    setBoard(previousBoard) // Rollback on failure
+                    setError(e instanceof Error ? e : new Error('Failed to update board'))
+                })
+            } finally {
+                safeSetState(() => {
+                    setLoading(false)
+                })
             }
         },
         removeBoard: async () => {
             const previousBoard = board
-            setError(null)
-            setBoard(null) // Optimistic update
+            safeSetState(() => {
+                setError(null)
+                setLoading(true)
+                setBoard(null) // Optimistic update
+            })
+            
             try {
                 await store.removeBoard(boardId)
+                safeSetState(() => {
+                    setError(null)
+                })
             } catch (e) {
-                setBoard(previousBoard) // Rollback on failure
-                setError(e instanceof Error ? e : new Error('Failed to remove board'))
+                safeSetState(() => {
+                    setBoard(previousBoard) // Rollback on failure
+                    setError(e instanceof Error ? e : new Error('Failed to remove board'))
+                })
+            } finally {
+                safeSetState(() => {
+                    setLoading(false)
+                })
             }
         }
     }
@@ -149,16 +199,40 @@ export function useBoards(store: Store) {
     const [boards, setBoards] = useState<Board[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<Error | null>(null)
+    const mounted = useRef(true)
+
+    useEffect(() => {
+        mounted.current = true
+        return () => {
+            mounted.current = false
+        }
+    }, [])
 
     useEffect(() => {
         setLoading(true)
         setError(null)
         const unsubscribe = store.getBoards((updatedBoards) => {
-            setBoards(updatedBoards)
-            setLoading(false)
+            if (!mounted.current) return
+            try {
+                setBoards(updatedBoards)
+                setLoading(false)
+                setError(null)
+            } catch (e) {
+                setError(e instanceof Error ? e : new Error('Failed to process boards update'))
+                setLoading(false)
+            }
         })
-        return unsubscribe
+        return () => {
+            mounted.current = false
+            unsubscribe()
+        }
     }, [store])
+
+    const safeSetState = useCallback((setter: Function) => {
+        if (mounted.current) {
+            setter()
+        }
+    }, [])
 
     return {
         boards,
@@ -166,39 +240,60 @@ export function useBoards(store: Store) {
         error,
         setBoard: async (board: Board) => {
             const previousBoards = boards
-            setError(null)
-            
-            // Optimistic update
-            setBoards(prev => {
-                const index = prev.findIndex(b => b.id === board.id)
-                if (index >= 0) {
-                    const newBoards = [...prev]
-                    newBoards[index] = board
-                    return newBoards
-                } else {
-                    return [...prev, board]
-                }
+            safeSetState(() => {
+                setError(null)
+                setLoading(true)
+                // Optimistic update
+                setBoards(prev => {
+                    const index = prev.findIndex(b => b.id === board.id)
+                    if (index >= 0) {
+                        const newBoards = [...prev]
+                        newBoards[index] = board
+                        return newBoards
+                    } else {
+                        return [...prev, board]
+                    }
+                })
             })
 
             try {
                 await store.setBoard(board)
+                safeSetState(() => {
+                    setError(null)
+                })
             } catch (e) {
-                setBoards(previousBoards) // Rollback on failure
-                setError(e instanceof Error ? e : new Error('Failed to update board'))
+                safeSetState(() => {
+                    setBoards(previousBoards) // Rollback on failure
+                    setError(e instanceof Error ? e : new Error('Failed to update board'))
+                })
+            } finally {
+                safeSetState(() => {
+                    setLoading(false)
+                })
             }
         },
         removeBoard: async (boardId: string) => {
             const previousBoards = boards
-            setError(null)
-            
-            // Optimistic update
-            setBoards(prev => prev.filter(b => b.id !== boardId))
+            safeSetState(() => {
+                setError(null)
+                setLoading(true)
+                setBoards(prev => prev.filter(b => b.id !== boardId))
+            })
 
             try {
                 await store.removeBoard(boardId)
+                safeSetState(() => {
+                    setError(null)
+                })
             } catch (e) {
-                setBoards(previousBoards) // Rollback on failure
-                setError(e instanceof Error ? e : new Error('Failed to remove board'))
+                safeSetState(() => {
+                    setBoards(previousBoards) // Rollback on failure
+                    setError(e instanceof Error ? e : new Error('Failed to remove board'))
+                })
+            } finally {
+                safeSetState(() => {
+                    setLoading(false)
+                })
             }
         }
     }
@@ -284,6 +379,7 @@ export function useCard(store: Store, cardId: string) {
         const unsubscribe = store.getCard(cardId, (updatedCard) => {
             setCard(updatedCard)
             setLoading(false)
+            setError(null)
         })
         return unsubscribe
     }, [store, cardId])
@@ -295,23 +391,31 @@ export function useCard(store: Store, cardId: string) {
         setCard: async (newCard: Card) => {
             const previousCard = card
             setError(null)
+            setLoading(true)
             setCard(newCard) // Optimistic update
             try {
                 await store.setCard(newCard)
+                setError(null)
             } catch (e) {
                 setCard(previousCard) // Rollback on failure
                 setError(e instanceof Error ? e : new Error('Failed to update card'))
+            } finally {
+                setLoading(false)
             }
         },
         removeCard: async () => {
             const previousCard = card
             setError(null)
+            setLoading(true)
             setCard(null) // Optimistic update
             try {
                 await store.removeCard(cardId)
+                setError(null)
             } catch (e) {
                 setCard(previousCard) // Rollback on failure
                 setError(e instanceof Error ? e : new Error('Failed to remove card'))
+            } finally {
+                setLoading(false)
             }
         }
     }
@@ -397,6 +501,7 @@ export function useChat(store: Store, chatId: ChatId) {
         const unsubscribe = store.getChat(chatId, (updatedChat) => {
             setChat(updatedChat)
             setLoading(false)
+            setError(null)
         })
         return unsubscribe
     }, [store, chatId])
@@ -408,23 +513,31 @@ export function useChat(store: Store, chatId: ChatId) {
         setChat: async (newChat: Chat) => {
             const previousChat = chat
             setError(null)
+            setLoading(true)
             setChat(newChat) // Optimistic update
             try {
                 await store.setChat(newChat)
+                setError(null)
             } catch (e) {
                 setChat(previousChat) // Rollback on failure
                 setError(e instanceof Error ? e : new Error('Failed to update chat'))
+            } finally {
+                setLoading(false)
             }
         },
         removeChat: async () => {
             const previousChat = chat
             setError(null)
+            setLoading(true)
             setChat(null) // Optimistic update
             try {
                 await store.removeChat(chatId)
+                setError(null)
             } catch (e) {
                 setChat(previousChat) // Rollback on failure
                 setError(e instanceof Error ? e : new Error('Failed to remove chat'))
+            } finally {
+                setLoading(false)
             }
         }
     }

@@ -243,18 +243,7 @@ function ChatMessage({ message, index, onEdit, onSaveToNotes }: {
               <div className={`text-sm whitespace-pre-wrap break-words prose dark:prose-invert prose-sm max-w-none
                            prose-p:my-1 prose-pre:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0 
                            prose-headings:my-1 prose-hr:my-2
-                           ${isUser ? `
-                           !prose-p:text-white !prose-p:opacity-100
-                           !prose-headings:text-white !prose-headings:opacity-100
-                           !prose-li:text-white !prose-li:opacity-100
-                           !prose-strong:text-white !prose-strong:opacity-100
-                           !prose-a:text-white !prose-a:opacity-100
-                           ` : `
-                           !prose-p:text-gray-900 !prose-p:dark:text-gray-50
-                           !prose-headings:text-gray-900 !prose-headings:dark:text-gray-50
-                           !prose-li:text-gray-900 !prose-li:dark:text-gray-50
-                           !prose-strong:text-gray-900 !prose-strong:dark:text-gray-50
-                           `}`}>
+                           ${isUser ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {message.content}
                 </ReactMarkdown>

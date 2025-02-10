@@ -37,7 +37,7 @@ interface NoteCardHeaderProps {
 const getCardPreview = (card: RichTextCard): string => {
   if (card.title) return card.title
   const preview = card.content.markdown.trim()
-  if (!preview) return '—'
+  if (!preview) return ''
   return preview.slice(0, 30) + (preview.length > 30 ? '...' : '')
 }
 
@@ -170,7 +170,7 @@ function NoteCardHeader({ card, onUpdateTitle, onDelete, isMarkdownMode, onMarkd
             onClick={handleTitleClick}
             className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-gray-200"
           >
-            {getCardPreview(card)}
+            {getCardPreview(card) || <span className="text-gray-400 dark:text-gray-500">—</span>}
           </h3>
         )}
       </div>
@@ -520,7 +520,7 @@ function CardListItem({ card, isSelected, onClick }: CardListItemProps) {
           : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
     >
       <div className="text-gray-800 dark:text-gray-200">
-        {getCardPreview(card)}
+        {getCardPreview(card) || <span className="text-gray-400 dark:text-gray-500">—</span>}
       </div>
     </div>
   )
@@ -890,6 +890,8 @@ export function SidebarBoardView(props: {
   }
 
   const handleDeleteCard = async (cardId: string) => {
+    if (!window.confirm('Are you sure you want to delete this note?')) return
+
     await removeCard(cardId)
     if (selectedCardId === cardId) {
       const remainingCards = cards.filter(c => c.id !== cardId)

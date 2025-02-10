@@ -4,8 +4,6 @@ import { LLMFactory, type ModelId, type LLMProvider, getProviderForModel } from 
 import { useSettings } from './useSettings'
 
 interface UseChatOptions {
-    /** Current chat object */
-    chat: Chat | null
     /** Cards to use for context */
     cards: Card[]
     /** Callback when chat is updated */
@@ -14,9 +12,9 @@ interface UseChatOptions {
 
 interface UseChatResult {
     /** Send a message to the LLM */
-    sendMessage: (content: string, modelId: ModelId) => Promise<void>
+    sendMessage: (chat: Chat, content: string, modelId: ModelId) => Promise<void>
     /** Edit an existing message and regenerate responses */
-    editMessage: (messageIndex: number, newContent: string, modelId: ModelId) => Promise<void>
+    editMessage: (chat: Chat, messageIndex: number, newContent: string, modelId: ModelId) => Promise<void>
     /** Whether a message is currently being sent */
     isLoading: boolean
     /** Any error that occurred */
@@ -26,7 +24,7 @@ interface UseChatResult {
 /**
  * Hook to manage chat state and API interactions
  */
-export function useChat({ chat, cards, onChatUpdate }: UseChatOptions): UseChatResult {
+export function useChat({ cards, onChatUpdate }: UseChatOptions): UseChatResult {
     const { settings } = useSettings()
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<Error | null>(null)
@@ -144,12 +142,7 @@ Always use markdown formatting in responses.`
     /**
      * Sends a message to the LLM
      */
-    const sendMessage = useCallback(async (content: string, modelId: ModelId) => {
-        if (!chat) {
-            setError(new Error('Missing chat'))
-            return
-        }
-
+    const sendMessage = useCallback(async (chat: Chat, content: string, modelId: ModelId) => {
         try {
             // Add user message
             const userMessage: ChatMessage = {
@@ -172,17 +165,12 @@ Always use markdown formatting in responses.`
             setError(err instanceof Error ? err : new Error('Unknown error occurred'))
             throw err
         }
-    }, [chat, onChatUpdate, getAssistantResponse])
+    }, [onChatUpdate, getAssistantResponse])
 
     /**
      * Edits a message and regenerates all subsequent responses
      */
-    const editMessage = useCallback(async (messageIndex: number, newContent: string, modelId: ModelId) => {
-        if (!chat) {
-            setError(new Error('Missing chat'))
-            return
-        }
-
+    const editMessage = useCallback(async (chat: Chat, messageIndex: number, newContent: string, modelId: ModelId) => {
         if (messageIndex < 0 || messageIndex >= chat.messages.length) {
             setError(new Error('Invalid message index'))
             return
@@ -223,7 +211,7 @@ Always use markdown formatting in responses.`
             setError(err instanceof Error ? err : new Error('Unknown error occurred'))
             throw err
         }
-    }, [chat, onChatUpdate, getAssistantResponse])
+    }, [onChatUpdate, getAssistantResponse])
 
     return {
         sendMessage,

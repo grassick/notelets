@@ -6,7 +6,6 @@ import {
     query,
     where,
     onSnapshot,
-    getDoc
 } from 'firebase/firestore'
 import type { Store } from '../../Store'
 import type { Board, Card, Chat, ChatId } from '../../types'
@@ -22,10 +21,6 @@ export class FirestoreStore implements Store {
         const user = getAuth().currentUser
         if (!user) throw new Error('Not authenticated')
         return user.uid
-    }
-
-    private getCollectionPath(collection: 'boards' | 'cards' | 'chats'): string {
-        return `users/${this.getUserId()}/${collection}`
     }
 
     async setBoard(board: Board): Promise<void> {

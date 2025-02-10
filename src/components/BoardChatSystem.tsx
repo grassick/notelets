@@ -73,23 +73,12 @@ export function BoardChatSystem({
     }
   }, [settings.llm, selectedModel, setSelectedModel])
 
-  // Initialize chat if none exists
-  useEffect(() => {
-    if (chats.length > 0 && !chat) {
-      // Find first non-empty chat or null
-      const nonEmptyChat = chats.find(c => c.messages.length > 0)
-      if (nonEmptyChat) {
-        setChat(nonEmptyChat)
-      } else if (chats[0].messages.length === 0) {
-        // If we have an empty chat but no messages, use it
-        setChat(chats[0])
-      }
-    }
-    // Don't automatically create a chat - wait for user action
-  }, [chats, chat])
+  // Update the handleNewChat function
+  const handleNewChat = useCallback(async () => {
+    setChat(null)
+  }, [boardId, storeSetChat])
 
   const { sendMessage, editMessage, isLoading, error: chatError } = useChat({
-    chat,
     cards,
     onChatUpdate: (updatedChat) => {
       storeSetChat(updatedChat)
@@ -103,35 +92,31 @@ export function BoardChatSystem({
     setError(null)
   }, [])
 
-  // Update the handleNewChat function
-  const handleNewChat = useCallback(async () => {
-    const newChat: Chat = {
-      id: uuidv4(),
-      boardId,
-      title: 'Chat',
-      messages: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-    try {
-      await storeSetChat(newChat)
-      setChat(newChat)
-      setError(null)
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to create new chat'))
-    }
-  }, [boardId, storeSetChat])
-
   const handleSendMessage = useCallback(async (content: string, modelId: ModelId) => {
-    if (!chat) return
     setError(null)
 
     try {
-      await sendMessage(content, modelId)
+      // If no chat exists, create one first
+      let activeChat = chat
+      if (!activeChat) {
+        activeChat = {
+          id: uuidv4(),
+          boardId,
+          title: 'Chat',
+          messages: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+        await storeSetChat(activeChat)
+        setChat(activeChat)
+      }
+      
+      // Now let useChat handle adding the message and getting the response
+      await sendMessage(activeChat, content, modelId)
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to send message'))
     }
-  }, [chat, sendMessage])
+  }, [chat, sendMessage, boardId, storeSetChat])
 
   const handleDeleteChat = useCallback(async (chatId: string) => {
     try {
@@ -159,7 +144,7 @@ export function BoardChatSystem({
     setError(null)
 
     try {
-      await editMessage(messageIndex, newContent, selectedModel)
+      await editMessage(chat, messageIndex, newContent, selectedModel)
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to edit message'))
     }
@@ -219,29 +204,30 @@ export function BoardChatSystem({
     )
   }
 
-  // Show empty state when no chats exist
-  if (!chat) {
+  // Show empty state only when there are no chats and no chat is selected
+  if (chats.length === 0 && !chat) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-        <div className="w-16 h-16 mb-6 text-gray-400 dark:text-gray-500">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-        </div>
-        <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">Start a New Chat</h3>
-        <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-sm">
-          Begin a conversation with your AI assistant. Your chat history will be saved here.
-        </p>
-        <button
-          onClick={handleNewChat}
-          className="inline-flex items-center px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 
-                   text-white transition-colors duration-150"
-        >
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Start New Chat
-        </button>
+      <div className={`flex flex-col h-full ${className}`}>
+        <ChatHeader
+          chat={chat}
+          chats={chats}
+          onNewChat={handleNewChat}
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
+          onChatSelect={handleChatSelect}
+          onChatDelete={handleDeleteChat}
+          onOpenSettings={() => setIsSettingsOpen(false)}
+        />
+        <ChatInterface
+          chat={null}
+          onSendMessage={handleSendMessage}
+          onEditMessage={handleEditMessage}
+          onSaveToNotes={handleSaveToNotes}
+          className="flex-1"
+          isLoading={isLoading}
+          selectedModel={selectedModel}
+          error={error || chatError}
+        />
       </div>
     )
   }
@@ -311,38 +297,40 @@ function ChatHeader({ chat, chats, onNewChat, selectedModel, onModelChange, onCh
           {isHistoryOpen && (
             <div className="absolute right-0 mt-1 w-64 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-10">
               <div className="py-1 max-h-64 overflow-y-auto">
-                {chats.map((historyChat) => (
-                  <div
-                    key={historyChat.id}
-                    className={`group flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700
-                      ${historyChat.id === chat?.id ? 'bg-gray-50 dark:bg-gray-700' : ''}`}
-                  >
-                    <button
-                      onClick={() => {
-                        onChatSelect(historyChat)
-                        setIsHistoryOpen(false)
-                      }}
-                      className="flex-1 text-left"
+                {[...chats]
+                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  .map((historyChat) => (
+                    <div
+                      key={historyChat.id}
+                      className={`group flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700
+                        ${historyChat.id === chat?.id ? 'bg-gray-50 dark:bg-gray-700' : ''}`}
                     >
-                      <div className="truncate">{getChatPreview(historyChat)}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {new Date(historyChat.createdAt).toLocaleDateString()}
-                      </div>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onChatDelete(historyChat.id)
-                      }}
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-opacity"
-                      title="Delete chat"
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
+                      <button
+                        onClick={() => {
+                          onChatSelect(historyChat)
+                          setIsHistoryOpen(false)
+                        }}
+                        className="flex-1 text-left"
+                      >
+                        <div className="truncate">{getChatPreview(historyChat)}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {new Date(historyChat.createdAt).toLocaleDateString()}
+                        </div>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onChatDelete(historyChat.id)
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-1 rounded text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-opacity"
+                        title="Delete chat"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
               </div>
             </div>
           )}

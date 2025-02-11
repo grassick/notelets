@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { FaPlus, FaTimes, FaFolder, FaSearch, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaTimes, FaFolder, FaSearch, FaTrash, FaMicrophone } from 'react-icons/fa';
 import type { Board } from "./types";
 import type { Store } from "./Store";
 import { useBoards } from "./Store";
@@ -8,6 +8,7 @@ import { BoardView } from "./BoardView";
 import { usePersist } from "./hooks/usePersist";
 import { SettingsModal } from "./components/settings/SettingsModal";
 import { BoardNameModal } from "./components/BoardNameModal";
+import { VoiceRecordModal } from "./components/VoiceRecordModal";
 
 export function TabsView(props: {
   store: Store
@@ -17,6 +18,8 @@ export function TabsView(props: {
   const [activeTabIndex, setActiveTabIndex] = usePersist<number>("activeTabIndex", -1)
   const { boards, loading, error, setBoard, removeBoard } = useBoards(store)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isVoiceRecordOpen, setIsVoiceRecordOpen] = useState(false)
+  const [lastActiveElement, setLastActiveElement] = useState<HTMLElement | null>(null)
   const [boardNameModal, setBoardNameModal] = useState<{
     isOpen: boolean
     type: 'create' | 'edit'
@@ -96,6 +99,29 @@ export function TabsView(props: {
     }
   }
 
+  function handleOpenVoiceRecord(e: React.MouseEvent) {
+    // Prevent any default button behavior
+    e.preventDefault()
+    e.stopPropagation()
+    
+    // Store the currently focused element
+    setLastActiveElement(document.activeElement as HTMLElement)
+    setIsVoiceRecordOpen(true)
+  }
+
+  function handleTranscriptionComplete(text: string) {
+    // Use the stored active element
+    const input = lastActiveElement
+    
+    if (input) {
+      // Make sure the element has focus
+      input.focus()
+      
+      // Use execCommand to insert text at current cursor position
+      document.execCommand('insertText', false, text)
+    }
+  }
+
   return (
     <div className="h-full grid grid-rows-[auto_1fr] bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
       <div className="px-4 py-2 border-b border-gray-200/80 dark:border-gray-700/80 flex items-center justify-between backdrop-blur-sm bg-white/50 dark:bg-gray-800/50">
@@ -122,6 +148,18 @@ export function TabsView(props: {
           </Tab>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onMouseDown={(e) => {
+              // Prevent the button from taking focus
+              e.preventDefault()
+            }}
+            onClick={handleOpenVoiceRecord}
+            className="p-2 rounded-md text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300
+                     hover:bg-gray-100 dark:hover:bg-gray-800"
+            aria-label="Voice Input"
+          >
+            <FaMicrophone className="w-5 h-5" />
+          </button>
           <button
             onClick={() => setIsSettingsOpen(true)}
             className="p-2 rounded-md text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300
@@ -162,6 +200,12 @@ export function TabsView(props: {
           />
         )}
       </div>
+
+      <VoiceRecordModal
+        isOpen={isVoiceRecordOpen}
+        onClose={() => setIsVoiceRecordOpen(false)}
+        onTranscriptionComplete={handleTranscriptionComplete}
+      />
 
       <SettingsModal
         isOpen={isSettingsOpen}

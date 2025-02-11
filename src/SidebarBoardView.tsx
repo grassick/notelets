@@ -9,7 +9,6 @@ import { ListPanel } from './components/notes/NoteList'
 import { NotesPanel } from './components/notes/NotesPanel'
 import { ResizeHandle } from './components/ui/ResizeHandle'
 import { ViewControls } from './components/ViewControls'
-import { MobileNoteHeader } from './components/notes/MobileNoteHeader'
 
 interface PanelState {
   isExpanded: boolean
@@ -226,16 +225,6 @@ export function SidebarBoardView(props: {
             flex flex-col flex-1
             ${isMobile ? 'w-full' : ''}
           `}>
-            {isMobile && viewMode === 'notes' && (
-              <MobileNoteHeader
-                cards={cards.filter((c): c is RichTextCard => c.type === 'richtext')}
-                selectedCardId={selectedCardId}
-                onCardSelect={handleCardSelect}
-                onCreateCard={handleCreateCard}
-                showAllNotes={showAllNotes}
-                onShowAllNotesChange={setShowAllNotes}
-              />
-            )}
             <NotesPanel
               cards={cards.filter((c): c is RichTextCard => c.type === 'richtext')}
               selectedCard={selectedCard}
@@ -243,6 +232,9 @@ export function SidebarBoardView(props: {
               onUpdateCardTitle={handleUpdateCardTitle}
               onDelete={handleDeleteCard}
               showAllNotes={showAllNotes}
+              onShowAllNotesChange={setShowAllNotes}
+              onCreateCard={handleCreateCard}
+              isMobile={isMobile}
             />
             {!isMobile && viewMode === 'split' && (
               <ResizeHandle onDragStart={() => setIsDragging(true)} />

@@ -20,10 +20,21 @@ interface NoteCardHeaderProps {
   className?: string
   /** Whether to always show actions */
   alwaysShowActions: boolean
+  /** Additional controls to render in the header */
+  extraControls?: React.ReactNode
 }
 
 /** Header component for a note card with title editing and actions */
-function NoteCardHeader({ card, onUpdateTitle, onDelete, isMarkdownMode, onMarkdownModeChange, alwaysShowActions, className = '' }: NoteCardHeaderProps) {
+function NoteCardHeader({ 
+  card, 
+  onUpdateTitle, 
+  onDelete, 
+  isMarkdownMode, 
+  onMarkdownModeChange, 
+  alwaysShowActions, 
+  className = '',
+  extraControls 
+}: NoteCardHeaderProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
   const [showCopyMenu, setShowCopyMenu] = useState(false)
@@ -142,7 +153,8 @@ function NoteCardHeader({ card, onUpdateTitle, onDelete, isMarkdownMode, onMarkd
           </h3>
         )}
       </div>
-      {!alwaysShowActions && <div className={`flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 ml-4`}>
+      <div className={`flex items-center gap-2 ${!alwaysShowActions ? 'opacity-0 group-hover:opacity-100 transition-opacity duration-150' : ''}`}>
+        {extraControls}
         <button
           onClick={() => onMarkdownModeChange(!isMarkdownMode)}
           className="text-[10px] text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400"
@@ -185,7 +197,7 @@ function NoteCardHeader({ card, onUpdateTitle, onDelete, isMarkdownMode, onMarkd
         >
           <FaTrash size={14} />
         </button>
-      </div>}
+      </div>
     </div>
   )
 }
@@ -237,6 +249,8 @@ interface NoteCardProps {
   onDelete: () => void
   /** Optional class name for styling */
   className?: string
+  /** Additional controls to render in the header */
+  extraControls?: React.ReactNode
 }
 
 /** A component that renders a note card in either single or multi view mode */
@@ -246,7 +260,8 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
   onUpdateCard, 
   onUpdateCardTitle, 
   onDelete, 
-  className = '' 
+  className = '',
+  extraControls
 }, ref) => {
   const [isMarkdownMode, setIsMarkdownMode] = useState(false)
   const [showCopyMenu, setShowCopyMenu] = useState(false)
@@ -325,62 +340,15 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
           className="flex flex-col flex-1 min-h-0"
         >
           <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-            <div className="flex justify-between items-center">
-              <div className="flex-1 min-w-0">
-                <NoteCardHeader
-                  card={card}
-                  onUpdateTitle={onUpdateCardTitle}
-                  onDelete={onDelete}
-                  isMarkdownMode={isMarkdownMode}
-                  onMarkdownModeChange={setIsMarkdownMode}
-                  alwaysShowActions={true}
-                />
-              </div>
-              <div className="flex items-center gap-2 ml-4">
-                <button
-                  onClick={() => setIsMarkdownMode(!isMarkdownMode)}
-                  className="text-[10px] text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400"
-                  title={isMarkdownMode ? "Switch to rich text mode" : "Switch to markdown mode"}
-                >
-                  {isMarkdownMode ? "Rich" : "MD"}
-                </button>
-                <div className="relative" ref={copyMenuRef}>
-                  <button
-                    onClick={() => setShowCopyMenu(!showCopyMenu)}
-                    className={`p-1 text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400
-                      ${showCopyMenu ? 'text-blue-500 dark:text-blue-400' : ''}`}
-                    title="Copy note text"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                    </svg>
-                  </button>
-                  {showCopyMenu && (
-                    <div className="absolute right-0 mt-1 py-1 w-32 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-10 flex flex-col">
-                      <button
-                        onClick={() => handleCopyText('markdown')}
-                        className="px-3 py-1 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        Copy&nbsp;Markdown
-                      </button>
-                      <button
-                        onClick={() => handleCopyText('html')}
-                        className="px-3 py-1 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        Copy&nbsp;Formatted
-                      </button>
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={onDelete}
-                  className="p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
-                  title="Delete note"
-                >
-                  <FaTrash size={14} />
-                </button>
-              </div>
-            </div>
+            <NoteCardHeader
+              card={card}
+              onUpdateTitle={onUpdateCardTitle}
+              onDelete={onDelete}
+              isMarkdownMode={isMarkdownMode}
+              onMarkdownModeChange={setIsMarkdownMode}
+              alwaysShowActions={true}
+              extraControls={extraControls}
+            />
           </div>
           <NoteCardBody
             content={card.content.markdown}
@@ -417,6 +385,7 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
             isMarkdownMode={isMarkdownMode}
             onMarkdownModeChange={setIsMarkdownMode}
             alwaysShowActions={false}
+            extraControls={extraControls}
           />
         </div>
         <NoteCardBody

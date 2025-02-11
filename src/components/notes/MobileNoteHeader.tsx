@@ -43,15 +43,17 @@ export function MobileNoteHeader({
   return (
     <div className="relative border-b border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between px-3 py-2">
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100"
-        >
-          <span>{selectedCard ? getCardPreview(selectedCard) : 'Select a note'}</span>
-          <FaChevronDown className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-        </button>
+        {showAllNotes && (
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100"
+          >
+            <span>{selectedCard ? getCardPreview(selectedCard) : 'Select a note'}</span>
+            <FaChevronDown className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          </button>
+        )}
         
-        <div className="flex items-center gap-2">
+        <div className={`flex items-center gap-2 ${!showAllNotes ? 'ml-auto' : ''}`}>
           <button
             onClick={() => onShowAllNotesChange(!showAllNotes)}
             className={`p-1.5 rounded-lg transition-colors ${
@@ -76,7 +78,7 @@ export function MobileNoteHeader({
         </div>
       </div>
 
-      {isOpen && (
+      {isOpen && showAllNotes && (
         <div className="absolute left-0 right-0 top-full z-10 max-h-64 overflow-y-auto bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-lg">
           {sortedCards.map(card => (
             <button

@@ -1,6 +1,7 @@
 import React from 'react'
 import { RichTextCard } from '../../types'
 import { NoteCard } from './NoteCard'
+import { FaLayerGroup, FaPlus } from 'react-icons/fa'
 
 /** Props for the NotesPanel component */
 interface NotesPanelProps {
@@ -16,6 +17,12 @@ interface NotesPanelProps {
   onDelete: (cardId: string) => void
   /** Whether to show all notes */
   showAllNotes: boolean
+  /** Callback when show all notes changes */
+  onShowAllNotesChange: (show: boolean) => void
+  /** Callback to create a new card */
+  onCreateCard: () => void
+  /** Whether we're in mobile view */
+  isMobile: boolean
 }
 
 /** Panel component that displays notes in either single or multi view mode */
@@ -25,7 +32,10 @@ export function NotesPanel({
   onUpdateCard, 
   onUpdateCardTitle, 
   onDelete, 
-  showAllNotes 
+  showAllNotes,
+  onShowAllNotesChange,
+  onCreateCard,
+  isMobile
 }: NotesPanelProps) {
   // Sort cards by creation date, newest first
   const sortedCards = [...cards].sort((a, b) => 
@@ -45,6 +55,29 @@ export function NotesPanel({
     }
   }, [selectedCard?.id, showAllNotes])
 
+  const mobileControls = isMobile ? (
+    <>
+      <button
+        onClick={() => onShowAllNotesChange(!showAllNotes)}
+        className={`p-1.5 rounded-lg transition-colors ${
+          showAllNotes 
+            ? 'text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' 
+            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+        }`}
+        title={showAllNotes ? "Show single note" : "Show all notes"}
+      >
+        <FaLayerGroup className="w-4 h-4" />
+      </button>
+      <button
+        onClick={onCreateCard}
+        className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+        title="New note"
+      >
+        <FaPlus className="w-4 h-4" />
+      </button>
+    </>
+  ) : null
+
   if (cards.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center flex-1 p-8 text-center">
@@ -58,10 +91,7 @@ export function NotesPanel({
           Create your first note to start capturing your thoughts and ideas. Click the + button in the sidebar to begin.
         </p>
         <button
-          onClick={() => {
-            const createButton = document.querySelector('[title="New card"]') as HTMLButtonElement
-            if (createButton) createButton.click()
-          }}
+          onClick={onCreateCard}
           className="inline-flex items-center px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 
                    text-white transition-colors duration-150"
         >
@@ -86,6 +116,7 @@ export function NotesPanel({
             onUpdateCard={(content) => onUpdateCard(selectedCard.id, content)}
             onUpdateCardTitle={(title) => onUpdateCardTitle(selectedCard.id, title)}
             onDelete={() => onDelete(selectedCard.id)}
+            extraControls={mobileControls}
           />
         )}
       </div>
@@ -114,6 +145,7 @@ export function NotesPanel({
             onUpdateCardTitle={(title) => onUpdateCardTitle(card.id, title)}
             onDelete={() => onDelete(card.id)}
             ref={(el) => cardRefs.current[card.id] = el}
+            extraControls={card.id === selectedCard?.id ? mobileControls : undefined}
           />
         ))}
       </div>

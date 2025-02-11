@@ -21,42 +21,6 @@ interface NoteCardHeaderProps {
   alwaysShowActions: boolean
 }
 
-/** Simple markdown editor component */
-function MarkdownEditor({ content, onChange, placeholder }: { 
-  content: string
-  onChange: (content: string) => void
-  placeholder?: string 
-}) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-
-  useEffect(() => {
-    const textarea = textareaRef.current
-    if (!textarea) return
-
-    const adjustHeight = () => {
-      textarea.style.height = 'auto'
-      textarea.style.height = `${textarea.scrollHeight}px`
-    }
-
-    adjustHeight()
-    textarea.addEventListener('input', adjustHeight)
-    return () => textarea.removeEventListener('input', adjustHeight)
-  }, [content])
-
-  return (
-    <textarea
-      ref={textareaRef}
-      value={content}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="w-full resize-none bg-transparent text-gray-900 dark:text-gray-100 
-                 placeholder-gray-400 dark:placeholder-gray-500
-                 focus:outline-none"
-      style={{ overflow: 'hidden' }}
-    />
-  )
-}
-
 /** Header component for a note card with title editing and actions */
 function NoteCardHeader({ card, onUpdateTitle, onDelete, isMarkdownMode, onMarkdownModeChange, alwaysShowActions, className = '' }: NoteCardHeaderProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
@@ -468,3 +432,39 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
     </div>
   )
 }) 
+
+/** Simple markdown editor component */
+function MarkdownEditor({ content, onChange, placeholder }: { 
+  content: string
+  onChange: (content: string) => void
+  placeholder?: string 
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    const adjustHeight = () => {
+      textarea.style.height = 'auto'
+      textarea.style.height = `${textarea.scrollHeight}px`
+    }
+
+    adjustHeight()
+    textarea.addEventListener('input', adjustHeight)
+    return () => textarea.removeEventListener('input', adjustHeight)
+  }, [content])
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={content}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full resize-none bg-transparent text-gray-900 dark:text-gray-100 
+                 placeholder-gray-400 dark:placeholder-gray-500
+                 focus:outline-none"
+      style={{ overflow: 'hidden' }}
+    />
+  )
+}

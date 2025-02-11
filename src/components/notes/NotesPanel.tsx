@@ -80,6 +80,7 @@ export function NotesPanel({
       <div className="flex flex-col border-r border-gray-200 dark:border-gray-700 flex-1">
         {selectedCard && (
           <NoteCard
+            key={selectedCard.id}
             card={selectedCard}
             isSingleView={true}
             onUpdateCard={(content) => onUpdateCard(selectedCard.id, content)}

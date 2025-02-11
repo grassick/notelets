@@ -161,9 +161,8 @@ function Tab({ isSelected, onClick, onRemove, children, className = '' }: TabPro
     <div 
       onClick={onClick}
       className={`
-        group px-4 py-2 cursor-pointer font-medium flex items-center text-sm
+        group relative pl-4 pr-3 py-2 cursor-pointer font-medium flex items-center text-sm
         transition-all duration-200 ease-in-out rounded-lg
-        ${onRemove ? 'pl-4' : ''}
         ${isSelected 
           ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' 
           : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:shadow-sm'
@@ -171,13 +170,15 @@ function Tab({ isSelected, onClick, onRemove, children, className = '' }: TabPro
         ${className}
       `}
     >
-      {children}
+      <span className="pr-2">{children}</span>
       {onRemove && (
-        <FaTimes 
-          onClick={onRemove} 
-          className="ml-2 opacity-0 group-hover:opacity-100 transition-all hover:text-red-500 cursor-pointer" 
-          size={12}
-        />
+        <span className="absolute right-1 top-1/2 -translate-y-1/2">
+          <FaTimes 
+            onClick={onRemove} 
+            className="opacity-0 group-hover:opacity-100 transition-all text-gray-300 hover:text-red-500 cursor-pointer" 
+            size={12}
+          />
+        </span>
       )}
     </div>
   )

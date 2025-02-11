@@ -6,11 +6,16 @@ import {
     query,
     where,
     onSnapshot,
+    getDoc,
 } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
 import { db } from '../firebase/config'
-import type { EncryptedStore, EncryptedBoard, EncryptedCard, EncryptedChat } from './EncryptedTypes'
+import type { EncryptedStore, EncryptedBoard, EncryptedCard, EncryptedChat, EncryptedBlob } from './EncryptedTypes'
 import type { ChatId } from '../../types'
+import { encrypt, decrypt } from './crypto'
+
+// Known text that we'll encrypt to validate the password
+const VALIDATION_TEXT = 'VALID_NOTELETS_ENCRYPTION_V1'
 
 /**
  * Implementation of EncryptedStore using Firebase Firestore
@@ -21,6 +26,45 @@ export class EncryptedFirestoreStore implements EncryptedStore {
         const user = getAuth().currentUser
         if (!user) throw new Error('Not authenticated')
         return user.uid
+    }
+
+    private getValidationDocRef() {
+        const userId = this.getUserId()
+        return doc(db, `encrypted-users/${userId}/_validation/encryption`)
+    }
+
+    async isInitialized(): Promise<boolean> {
+        const validationDoc = await getDoc(this.getValidationDocRef())
+        return validationDoc.exists()
+    }
+
+    async initialize(password: string): Promise<void> {
+        // Check if already initialized
+        if (await this.isInitialized()) {
+            throw new Error('Encryption already initialized')
+        }
+
+        // Create validation document
+        const encrypted = await encrypt(VALIDATION_TEXT, password)
+        await setDoc(this.getValidationDocRef(), {
+            validation: encrypted
+        })
+    }
+
+    async validatePassword(password: string): Promise<boolean> {
+        try {
+            const validationDoc = await getDoc(this.getValidationDocRef())
+            if (!validationDoc.exists()) {
+                return false
+            }
+
+            const data = validationDoc.data()
+            const encrypted = data.validation as EncryptedBlob
+            const decrypted = await decrypt(encrypted, password)
+            return decrypted === VALIDATION_TEXT
+        } catch (error) {
+            return false
+        }
     }
 
     async setBoard(board: EncryptedBoard): Promise<void> {

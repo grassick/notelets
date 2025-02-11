@@ -61,6 +61,25 @@ import type { BoardId, CardId, ChatId } from '../../types'
  */
 export interface EncryptedStore {
     /**
+     * Check if the store has been initialized with encryption
+     * Returns true if any encrypted data exists for this user
+     */
+    isInitialized(): Promise<boolean>
+
+    /**
+     * Set up encryption for the first time with a password
+     * Should fail if already initialized
+     * @throws Error if already initialized
+     */
+    initialize(password: string): Promise<void>
+
+    /**
+     * Test if a password can decrypt the store's data
+     * Returns true if password is correct
+     */
+    validatePassword(password: string): Promise<boolean>
+
+    /**
      * Adds or updates an encrypted board
      */
     setBoard(board: EncryptedBoard): Promise<void>

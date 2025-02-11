@@ -23,17 +23,17 @@ export class FirestoreStore implements Store {
         return user.uid
     }
 
-    async setBoard(board: Board): Promise<void> {
+    setBoard = async (board: Board): Promise<void> => {
         const userId = this.getUserId()
         await setDoc(doc(db, `users/${userId}/boards/${board.id}`), board)
     }
 
-    async removeBoard(boardId: string): Promise<void> {
+    removeBoard = async (boardId: string): Promise<void> => {
         const userId = this.getUserId()
         await deleteDoc(doc(db, `users/${userId}/boards/${boardId}`))
     }
 
-    getBoards(callback: (boards: Board[]) => void): () => void {
+    getBoards = (callback: (boards: Board[]) => void): () => void => {
         const userId = this.getUserId()
         const q = collection(db, `users/${userId}/boards`)
         
@@ -43,7 +43,7 @@ export class FirestoreStore implements Store {
         })
     }
 
-    getBoard(boardId: string, callback: (board: Board | null) => void): () => void {
+    getBoard = (boardId: string, callback: (board: Board | null) => void): () => void => {
         const userId = this.getUserId()
         const docRef = doc(db, `users/${userId}/boards/${boardId}`)
         
@@ -52,17 +52,17 @@ export class FirestoreStore implements Store {
         })
     }
 
-    async setCard(card: Card): Promise<void> {
+    setCard = async (card: Card): Promise<void> => {
         const userId = this.getUserId()
         await setDoc(doc(db, `users/${userId}/cards/${card.id}`), card)
     }
 
-    async removeCard(cardId: string): Promise<void> {
+    removeCard = async (cardId: string): Promise<void> => {
         const userId = this.getUserId()
         await deleteDoc(doc(db, `users/${userId}/cards/${cardId}`))
     }
 
-    getCardsByBoard(boardId: string, callback: (cards: Card[]) => void): () => void {
+    getCardsByBoard = (boardId: string, callback: (cards: Card[]) => void): () => void => {
         const userId = this.getUserId()
         const q = query(
             collection(db, `users/${userId}/cards`),
@@ -75,7 +75,7 @@ export class FirestoreStore implements Store {
         })
     }
 
-    getCard(cardId: string, callback: (card: Card | null) => void): () => void {
+    getCard = (cardId: string, callback: (card: Card | null) => void): () => void => {
         const userId = this.getUserId()
         const docRef = doc(db, `users/${userId}/cards/${cardId}`)
         
@@ -84,17 +84,17 @@ export class FirestoreStore implements Store {
         })
     }
 
-    async setChat(chat: Chat): Promise<void> {
+    setChat = async (chat: Chat): Promise<void> => {
         const userId = this.getUserId()
         await setDoc(doc(db, `users/${userId}/chats/${chat.id}`), chat)
     }
 
-    async removeChat(chatId: ChatId): Promise<void> {
+    removeChat = async (chatId: ChatId): Promise<void> => {
         const userId = this.getUserId()
         await deleteDoc(doc(db, `users/${userId}/chats/${chatId}`))
     }
 
-    getChatsByBoard(boardId: string, callback: (chats: Chat[]) => void): () => void {
+    getChatsByBoard = (boardId: string, callback: (chats: Chat[]) => void): () => void => {
         const userId = this.getUserId()
         const q = query(
             collection(db, `users/${userId}/chats`),
@@ -107,7 +107,7 @@ export class FirestoreStore implements Store {
         })
     }
 
-    getChat(chatId: ChatId, callback: (chat: Chat | null) => void): () => void {
+    getChat = (chatId: ChatId, callback: (chat: Chat | null) => void): () => void => {
         const userId = this.getUserId()
         const docRef = doc(db, `users/${userId}/chats/${chatId}`)
         

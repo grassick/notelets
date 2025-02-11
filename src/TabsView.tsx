@@ -16,15 +16,9 @@ export function TabsView(props: {
   const [activeTabIndex, setActiveTabIndex] = usePersist<number>("activeTabIndex", -1)
   const { boards, loading, error, setBoard, removeBoard } = useBoards(store)
 
-  // Filter pages to only include existing boards, but only after loading is complete
-  const validPages = loading ? pages : pages.filter(pageId => boards.some(board => board.id === pageId))
-  
-  // Ensure activeTabIndex doesn't exceed the number of valid pages
-  useEffect(() => {
-    if (!loading && activeTabIndex >= validPages.length) {
-      setActiveTabIndex(Math.max(validPages.length - 1, -1))
-    }
-  }, [loading, validPages.length, activeTabIndex])
+  // Only show pages that correspond to existing boards
+  const validPages = pages.filter(pageId => boards.some(board => board.id === pageId))
+  const currentTabIndex = activeTabIndex >= validPages.length ? -1 : activeTabIndex
 
   function handleTabClick(index: number) {
     if (activeTabIndex !== index) {
@@ -87,7 +81,7 @@ export function TabsView(props: {
             return (
               <Tab 
                 key={pageId}
-                isSelected={index === activeTabIndex}
+                isSelected={index === currentTabIndex}
                 onClick={() => handleTabClick(index)}
                 onRemove={(ev) => handleRemoveTab(pageId, index, ev)}
               >
@@ -96,7 +90,7 @@ export function TabsView(props: {
             )
           })}
           <Tab
-            isSelected={activeTabIndex === -1}
+            isSelected={currentTabIndex === -1}
             onClick={() => setActiveTabIndex(-1)}
           >
             <FaPlus size={12} />
@@ -108,7 +102,7 @@ export function TabsView(props: {
       </div>
       
       <div className="h-full overflow-auto">
-        {activeTabIndex === -1 ? (
+        {currentTabIndex === -1 ? (
           <BoardList
             loading={loading}
             boards={boards}
@@ -127,7 +121,7 @@ export function TabsView(props: {
         ) : (
           <BoardView 
             store={store}
-            boardId={validPages[activeTabIndex]}
+            boardId={validPages[currentTabIndex]}
           />
         )}
       </div>

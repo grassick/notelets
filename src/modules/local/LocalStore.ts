@@ -84,7 +84,7 @@ export class LocalStore implements Store {
         }
     }
 
-    async setBoard(board: Board): Promise<void> {
+    setBoard = async (board: Board): Promise<void> => {
         await this.ensureDB()
         return new Promise((resolve, reject) => {
             const store = this.getStore('boards', 'readwrite')
@@ -98,7 +98,7 @@ export class LocalStore implements Store {
         })
     }
 
-    async removeBoard(boardId: string): Promise<void> {
+    removeBoard = async (boardId: string): Promise<void> => {
         await this.ensureDB()
         return new Promise((resolve, reject) => {
             const transaction = this.db!.transaction(['boards', 'cards', 'chats'], 'readwrite')
@@ -146,7 +146,7 @@ export class LocalStore implements Store {
         })
     }
 
-    getBoards(callback: (boards: Board[]) => void): () => void {
+    getBoards = (callback: (boards: Board[]) => void): () => void => {
         const fetchAndNotify = async () => {
             await this.ensureDB()
             const store = this.getStore('boards')
@@ -159,7 +159,7 @@ export class LocalStore implements Store {
         return this.addListener('boards', fetchAndNotify)
     }
 
-    getBoard(boardId: string, callback: (board: Board | null) => void): () => void {
+    getBoard = (boardId: string, callback: (board: Board | null) => void): () => void => {
         const fetchAndNotify = async () => {
             await this.ensureDB()
             const store = this.getStore('boards')
@@ -172,7 +172,7 @@ export class LocalStore implements Store {
         return this.addListener(`board:${boardId}`, fetchAndNotify)
     }
 
-    async setCard(card: Card): Promise<void> {
+    setCard = async (card: Card): Promise<void> => {
         await this.ensureDB()
         return new Promise((resolve, reject) => {
             const store = this.getStore('cards', 'readwrite')
@@ -186,7 +186,7 @@ export class LocalStore implements Store {
         })
     }
 
-    async removeCard(cardId: string): Promise<void> {
+    removeCard = async (cardId: string): Promise<void> => {
         await this.ensureDB()
         return new Promise((resolve, reject) => {
             const store = this.getStore('cards', 'readwrite')
@@ -211,7 +211,7 @@ export class LocalStore implements Store {
         })
     }
 
-    getCardsByBoard(boardId: string, callback: (cards: Card[]) => void): () => void {
+    getCardsByBoard = (boardId: string, callback: (cards: Card[]) => void): () => void => {
         const fetchAndNotify = async () => {
             await this.ensureDB()
             const store = this.getStore('cards')
@@ -227,7 +227,7 @@ export class LocalStore implements Store {
         return this.addListener(`cards:${boardId}`, fetchAndNotify)
     }
 
-    getCard(cardId: string, callback: (card: Card | null) => void): () => void {
+    getCard = (cardId: string, callback: (card: Card | null) => void): () => void => {
         const fetchAndNotify = async () => {
             await this.ensureDB()
             const store = this.getStore('cards')
@@ -240,7 +240,7 @@ export class LocalStore implements Store {
         return this.addListener(`card:${cardId}`, fetchAndNotify)
     }
 
-    async setChat(chat: Chat): Promise<void> {
+    setChat = async (chat: Chat): Promise<void> => {
         await this.ensureDB()
         return new Promise((resolve, reject) => {
             const store = this.getStore('chats', 'readwrite')
@@ -254,7 +254,7 @@ export class LocalStore implements Store {
         })
     }
 
-    async removeChat(chatId: ChatId): Promise<void> {
+    removeChat = async (chatId: ChatId): Promise<void> => {
         await this.ensureDB()
         return new Promise((resolve, reject) => {
             const store = this.getStore('chats', 'readwrite')
@@ -279,7 +279,7 @@ export class LocalStore implements Store {
         })
     }
 
-    getChatsByBoard(boardId: string, callback: (chats: Chat[]) => void): () => void {
+    getChatsByBoard = (boardId: string, callback: (chats: Chat[]) => void): () => void => {
         const fetchAndNotify = async () => {
             await this.ensureDB()
             const store = this.getStore('chats')
@@ -295,7 +295,7 @@ export class LocalStore implements Store {
         return this.addListener(`chats:${boardId}`, fetchAndNotify)
     }
 
-    getChat(chatId: ChatId, callback: (chat: Chat | null) => void): () => void {
+    getChat = (chatId: ChatId, callback: (chat: Chat | null) => void): () => void => {
         const fetchAndNotify = async () => {
             await this.ensureDB()
             const store = this.getStore('chats')

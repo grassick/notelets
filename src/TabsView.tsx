@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { FaPlus, FaTimes, FaFolder, FaSearch, FaTrash, FaMicrophone } from 'react-icons/fa';
 import type { Board } from "./types";
@@ -37,8 +37,15 @@ export function TabsView(props: {
     type: 'create'
   })
 
+  useEffect(() => {
+    console.log('mounting TABVIEW')
+    return () => {
+      console.log('unmounting TABVIEW')
+    }
+  }, [])
+
   // Only show pages that correspond to existing boards
-  const validPages = pages.filter(pageId => boards.some(board => board.id === pageId))
+  const validPages = useMemo(() => pages.filter(pageId => boards.some(board => board.id === pageId)), [pages, boards])
   const currentTabIndex = activeTabIndex >= validPages.length ? -1 : activeTabIndex
 
   function handleTabClick(index: number) {
@@ -116,78 +123,6 @@ export function TabsView(props: {
     }
   }, [isRecording])
 
-  async function startRecording(e: React.MouseEvent) {
-    e.preventDefault()
-    e.stopPropagation()
-    
-    // Store the currently focused element
-    setLastActiveElement(document.activeElement as HTMLElement)
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      mediaRecorder.current = new MediaRecorder(stream)
-      chunks.current = []
-
-      mediaRecorder.current.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunks.current.push(e.data)
-        }
-      }
-
-      mediaRecorder.current.start()
-      setIsRecording(true)
-    } catch (error) {
-      console.error('Error starting recording:', error)
-    }
-  }
-
-  async function stopRecording() {
-    if (!mediaRecorder.current) return
-
-    setIsRecording(false)
-    setIsProcessing(true)
-
-    try {
-      // Create a promise that resolves when the mediaRecorder stops
-      const stopPromise = new Promise<void>((resolve) => {
-        if (mediaRecorder.current) {
-          mediaRecorder.current.onstop = () => resolve()
-        }
-      })
-
-      // Stop recording
-      mediaRecorder.current.stop()
-      await stopPromise
-
-      // Stop all tracks
-      mediaRecorder.current.stream.getTracks().forEach(track => track.stop())
-
-      // Create blob from chunks
-      const audioBlob = new Blob(chunks.current, { type: 'audio/webm' })
-      
-      // Transcribe audio
-      const transcription = await openaiClient.transcribeAudio(audioBlob)
-      
-      // Insert text at cursor position
-      if (lastActiveElement) {
-        lastActiveElement.focus()
-        document.execCommand('insertText', false, transcription)
-      }
-    } catch (error) {
-      console.error('Error processing audio:', error)
-    } finally {
-      setIsProcessing(false)
-    }
-  }
-
-  function handleVoiceButtonClick(e: React.MouseEvent) {
-    if (isRecording) {
-      stopRecording()
-    } else {
-      startRecording(e)
-    }
-  }
-
   return (
     <div className="h-full grid grid-rows-[auto_1fr] bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
       <div className="px-4 py-2 border-b border-gray-200/80 dark:border-gray-700/80 flex items-center justify-between backdrop-blur-sm bg-white/50 dark:bg-gray-800/50">
@@ -250,7 +185,6 @@ export function TabsView(props: {
           />
         ) : (
           <BoardView 
-            key={validPages[currentTabIndex]}
             store={store}
             boardId={validPages[currentTabIndex]}
           />

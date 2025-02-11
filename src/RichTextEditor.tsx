@@ -23,7 +23,7 @@ const turndown = new TurndownService({
   codeBlockStyle: 'fenced'
 }).use(gfm)
 
-const debug = true
+const debug = false // Set to true to enable debug logging
 
 /**
  * Unwraps paragraph tags inside list items while preserving their content

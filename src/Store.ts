@@ -124,20 +124,32 @@ export function useDocument<T extends { id: string }>(options : {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<Error | null>(null)
     const mounted = useRef(true)
+    const weird = useRef(100)
+
+    console.log('mounted', mounted.current)
+    console.log('weird', weird.current)
 
     useEffect(() => {
         mounted.current = true
+        weird.current = 200
+        console.log('mounting useDocument', weird.current)
         return () => {
-            mounted.current = false
+            console.log('unmounting useDocument', weird.current)
+            // mounted.current = false
         }
     }, [])
 
     useEffect(() => {
+        setDocument(null)
         setLoading(true)
         setError(null)
+        console.log('getting documentId', documentId)
         const unsubscribe = getDocument(documentId, (updatedDocument) => {
+            console.log('got document', updatedDocument)
+            console.log('mounted', mounted.current)
             if (!mounted.current) return
             try {
+                console.log('setting document', updatedDocument)
                 setDocument(updatedDocument)
                 setLoading(false)
                 setError(null)
@@ -230,8 +242,10 @@ export function useDocuments<T extends { id: string }>(options : {
 
     useEffect(() => {
         mounted.current = true
+        console.log('mounting useDocuments')
         return () => {
             mounted.current = false
+            console.log('unmounting useDocuments')
         }
     }, [])
 
@@ -340,6 +354,19 @@ export function useBoard(store: Store, boardId: string) {
         removeDocument: store.removeBoard,
         documentId: boardId
     })
+
+    console.log('--- useBoard')
+    console.log('boardId', boardId)
+    console.log('document', document)
+    console.log('loading', loading)
+    console.log('error', error)
+
+    useEffect(() => {
+        console.log('mounting useBoard')
+        return () => {
+            console.log('unmounting useBoard')
+        }
+    }, [])
     
     return {
         board: document,

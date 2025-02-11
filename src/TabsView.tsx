@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { FaPlus, FaTimes, FaFolder, FaSearch } from 'react-icons/fa';
+import { FaPlus, FaTimes, FaFolder, FaSearch, FaTrash } from 'react-icons/fa';
 import type { Board } from "./types";
 import type { Store } from "./Store";
 import { useBoards } from "./Store";
@@ -328,7 +328,7 @@ function BoardList(props: BoardListProps) {
                            text-gray-400 hover:text-red-600 dark:hover:text-red-400
                            transition-all duration-200"
                 >
-                  <FaTimes size={14} />
+                  <FaTrash size={14} />
                 </button>
               </div>
             </div>

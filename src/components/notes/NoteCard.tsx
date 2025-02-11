@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, forwardRef } from 'react'
 import { RichTextEditor } from '../../RichTextEditor'
 import { RichTextCard } from '../../types'
 import MarkdownIt from 'markdown-it'
+import { FaTrash } from 'react-icons/fa'
 
 /** Props for the NoteCardHeader component */
 interface NoteCardHeaderProps {
@@ -182,9 +183,7 @@ function NoteCardHeader({ card, onUpdateTitle, onDelete, isMarkdownMode, onMarkd
           className={`p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 ${alwaysShowActions ? 'hover:bg-red-50 dark:hover:bg-red-900/30 rounded' : ''}`}
           title="Delete note"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <FaTrash size={14} />
         </button>
       </div>}
     </div>
@@ -378,9 +377,7 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
                   className="p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
                   title="Delete note"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <FaTrash size={14} />
                 </button>
               </div>
             </div>

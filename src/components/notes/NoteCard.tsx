@@ -429,7 +429,7 @@ function MarkdownEditor({ content, onChange, placeholder }: {
       placeholder={placeholder}
       className="w-full resize-none bg-transparent text-gray-900 dark:text-gray-100 
                  placeholder-gray-400 dark:placeholder-gray-500
-                 focus:outline-none"
+                 focus:outline-none prose-sm"
       style={{ overflow: 'hidden' }}
     />
   )

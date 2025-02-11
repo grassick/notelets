@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { RichTextCard } from '../../types'
 import { NoteCard } from './NoteCard'
 import { FaLayerGroup, FaPlus } from 'react-icons/fa'
@@ -46,7 +46,7 @@ export function NotesPanel({
   const cardRefs = React.useRef<{ [key: string]: HTMLDivElement | null }>({})
 
   // Add scroll effect when selectedCard changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (selectedCard && showAllNotes) {
       const cardElement = cardRefs.current[selectedCard.id]
       if (cardElement) {

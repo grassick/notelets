@@ -114,7 +114,7 @@ export interface Board {
         // linear?: string[] // Array of card IDs in display order
 
         /** Currently selected card */
-        currentCardId?: string
+        selectedCardId?: string | null
     }
     /** Timestamp when the board was created in ISO 8601 format */
     createdAt: string

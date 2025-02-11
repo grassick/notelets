@@ -49,7 +49,7 @@ describe('crypto utilities', () => {
             title: 'Test Board',
             viewType: 'vertical',
             layoutConfig: {
-                currentCardId: 'card1'
+                selectedCardId: 'card1'
             }
         }
 
@@ -81,7 +81,7 @@ describe('crypto utilities', () => {
             expect(typeof decrypted.title).toBe('string')
             expect(typeof decrypted.viewType).toBe('string')
             expect(decrypted.viewType).toBe('vertical')
-            expect(typeof decrypted.layoutConfig.currentCardId).toBe('string')
+            expect(typeof decrypted.layoutConfig.selectedCardId).toBe('string')
         })
     })
 

@@ -101,6 +101,42 @@ export function TabsView(props: {
     }
   }
 
+  function renderContents() {
+    if (loading) {
+      return <div className="text-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 dark:border-gray-400 mx-auto mb-4"></div>
+        <p className="text-gray-600 dark:text-gray-400">Loading your boards...</p>
+      </div>
+    }
+    
+    if (currentTabIndex === -1) {
+      return (
+        <BoardList
+          loading={loading}
+          boards={boards}
+          pages={validPages}
+          onSelectBoard={(boardId, index) => {
+          if (!validPages.includes(boardId)) {
+            setPages([...validPages, boardId])
+            setActiveTabIndex(validPages.length)
+          } else {
+            setActiveTabIndex(index)
+          }
+        }}
+        onCreateBoard={handleCreateBoard}
+        onDeleteBoard={handleDeleteBoard}
+      />
+    ) 
+    } else {
+      return (
+        <BoardView 
+          store={store}
+          boardId={validPages[currentTabIndex]}
+        />
+      )
+    }
+  }
+
   return (
     <div className="h-full grid grid-rows-[auto_1fr] bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
       <div className="px-4 py-2 border-b border-gray-200/80 dark:border-gray-700/80 flex items-center justify-between backdrop-blur-sm bg-white/50 dark:bg-gray-800/50">
@@ -145,28 +181,7 @@ export function TabsView(props: {
       </div>
       
       <div className="h-full overflow-auto">
-        {currentTabIndex === -1 ? (
-          <BoardList
-            loading={loading}
-            boards={boards}
-            pages={validPages}
-            onSelectBoard={(boardId, index) => {
-              if (!validPages.includes(boardId)) {
-                setPages([...validPages, boardId])
-                setActiveTabIndex(validPages.length)
-              } else {
-                setActiveTabIndex(index)
-              }
-            }}
-            onCreateBoard={handleCreateBoard}
-            onDeleteBoard={handleDeleteBoard}
-          />
-        ) : (
-          <BoardView 
-            store={store}
-            boardId={validPages[currentTabIndex]}
-          />
-        )}
+        { renderContents() }
       </div>
 
       <SettingsModal

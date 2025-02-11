@@ -190,7 +190,6 @@ export function useBoards(store: Store) {
             const previousBoards = boards
             try {
                 setError(null)
-                setLoading(true)
                 // Optimistic update
                 setBoards(prev => {
                     const index = prev.findIndex(b => b.id === board.id)
@@ -206,22 +205,17 @@ export function useBoards(store: Store) {
             } catch (e) {
                 setBoards(previousBoards) // Rollback on failure
                 setError(e instanceof Error ? e : new Error('Failed to update board'))
-            } finally {
-                setLoading(false)
             }
         },
         removeBoard: async (boardId: string) => {
             const previousBoards = boards
             try {
                 setError(null)
-                setLoading(true)
                 setBoards(prev => prev.filter(b => b.id !== boardId))
                 await store.removeBoard(boardId)
             } catch (e) {
                 setBoards(previousBoards) // Rollback on failure
                 setError(e instanceof Error ? e : new Error('Failed to remove board'))
-            } finally {
-                setLoading(false)
             }
         }
     }
@@ -262,7 +256,6 @@ export function useCards(store: Store, boardId: string) {
             const previousCards = cards
             try {
                 setError(null)
-                setLoading(true)
                 // Optimistic update
                 setCards(prev => {
                     const index = prev.findIndex(c => c.id === card.id)
@@ -278,22 +271,17 @@ export function useCards(store: Store, boardId: string) {
             } catch (e) {
                 setCards(previousCards) // Rollback on failure
                 setError(e instanceof Error ? e : new Error('Failed to update card'))
-            } finally {
-                setLoading(false)
             }
         },
         removeCard: async (cardId: string) => {
             const previousCards = cards
             try {
                 setError(null)
-                setLoading(true)
                 setCards(prev => prev.filter(c => c.id !== cardId))
                 await store.removeCard(cardId)
             } catch (e) {
                 setCards(previousCards) // Rollback on failure
                 setError(e instanceof Error ? e : new Error('Failed to remove card'))
-            } finally {
-                setLoading(false)
             }
         }
     }
@@ -334,28 +322,22 @@ export function useCard(store: Store, cardId: string) {
             const previousCard = card
             try {
                 setError(null)
-                setLoading(true)
                 setCard(updatedCard) // Optimistic update
                 await store.setCard(updatedCard)
             } catch (e) {
                 setCard(previousCard) // Rollback on failure
                 setError(e instanceof Error ? e : new Error('Failed to update card'))
-            } finally {
-                setLoading(false)
             }
         },
         removeCard: async (cardId: string) => {
             const previousCard = card
             try {
                 setError(null)
-                setLoading(true)
                 setCard(null)
                 await store.removeCard(cardId)
             } catch (e) {
                 setCard(previousCard) // Rollback on failure
                 setError(e instanceof Error ? e : new Error('Failed to remove card'))
-            } finally {
-                setLoading(false)
             }
         }
     }
@@ -396,7 +378,6 @@ export function useChats(store: Store, boardId: string) {
             const previousChats = chats
             try {
                 setError(null)
-                setLoading(true)
                 // Optimistic update
                 setChats(prev => {
                     const index = prev.findIndex(c => c.id === chat.id)
@@ -412,22 +393,17 @@ export function useChats(store: Store, boardId: string) {
             } catch (e) {
                 setChats(previousChats) // Rollback on failure
                 setError(e instanceof Error ? e : new Error('Failed to update chat'))
-            } finally {
-                setLoading(false)
             }
         },
         removeChat: async (chatId: string) => {
             const previousChats = chats
             try {
                 setError(null)
-                setLoading(true)
                 setChats(prev => prev.filter(c => c.id !== chatId))
                 await store.removeChat(chatId)
             } catch (e) {
                 setChats(previousChats) // Rollback on failure
                 setError(e instanceof Error ? e : new Error('Failed to remove chat'))
-            } finally {
-                setLoading(false)
             }
         }
     }
@@ -468,28 +444,22 @@ export function useChat(store: Store, chatId: string) {
             const previousChat = chat
             try {
                 setError(null)
-                setLoading(true)
                 setChat(updatedChat) // Optimistic update
                 await store.setChat(updatedChat)
             } catch (e) {
                 setChat(previousChat) // Rollback on failure
                 setError(e instanceof Error ? e : new Error('Failed to update chat'))
-            } finally {
-                setLoading(false)
-            }
+            } 
         },
         removeChat: async (chatId: string) => {
             const previousChat = chat
             try {
                 setError(null)
-                setLoading(true)
                 setChat(null)
                 await store.removeChat(chatId)
             } catch (e) {
                 setChat(previousChat) // Rollback on failure
                 setError(e instanceof Error ? e : new Error('Failed to remove chat'))
-            } finally {
-                setLoading(false)
             }
         }
     }

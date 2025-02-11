@@ -56,13 +56,6 @@ function MainContent() {
   const [needsUnlock, setNeedsUnlock] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    console.log('mounting MAINCONTENT')
-    return () => {
-      console.log('unmounting MAINCONTENT')
-    }
-  }, [])
-
   // Initialize store based on storage type
   useEffect(() => {
     const initializeStore = async () => {

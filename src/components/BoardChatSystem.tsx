@@ -58,9 +58,8 @@ export function BoardChatSystem({
   className = '',
 }: BoardChatSystemProps) {
   const { settings: userSettings } = useUserSettings(store)
-  const { cards } = useCards(store, boardId)
+  const { cards, setCard } = useCards(store, boardId)
   const { chats, setChat: storeSetChat, removeChat } = useChats(store, boardId)
-  const { setCard } = useCards(store, boardId)
   const [chat, setChat] = useState<Chat | null>(null)
   const [error, setError] = useState<Error | null>(null)
   const [selectedModel, setSelectedModel] = usePersist<ModelId>('selectedModel', getDefaultModel(userSettings.llm))

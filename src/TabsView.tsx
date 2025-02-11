@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { FaPlus, FaTimes, FaFolder, FaSearch, FaTrash, FaMicrophone } from 'react-icons/fa';
+import { FaPlus, FaTimes, FaFolder, FaSearch, FaTrash } from 'react-icons/fa';
 import type { Board } from "./types";
 import type { Store } from "./Store";
 import { useBoards } from "./Store";
@@ -20,13 +20,8 @@ export function TabsView(props: {
   const [activeTabIndex, setActiveTabIndex] = usePersist<number>("activeTabIndex", -1)
   const { boards, loading, error, setBoard, removeBoard } = useBoards(store)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const [isRecording, setIsRecording] = useState(false)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [lastActiveElement, setLastActiveElement] = useState<HTMLElement | null>(null)
   const { settings } = useUserSettings(store)
   const openaiClient = new OpenAIClient(settings.llm.openaiKey || '')
-  const mediaRecorder = useRef<MediaRecorder | null>(null)
-  const chunks = useRef<Blob[]>([])
   const [boardNameModal, setBoardNameModal] = useState<{
     isOpen: boolean
     type: 'create' | 'edit'
@@ -36,13 +31,6 @@ export function TabsView(props: {
     isOpen: false,
     type: 'create'
   })
-
-  useEffect(() => {
-    console.log('mounting TABVIEW')
-    return () => {
-      console.log('unmounting TABVIEW')
-    }
-  }, [])
 
   // Only show pages that correspond to existing boards
   const validPages = useMemo(() => pages.filter(pageId => boards.some(board => board.id === pageId)), [pages, boards])
@@ -112,16 +100,6 @@ export function TabsView(props: {
       setActiveTabIndex(Math.min(newPages.length - 1, activeTabIndex))
     }
   }
-
-  // Cleanup recording on unmount
-  useEffect(() => {
-    return () => {
-      if (mediaRecorder.current && isRecording) {
-        mediaRecorder.current.stop()
-        mediaRecorder.current.stream.getTracks().forEach(track => track.stop())
-      }
-    }
-  }, [isRecording])
 
   return (
     <div className="h-full grid grid-rows-[auto_1fr] bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">

@@ -107,273 +107,52 @@ export interface Store {
     setUserSettings(settings: UserSettings): Promise<void>
 }
 
-
-/**
- * Hook to interact with a single document
- * @param store The store instance
- * @param documentId ID of the document to load
- */
-export function useDocument<T extends { id: string }>(options : {
-    getDocument: (id: string, callback: (document: T | null) => void) => () => void, 
-    updateDocument: (document: T) => Promise<void>,
-    removeDocument: (id: string) => Promise<void>,
-    documentId: string
-}) {
-    const { getDocument, updateDocument, removeDocument, documentId } = options
-    const [document, setDocument] = useState<T | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<Error | null>(null)
-    const mounted = useRef(true)
-    const weird = useRef(100)
-
-    console.log('mounted', mounted.current)
-    console.log('weird', weird.current)
-
-    useEffect(() => {
-        mounted.current = true
-        weird.current = 200
-        console.log('mounting useDocument', weird.current)
-        return () => {
-            console.log('unmounting useDocument', weird.current)
-            // mounted.current = false
-        }
-    }, [])
-
-    useEffect(() => {
-        setDocument(null)
-        setLoading(true)
-        setError(null)
-        console.log('getting documentId', documentId)
-        const unsubscribe = getDocument(documentId, (updatedDocument) => {
-            console.log('got document', updatedDocument)
-            console.log('mounted', mounted.current)
-            if (!mounted.current) return
-            try {
-                console.log('setting document', updatedDocument)
-                setDocument(updatedDocument)
-                setLoading(false)
-                setError(null)
-            } catch (e) {
-                setError(e instanceof Error ? e : new Error('Failed to process document update'))
-                setLoading(false)
-            }
-        })
-        return () => {
-            mounted.current = false
-            unsubscribe()
-        }
-    }, [getDocument, documentId])
-
-    const safeSetState = useCallback((setter: Function) => {
-        if (mounted.current) {
-            setter()
-        }
-    }, [])
-
-    return {
-        document,
-        loading,
-        error,
-        setDocument: async (newDocument: T) => {
-            const previousDocument = document
-            safeSetState(() => {
-                setError(null)
-                setLoading(true)
-                setDocument(newDocument) // Optimistic update
-            })
-            
-            try {
-                await updateDocument(newDocument)
-                safeSetState(() => {
-                    setError(null)
-                })
-            } catch (e) {
-                safeSetState(() => {
-                    setDocument(previousDocument) // Rollback on failure
-                    setError(e instanceof Error ? e : new Error('Failed to update document'))
-                })
-            } finally {
-                safeSetState(() => {
-                    setLoading(false)
-                })
-            }
-        },
-        removeDocument: async () => {
-            const previousDocument = document
-            safeSetState(() => {
-                setError(null)
-                setLoading(true)
-                setDocument(null) // Optimistic update
-            })
-            
-            try {
-                await removeDocument(documentId)
-                safeSetState(() => {
-                    setError(null)
-                })
-            } catch (e) {
-                safeSetState(() => {
-                    setDocument(previousDocument) // Rollback on failure
-                    setError(e instanceof Error ? e : new Error('Failed to remove document'))
-                })
-            } finally {
-                safeSetState(() => {
-                    setLoading(false)
-                })
-            }
-        }
-    }
-}
-
-/**
- * Hook to interact with all documents
- * @param store The store instance
- */
-export function useDocuments<T extends { id: string }>(options : {
-    getDocuments: (callback: (documents: T[]) => void) => () => void,
-    updateDocument: (document: T) => Promise<void>,
-    removeDocument: (id: string) => Promise<void>,
-}) {
-    const { getDocuments, updateDocument, removeDocument } = options
-    const [documents, setDocuments] = useState<T[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<Error | null>(null)
-    const mounted = useRef(true)
-
-    useEffect(() => {
-        mounted.current = true
-        console.log('mounting useDocuments')
-        return () => {
-            mounted.current = false
-            console.log('unmounting useDocuments')
-        }
-    }, [])
-
-    useEffect(() => {
-        setLoading(true)
-        setError(null)
-        const unsubscribe = getDocuments((updatedDocuments) => {
-            if (!mounted.current) return
-            try {
-                setDocuments(updatedDocuments)
-                setLoading(false)
-                setError(null)
-            } catch (e) {
-                setError(e instanceof Error ? e : new Error('Failed to process boards update'))
-                setLoading(false)
-            }
-        })
-        return () => {
-            mounted.current = false
-            unsubscribe()
-        }
-    }, [getDocuments])
-
-    const safeSetState = useCallback((setter: Function) => {
-        if (mounted.current) {
-            setter()
-        }
-    }, [])
-
-    return {
-        documents,
-        loading,
-        error,
-        setDocument: async (document: T) => {
-            const previousDocuments = documents
-            safeSetState(() => {
-                setError(null)
-                setLoading(true)
-                // Optimistic update
-                setDocuments(prev => {
-                    const index = prev.findIndex(d => d.id === document.id)
-                    if (index >= 0) {
-                        const newDocuments = [...prev]
-                        newDocuments[index] = document
-                        return newDocuments
-                    } else {
-                        return [...prev, document]
-                    }
-                })
-            })
-
-            try {
-                await updateDocument(document)
-                safeSetState(() => {
-                    setError(null)
-                })
-            } catch (e) {
-                safeSetState(() => {
-                    setDocuments(previousDocuments) // Rollback on failure
-                    setError(e instanceof Error ? e : new Error('Failed to update document'))
-                })
-            } finally {
-                safeSetState(() => {
-                    setLoading(false)
-                })
-            }
-        },
-        removeDocument: async (documentId: string) => {
-            const previousDocuments = documents
-            safeSetState(() => {
-                setError(null)
-                setLoading(true)
-                setDocuments(prev => prev.filter(d => d.id !== documentId))
-            })
-
-            try {
-                await removeDocument(documentId)
-                safeSetState(() => {
-                    setError(null)
-                })
-            } catch (e) {
-                safeSetState(() => {
-                    setDocuments(previousDocuments) // Rollback on failure
-                    setError(e instanceof Error ? e : new Error('Failed to remove document'))
-                })
-            } finally {
-                safeSetState(() => {
-                    setLoading(false)
-                })
-            }
-        }
-    }
-}
-
-
-
 /**
  * Hook to interact with a single board
  * @param store The store instance
  * @param boardId ID of the board to load
  */
 export function useBoard(store: Store, boardId: string) {
-    const { document, loading, error, setDocument, removeDocument } = useDocument<Board>({
-        getDocument: store.getBoard,
-        updateDocument: store.setBoard,
-        removeDocument: store.removeBoard,
-        documentId: boardId
-    })
-
-    console.log('--- useBoard')
-    console.log('boardId', boardId)
-    console.log('document', document)
-    console.log('loading', loading)
-    console.log('error', error)
+    const [board, setBoard] = useState<Board | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<Error | null>(null) // TODO: Expose getBoard errors at store level
 
     useEffect(() => {
-        console.log('mounting useBoard')
-        return () => {
-            console.log('unmounting useBoard')
-        }
-    }, [])
-    
+        setBoard(null)
+        setLoading(true)
+        const unsubscribe = store.getBoard(boardId, (updatedBoard) => {
+            setBoard(updatedBoard)
+            setLoading(false)
+        })
+        return unsubscribe
+    }, [store, boardId])
+
     return {
-        board: document,
+        board,
         loading,
         error,
-        setBoard: setDocument,
-        removeBoard: removeDocument
+        setBoard: async (newBoard: Board) => {
+            const previousBoard = board
+            try {
+                setError(null)
+                setBoard(newBoard) // Optimistic update
+                await store.setBoard(newBoard)
+            } catch (e) {
+                setBoard(previousBoard)
+                setError(e instanceof Error ? e : new Error('Failed to update board'))
+            }
+        },
+        removeBoard: async () => {
+            const previousBoard = board
+            try {
+                setError(null)
+                setBoard(null) // Optimistic update
+                await store.removeBoard(boardId)
+            } catch (e) {
+                setBoard(previousBoard)
+                setError(e instanceof Error ? e : new Error('Failed to remove board'))
+            }
+        }
     }
 }
 
@@ -382,18 +161,69 @@ export function useBoard(store: Store, boardId: string) {
  * @param store The store instance
  */
 export function useBoards(store: Store) {
-    const { documents, loading, error, setDocument, removeDocument } = useDocuments<Board>({
-        getDocuments: store.getBoards,
-        updateDocument: store.setBoard,
-        removeDocument: store.removeBoard,
-    })
+    const [boards, setBoards] = useState<Board[]>([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<Error | null>(null)
+
+    useEffect(() => {
+        setBoards([])
+        setLoading(true)
+        setError(null)
+        const unsubscribe = store.getBoards((updatedBoards) => {
+            try {
+                setBoards(updatedBoards)
+                setLoading(false)
+                setError(null)
+            } catch (e) {
+                setError(e instanceof Error ? e : new Error('Failed to process boards update'))
+                setLoading(false)
+            }
+        })
+        return unsubscribe
+    }, [store])
 
     return {
-        boards: documents,
+        boards,
         loading,
         error,
-        setBoard: setDocument,
-        removeBoard: removeDocument
+        setBoard: async (board: Board) => {
+            const previousBoards = boards
+            try {
+                setError(null)
+                setLoading(true)
+                // Optimistic update
+                setBoards(prev => {
+                    const index = prev.findIndex(b => b.id === board.id)
+                    if (index >= 0) {
+                        const newBoards = [...prev]
+                        newBoards[index] = board
+                        return newBoards
+                    } else {
+                        return [...prev, board]
+                    }
+                })
+                await store.setBoard(board)
+            } catch (e) {
+                setBoards(previousBoards) // Rollback on failure
+                setError(e instanceof Error ? e : new Error('Failed to update board'))
+            } finally {
+                setLoading(false)
+            }
+        },
+        removeBoard: async (boardId: string) => {
+            const previousBoards = boards
+            try {
+                setError(null)
+                setLoading(true)
+                setBoards(prev => prev.filter(b => b.id !== boardId))
+                await store.removeBoard(boardId)
+            } catch (e) {
+                setBoards(previousBoards) // Rollback on failure
+                setError(e instanceof Error ? e : new Error('Failed to remove board'))
+            } finally {
+                setLoading(false)
+            }
+        }
     }
 }
 
@@ -403,69 +233,203 @@ export function useBoards(store: Store) {
  * @param boardId ID of the board whose cards to load
  */
 export function useCards(store: Store, boardId: string) {
-    const getDocuments = useCallback((callback: (documents: Card[]) => void) => {
-        return store.getCardsByBoard(boardId, callback)
-    }, [boardId, store])
+    const [cards, setCards] = useState<Card[]>([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<Error | null>(null)
 
-    const { documents, loading, error, setDocument, removeDocument } = useDocuments<Card>({
-        getDocuments,
-        updateDocument: store.setCard,
-        removeDocument: store.removeCard,
-    })
+    useEffect(() => {
+        setCards([])
+        setLoading(true)
+        setError(null)
+        const unsubscribe = store.getCardsByBoard(boardId, (updatedCards) => {
+            try {
+                setCards(updatedCards)
+                setLoading(false)
+                setError(null)
+            } catch (e) {
+                setError(e instanceof Error ? e : new Error('Failed to process cards update'))
+                setLoading(false)
+            }
+        })
+        return unsubscribe
+    }, [store, boardId])
 
     return {
-        cards: documents,
+        cards,
         loading,
         error,
-        setCard: setDocument,
-        removeCard: removeDocument
+        setCard: async (card: Card) => {
+            const previousCards = cards
+            try {
+                setError(null)
+                setLoading(true)
+                // Optimistic update
+                setCards(prev => {
+                    const index = prev.findIndex(c => c.id === card.id)
+                    if (index >= 0) {
+                        const newCards = [...prev]
+                        newCards[index] = card
+                        return newCards
+                    } else {
+                        return [...prev, card]
+                    }
+                })
+                await store.setCard(card)
+            } catch (e) {
+                setCards(previousCards) // Rollback on failure
+                setError(e instanceof Error ? e : new Error('Failed to update card'))
+            } finally {
+                setLoading(false)
+            }
+        },
+        removeCard: async (cardId: string) => {
+            const previousCards = cards
+            try {
+                setError(null)
+                setLoading(true)
+                setCards(prev => prev.filter(c => c.id !== cardId))
+                await store.removeCard(cardId)
+            } catch (e) {
+                setCards(previousCards) // Rollback on failure
+                setError(e instanceof Error ? e : new Error('Failed to remove card'))
+            } finally {
+                setLoading(false)
+            }
+        }
     }
 }
- 
+
 /**
  * Hook to interact with a single card
  * @param store The store instance
  * @param cardId ID of the card to load
  */
 export function useCard(store: Store, cardId: string) {
-    const { document, loading, error, setDocument, removeDocument } = useDocument<Card>({
-        getDocument: store.getCard,
-        updateDocument: store.setCard,
-        removeDocument: store.removeCard,
-        documentId: cardId
-    })
-    
+    const [card, setCard] = useState<Card | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<Error | null>(null)
+
+    useEffect(() => {
+        setCard(null)
+        setLoading(true)
+        setError(null)
+        const unsubscribe = store.getCard(cardId, (updatedCard) => {
+            try {
+                setCard(updatedCard)
+                setLoading(false)
+                setError(null)
+            } catch (e) {
+                setError(e instanceof Error ? e : new Error('Failed to process card update'))
+                setLoading(false)
+            }
+        })
+        return unsubscribe
+    }, [store, cardId])
+
     return {
-        card: document,
+        card,
         loading,
         error,
-        setCard: setDocument,
-        removeCard: removeDocument
+        setCard: async (updatedCard: Card) => {
+            const previousCard = card
+            try {
+                setError(null)
+                setLoading(true)
+                setCard(updatedCard) // Optimistic update
+                await store.setCard(updatedCard)
+            } catch (e) {
+                setCard(previousCard) // Rollback on failure
+                setError(e instanceof Error ? e : new Error('Failed to update card'))
+            } finally {
+                setLoading(false)
+            }
+        },
+        removeCard: async (cardId: string) => {
+            const previousCard = card
+            try {
+                setError(null)
+                setLoading(true)
+                setCard(null)
+                await store.removeCard(cardId)
+            } catch (e) {
+                setCard(previousCard) // Rollback on failure
+                setError(e instanceof Error ? e : new Error('Failed to remove card'))
+            } finally {
+                setLoading(false)
+            }
+        }
     }
 }
-    
+
 /**
  * Hook to interact with chats belonging to a board
  * @param store The store instance
  * @param boardId ID of the board whose chats to load
  */
 export function useChats(store: Store, boardId: string) {
-    const getDocuments = useCallback((callback: (documents: Chat[]) => void) => {
-        return store.getChatsByBoard(boardId, callback)
-    }, [boardId, store])
-
-    const { documents, loading, error, setDocument, removeDocument } = useDocuments<Chat>({
-        getDocuments,
-        updateDocument: store.setChat,
-        removeDocument: store.removeChat,
-    })
+    const [chats, setChats] = useState<Chat[]>([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<Error | null>(null)
+    
+    useEffect(() => {
+        setChats([])
+        setLoading(true)
+        setError(null)
+        const unsubscribe = store.getChatsByBoard(boardId, (updatedChats) => {
+            try {
+                setChats(updatedChats)
+                setLoading(false)
+                setError(null)
+            } catch (e) {
+                setError(e instanceof Error ? e : new Error('Failed to process chats update'))
+                setLoading(false)
+            }
+        })
+        return unsubscribe
+    }, [store, boardId])
 
     return {
-        chats: documents,
+        chats,
         loading,
         error,
-        setChat: setDocument,
-        removeChat: removeDocument
+        setChat: async (chat: Chat) => {
+            const previousChats = chats
+            try {
+                setError(null)
+                setLoading(true)
+                // Optimistic update
+                setChats(prev => {
+                    const index = prev.findIndex(c => c.id === chat.id)
+                    if (index >= 0) {
+                        const newChats = [...prev]
+                        newChats[index] = chat
+                        return newChats
+                    } else {
+                        return [...prev, chat]
+                    }
+                })
+                await store.setChat(chat)
+            } catch (e) {
+                setChats(previousChats) // Rollback on failure
+                setError(e instanceof Error ? e : new Error('Failed to update chat'))
+            } finally {
+                setLoading(false)
+            }
+        },
+        removeChat: async (chatId: string) => {
+            const previousChats = chats
+            try {
+                setError(null)
+                setLoading(true)
+                setChats(prev => prev.filter(c => c.id !== chatId))
+                await store.removeChat(chatId)
+            } catch (e) {
+                setChats(previousChats) // Rollback on failure
+                setError(e instanceof Error ? e : new Error('Failed to remove chat'))
+            } finally {
+                setLoading(false)
+            }
+        }
     }
 }
 
@@ -475,19 +439,58 @@ export function useChats(store: Store, boardId: string) {
  * @param chatId ID of the chat to load
  */
 export function useChat(store: Store, chatId: string) {
-    const { document, loading, error, setDocument, removeDocument } = useDocument<Chat>({
-        getDocument: store.getChat,
-        updateDocument: store.setChat,
-        removeDocument: store.removeChat,
-        documentId: chatId
-    })
-    
+    const [chat, setChat] = useState<Chat | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<Error | null>(null)
+
+    useEffect(() => {
+        setChat(null)
+        setLoading(true)
+        setError(null)
+        const unsubscribe = store.getChat(chatId, (updatedChat) => {
+            try {
+                setChat(updatedChat)
+                setLoading(false)
+                setError(null)
+            } catch (e) {
+                setError(e instanceof Error ? e : new Error('Failed to process chat update'))
+                setLoading(false)
+            }
+        })
+        return unsubscribe
+    }, [store, chatId])
+
     return {
-        chat: document,
+        chat,
         loading,
         error,
-        setChat: setDocument,
-        removeChat: removeDocument
+        setChat: async (updatedChat: Chat) => {
+            const previousChat = chat
+            try {
+                setError(null)
+                setLoading(true)
+                setChat(updatedChat) // Optimistic update
+                await store.setChat(updatedChat)
+            } catch (e) {
+                setChat(previousChat) // Rollback on failure
+                setError(e instanceof Error ? e : new Error('Failed to update chat'))
+            } finally {
+                setLoading(false)
+            }
+        },
+        removeChat: async (chatId: string) => {
+            const previousChat = chat
+            try {
+                setError(null)
+                setLoading(true)
+                setChat(null)
+                await store.removeChat(chatId)
+            } catch (e) {
+                setChat(previousChat) // Rollback on failure
+                setError(e instanceof Error ? e : new Error('Failed to remove chat'))
+            } finally {
+                setLoading(false)
+            }
+        }
     }
 }
-            

@@ -4,7 +4,7 @@ import "./index.css"
 
 import { TabsView } from './TabsView'
 import { Store } from './Store'
-import { useSettings } from './hooks/useSettings'
+import { useDeviceSettings } from './hooks/useSettings'
 import { AuthProvider, useAuth } from './modules/auth/AuthContext'
 import { LoginPage } from './modules/auth/LoginPage'
 import { SignupPage } from './modules/auth/SignupPage'
@@ -33,14 +33,14 @@ function LoadingScreen() {
 
 function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading } = useAuth()
-  const { settings } = useSettings()
+  const { settings: deviceSettings } = useDeviceSettings()
 
   if (loading) {
     return <LoadingScreen />
   }
 
   // If we're in cloud mode and not logged in, redirect to login
-  if (settings.storage.type === 'cloud' && !user) {
+  if (deviceSettings.storage.type === 'cloud' && !user) {
     return <Navigate to="/login" />
   }
 
@@ -48,7 +48,7 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
 }
 
 function MainContent() {
-  const { settings, updateSettings } = useSettings()
+  const { settings: deviceSettings, updateSettings: updateDeviceSettings } = useDeviceSettings()
   const { user } = useAuth()
   const [store, setStore] = useState<Store | null>(null)
   const [encryptedStore, setEncryptedStore] = useState<EncryptedFirestoreStore | null>(null)
@@ -66,7 +66,7 @@ function MainContent() {
       setNeedsUnlock(false)
 
       try {
-        if (settings.storage.type === 'cloud' && user) {
+        if (deviceSettings.storage.type === 'cloud' && user) {
           // Create encrypted store
           const encrypted = new EncryptedFirestoreStore()
           setEncryptedStore(encrypted)
@@ -94,7 +94,7 @@ function MainContent() {
           // Need to unlock
           setNeedsUnlock(true)
           setIsLoading(false)
-        } else if (settings.storage.type === 'local') {
+        } else if (deviceSettings.storage.type === 'local') {
           setStore(new LocalStore())
           setIsLoading(false)
         } else {
@@ -108,11 +108,11 @@ function MainContent() {
     }
 
     initializeStore()
-  }, [settings.storage.type, user])
+  }, [deviceSettings.storage.type, user])
 
   // Handle storage mode selection
   const handleStorageModeSelect = (mode: 'local' | 'cloud') => {
-    updateSettings('storage', { type: mode })
+    updateDeviceSettings('storage', { type: mode })
   }
 
   // Handle encryption setup
@@ -150,7 +150,7 @@ function MainContent() {
   }
 
   // If storage type not selected, show welcome screen
-  if (!settings.storage.type) {
+  if (!deviceSettings.storage.type) {
     return <WelcomeScreen onChoose={handleStorageModeSelect} />
   }
 

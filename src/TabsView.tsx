@@ -143,6 +143,7 @@ export function TabsView(props: {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+        store={store}
       />
     </div>
   )

@@ -256,7 +256,7 @@ function ChatMessage({ message, index, onEdit, onSaveToNotes }: {
               {isUser ? (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="text-[10px] opacity-0 group-hover:opacity-40 hover:!opacity-100 hover:bg-white/10 px-1.5 py-0.5 rounded-sm transition-opacity duration-150"
+                  className="text-[10px] opacity-0 group-hover:opacity-40 hover:!opacity-100 hover:bg-white/10 px-1.5 pb-0.5 rounded-sm transition-opacity duration-150"
                   title="Edit message"
                 >
                   Edit
@@ -264,7 +264,7 @@ function ChatMessage({ message, index, onEdit, onSaveToNotes }: {
               ) : onSaveToNotes && (
                 <button
                   onClick={() => onSaveToNotes(message.content)}
-                  className="text-[10px] opacity-0 group-hover:opacity-40 hover:!opacity-100 hover:bg-black/5 dark:hover:bg-white/10 px-1.5 py-0.5 rounded-sm transition-opacity duration-150"
+                  className="text-[10px] opacity-0 group-hover:opacity-40 hover:!opacity-100 hover:bg-black/5 dark:hover:bg-white/10 px-1.5 pb-0.5 rounded-sm transition-opacity duration-150"
                   title="Save to notes"
                 >
                   Save as note

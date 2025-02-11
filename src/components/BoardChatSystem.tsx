@@ -6,7 +6,7 @@ import { ModelId, getDefaultModel, isModelAvailable } from '../api/llm'
 import { v4 as uuidv4 } from 'uuid'
 import { ChatInterface } from './ChatInterface'
 import { useChat } from '../hooks/useChat'
-import { useSettings } from '../hooks/useSettings'
+import { useUserSettings } from '../hooks/useSettings'
 import { ModelSelector } from './chat/ModelSelector'
 import { usePersist } from '../hooks/usePersist'
 import { SettingsModal } from './settings/SettingsModal'
@@ -37,6 +37,8 @@ interface ChatHeaderProps {
   onChatDelete: (chatId: string) => void
   /** Callback to open settings modal */
   onOpenSettings: () => void
+  /** The data store instance */
+  store: Store
 }
 
 /**
@@ -45,18 +47,18 @@ interface ChatHeaderProps {
  * - Handling LLM interactions
  * - Managing chat state
  */
-export function BoardChatSystem({ 
-  store, 
-  boardId, 
+export function BoardChatSystem({
+  store,
+  boardId,
   className = '',
 }: BoardChatSystemProps) {
-  const { settings } = useSettings()
+  const { settings: userSettings } = useUserSettings(store)
   const { cards } = useCards(store, boardId)
   const { chats, setChat: storeSetChat, removeChat } = useChats(store, boardId)
   const { setCard } = useCards(store, boardId)
   const [chat, setChat] = useState<Chat | null>(null)
   const [error, setError] = useState<Error | null>(null)
-  const [selectedModel, setSelectedModel] = usePersist<ModelId>('selectedModel', getDefaultModel(settings.llm))
+  const [selectedModel, setSelectedModel] = usePersist<ModelId>('selectedModel', getDefaultModel(userSettings.llm))
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   // Listen for settings open request from ModelSelector
@@ -68,10 +70,10 @@ export function BoardChatSystem({
 
   // Validate selected model on settings change
   useEffect(() => {
-    if (!isModelAvailable(selectedModel, settings.llm)) {
-      setSelectedModel(getDefaultModel(settings.llm))
+    if (!isModelAvailable(selectedModel, userSettings.llm)) {
+      setSelectedModel(getDefaultModel(userSettings.llm))
     }
-  }, [settings.llm, selectedModel, setSelectedModel])
+  }, [userSettings.llm, selectedModel, setSelectedModel])
 
   // Update the handleNewChat function
   const handleNewChat = useCallback(async () => {
@@ -83,7 +85,8 @@ export function BoardChatSystem({
     onChatUpdate: (updatedChat) => {
       storeSetChat(updatedChat)
       setChat(updatedChat)
-    }
+    },
+    userSettings
   })
 
   // Add chat selection handler
@@ -110,7 +113,7 @@ export function BoardChatSystem({
         await storeSetChat(activeChat)
         setChat(activeChat)
       }
-      
+
       // Now let useChat handle adding the message and getting the response
       await sendMessage(activeChat, content, modelId)
     } catch (err) {
@@ -121,7 +124,7 @@ export function BoardChatSystem({
   const handleDeleteChat = useCallback(async (chatId: string) => {
     try {
       await removeChat(chatId)
-      
+
       // If we deleted the active chat, switch to another one
       if (chat?.id === chatId) {
         const remainingChats = chats.filter((c: Chat) => c.id !== chatId)
@@ -169,8 +172,7 @@ export function BoardChatSystem({
     }
   }, [boardId, setCard])
 
-  // Show API key missing message if no keys are set
-  if (!Object.values(settings.llm).some(key => key)) {
+  function renderEmptyState() {
     return (
       <>
         <div className="flex flex-col items-center justify-center h-full p-8 text-center">
@@ -196,38 +198,47 @@ export function BoardChatSystem({
             Open Settings
           </button>
         </div>
-        <SettingsModal 
-          isOpen={isSettingsOpen}
-          onClose={() => setIsSettingsOpen(false)}
-        />
       </>
     )
   }
 
   // Show empty state only when there are no chats and no chat is selected
   if (chats.length === 0 && !chat) {
+    // Show API key missing message if no keys are set
+    const hasNoKeys = !Object.values(userSettings.llm).some(key => key)
+
     return (
       <div className={`flex flex-col h-full ${className}`}>
-        <ChatHeader
-          chat={chat}
-          chats={chats}
-          onNewChat={handleNewChat}
-          selectedModel={selectedModel}
-          onModelChange={setSelectedModel}
-          onChatSelect={handleChatSelect}
-          onChatDelete={handleDeleteChat}
-          onOpenSettings={() => setIsSettingsOpen(false)}
+        <SettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          store={store}
         />
-        <ChatInterface
-          chat={null}
-          onSendMessage={handleSendMessage}
-          onEditMessage={handleEditMessage}
-          onSaveToNotes={handleSaveToNotes}
-          className="flex-1"
-          isLoading={isLoading}
-          selectedModel={selectedModel}
-          error={error || chatError}
-        />
+        {hasNoKeys ? renderEmptyState() : (
+          <>
+            <ChatHeader
+              chat={chat}
+              chats={chats}
+              onNewChat={handleNewChat}
+              selectedModel={selectedModel}
+              onModelChange={setSelectedModel}
+              onChatSelect={handleChatSelect}
+              onChatDelete={handleDeleteChat}
+              onOpenSettings={() => setIsSettingsOpen(false)}
+              store={store}
+            />
+            <ChatInterface
+              chat={null}
+              onSendMessage={handleSendMessage}
+              onEditMessage={handleEditMessage}
+              onSaveToNotes={handleSaveToNotes}
+              className="flex-1"
+              isLoading={isLoading}
+              selectedModel={selectedModel}
+              error={error || chatError}
+            />
+          </>
+        )}
       </div>
     )
   }
@@ -244,6 +255,7 @@ export function BoardChatSystem({
           onChatSelect={handleChatSelect}
           onChatDelete={handleDeleteChat}
           onOpenSettings={() => setIsSettingsOpen(true)}
+          store={store}
         />
         <ChatInterface
           chat={chat}
@@ -256,18 +268,18 @@ export function BoardChatSystem({
           error={error || chatError}
         />
       </div>
-      <SettingsModal 
+      <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+        store={store}
       />
     </>
   )
-} 
+}
 
-
-function ChatHeader({ chat, chats, onNewChat, selectedModel, onModelChange, onChatSelect, onChatDelete, onOpenSettings }: ChatHeaderProps) {
+function ChatHeader({ chat, chats, onNewChat, selectedModel, onModelChange, onChatSelect, onChatDelete, onOpenSettings, store }: ChatHeaderProps) {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
-  const { settings } = useSettings()
+  const { settings: userSettings } = useUserSettings(store)
   const historyRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -289,7 +301,7 @@ function ChatHeader({ chat, chats, onNewChat, selectedModel, onModelChange, onCh
   }
 
   // Check if any LLM keys are set
-  const hasLLMKeys = Object.values(settings.llm).some(key => key)
+  const hasLLMKeys = Object.values(userSettings.llm).some(key => key)
 
   return (
     <div className="h-8 px-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
@@ -305,7 +317,7 @@ function ChatHeader({ chat, chats, onNewChat, selectedModel, onModelChange, onCh
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </button>
-          
+
           {isHistoryOpen && (
             <div className="absolute right-0 mt-1 w-64 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-10">
               <div className="py-1 max-h-64 overflow-y-auto">
@@ -314,27 +326,27 @@ function ChatHeader({ chat, chats, onNewChat, selectedModel, onModelChange, onCh
                   .map((historyChat) => (
                     <div
                       key={historyChat.id}
-                      className={`group flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700
-                        ${historyChat.id === chat?.id ? 'bg-gray-50 dark:bg-gray-700' : ''}`}
+                      className={`flex items-center justify-between px-4 py-2 text-sm cursor-pointer
+                        ${historyChat.id === chat?.id
+                          ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}
+                      onClick={() => {
+                        onChatSelect(historyChat)
+                        setIsHistoryOpen(false)
+                      }}
                     >
-                      <button
-                        onClick={() => {
-                          onChatSelect(historyChat)
-                          setIsHistoryOpen(false)
-                        }}
-                        className="flex-1 text-left"
-                      >
-                        <div className="truncate text-gray-900 dark:text-gray-100">{getChatPreview(historyChat)}</div>
-                      </button>
+                      <span className="truncate flex-1 mr-2">
+                        {getChatPreview(historyChat)}
+                      </span>
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
                           onChatDelete(historyChat.id)
                         }}
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-opacity"
-                        title="Delete chat"
+                        className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
                       >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
@@ -344,12 +356,7 @@ function ChatHeader({ chat, chats, onNewChat, selectedModel, onModelChange, onCh
             </div>
           )}
         </div>
-        <ModelSelector
-          value={selectedModel}
-          onChange={onModelChange}
-          className="text-[10px]"
-          onOpenSettings={onOpenSettings}
-        />
+
         <button
           onClick={onNewChat}
           className="p-1 rounded text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800"
@@ -359,6 +366,14 @@ function ChatHeader({ chat, chats, onNewChat, selectedModel, onModelChange, onCh
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
         </button>
+
+        <ModelSelector
+          value={selectedModel}
+          onChange={onModelChange}
+          onOpenSettings={onOpenSettings}
+          store={store}
+          className="text-[10px]"
+        />
       </div>
     </div>
   )

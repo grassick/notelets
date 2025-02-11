@@ -1,18 +1,26 @@
 import React, { useState } from 'react'
-import { useSettings } from '../../hooks/useSettings'
+import { useDeviceSettings, useUserSettings } from '../../hooks/useSettings'
 import ChangePasswordForm from '../../modules/auth/components/ChangePasswordForm'
 import { useAuth } from '../../modules/auth/AuthContext'
 import { AboutTab } from './AboutTab'
+import type { Store } from '../../Store'
 
 interface SettingsModalProps {
+  /** Whether the modal is open */
   isOpen: boolean
+  /** Callback when the modal is closed */
   onClose: () => void
+  /** The data store instance */
+  store: Store
 }
 
 type SettingsTab = 'appearance' | 'llm' | 'account' | 'storage' | 'about'
 
-export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const { settings, updateSettings, loading } = useSettings()
+export function SettingsModal({ isOpen, onClose, store }: SettingsModalProps) {
+  // Use device settings for appearance and storage type
+  const { settings: deviceSettings, updateSettings: updateDeviceSettings } = useDeviceSettings()
+  // Use user settings with store for LLM settings when available
+  const { settings: userSettings, updateSettings: updateUserSettings, loading: userSettingsLoading } = useUserSettings(store)
   const { logout, user } = useAuth()
   const [activeTab, setActiveTab] = useState<SettingsTab>('llm')
 
@@ -40,8 +48,16 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       if (!confirmed) return
     }
 
-    updateSettings('storage', { type: newMode })
+    updateDeviceSettings('storage', { type: newMode })
     window.location.reload() // Ensure clean state
+  }
+
+  // Get LLM settings from user settings if available
+  const llmSettings = userSettings.llm || {
+    openaiKey: '',
+    anthropicKey: '',
+    geminiKey: '',
+    deepseekKey: ''
   }
 
   return (
@@ -116,7 +132,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   ${activeTab === 'about'
                     ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                  }`}
+                    }`}
               >
                 About
               </button>
@@ -125,7 +141,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
           {/* Main Content */}
           <div className="flex-1 p-6 overflow-y-auto">
-            {loading ? (
+            {userSettingsLoading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
               </div>
@@ -139,8 +155,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     </label>
                     <input
                       type="text"
-                      value={settings.llm.openaiKey || ''}
-                      onChange={e => updateSettings('llm', { openaiKey: e.target.value })}
+                      value={llmSettings.openaiKey || ''}
+                      onChange={e => updateUserSettings('llm', { openaiKey: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
                                bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
                                focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -153,8 +169,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     </label>
                     <input
                       type="text"
-                      value={settings.llm.anthropicKey || ''}
-                      onChange={e => updateSettings('llm', { anthropicKey: e.target.value })}
+                      value={llmSettings.anthropicKey || ''}
+                      onChange={e => updateUserSettings('llm', { anthropicKey: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
                                bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
                                focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -167,8 +183,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     </label>
                     <input
                       type="text"
-                      value={settings.llm.geminiKey || ''}
-                      onChange={e => updateSettings('llm', { geminiKey: e.target.value })}
+                      value={llmSettings.geminiKey || ''}
+                      onChange={e => updateUserSettings('llm', { geminiKey: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
                                bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
                                focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -181,8 +197,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     </label>
                     <input
                       type="text"
-                      value={settings.llm.deepseekKey || ''}
-                      onChange={e => updateSettings('llm', { deepseekKey: e.target.value })}
+                      value={llmSettings.deepseekKey || ''}
+                      onChange={e => updateUserSettings('llm', { deepseekKey: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
                                bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
                                focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -202,17 +218,17 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="flex items-center justify-between">
                   <label className="text-sm text-gray-700 dark:text-gray-300">Dark Mode</label>
                   <button
-                    onClick={() => updateSettings('appearance', {
-                      darkMode: !settings.appearance.darkMode
+                    onClick={() => updateDeviceSettings('appearance', {
+                      darkMode: !deviceSettings.appearance.darkMode
                     })}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full
-                      ${settings.appearance.darkMode
+                      ${deviceSettings.appearance.darkMode
                         ? 'bg-blue-600'
                         : 'bg-gray-200 dark:bg-gray-700'}`}
                   >
                     <span
                       className={`inline-block h-4 w-4 transform rounded-full bg-white transition
-                        ${settings.appearance.darkMode ? 'translate-x-6' : 'translate-x-1'}`}
+                        ${deviceSettings.appearance.darkMode ? 'translate-x-6' : 'translate-x-1'}`}
                     />
                   </button>
                 </div>
@@ -252,10 +268,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      Current Mode: {settings.storage.type === 'local' ? 'Local' : 'Cloud'}
+                      Current Mode: {deviceSettings.storage.type === 'local' ? 'Local' : 'Cloud'}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      {settings.storage.type === 'local'
+                      {deviceSettings.storage.type === 'local'
                         ? 'Storing data on this device only'
                         : 'Syncing data through your account'}
                     </p>
@@ -263,15 +279,15 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
                   <button
                     onClick={() => handleChange(
-                      settings.storage.type === 'local' ? 'cloud' : 'local'
+                      deviceSettings.storage.type === 'local' ? 'cloud' : 'local'
                     )}
                     className="ml-4 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md"
                   >
-                    Switch to {settings.storage.type === 'local' ? 'Cloud' : 'Local'}
+                    Switch to {deviceSettings.storage.type === 'local' ? 'Cloud' : 'Local'}
                   </button>
                 </div>
 
-                {settings.storage.type === 'local' && (
+                {deviceSettings.storage.type === 'local' && (
                   <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
                     <p className="text-sm text-yellow-700 dark:text-yellow-300">
                       ⚠️ Local Mode Notice: Your notes are only saved on this device/browser.

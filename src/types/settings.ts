@@ -26,9 +26,4 @@ export interface UserSettings {
     /** DeepSeek API key */
     deepseekKey?: string
   }
-}
-
-/** Combined settings type */
-export interface Settings extends DeviceSettings {
-  llm: UserSettings['llm']
 } 

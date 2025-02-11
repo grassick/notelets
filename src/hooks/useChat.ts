@@ -1,13 +1,16 @@
 import { useState, useCallback } from 'react'
 import type { Chat, ChatMessage, Card, RichTextCard } from '../types'
 import { LLMFactory, type ModelId, type LLMProvider, getProviderForModel } from '../api/llm'
-import { useSettings } from './useSettings'
+import { useDeviceSettings, useUserSettings } from './useSettings'
+import { UserSettings } from '../types/settings'
 
 interface UseChatOptions {
     /** Cards to use for context */
     cards: Card[]
     /** Callback when chat is updated */
     onChatUpdate: (chat: Chat) => void
+    /** User settings */
+    userSettings: UserSettings
 }
 
 interface UseChatResult {
@@ -24,8 +27,7 @@ interface UseChatResult {
 /**
  * Hook to manage chat state and API interactions
  */
-export function useChat({ cards, onChatUpdate }: UseChatOptions): UseChatResult {
-    const { settings } = useSettings()
+export function useChat({ cards, onChatUpdate, userSettings }: UseChatOptions): UseChatResult {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<Error | null>(null)
     const [providerCache] = useState<Map<string, LLMProvider>>(new Map())
@@ -55,7 +57,7 @@ export function useChat({ cards, onChatUpdate }: UseChatOptions): UseChatResult 
             throw new Error(`Unknown model: ${modelId}`)
         }
 
-        const apiKey = settings.llm[`${provider}Key` as keyof typeof settings.llm]
+        const apiKey = userSettings.llm[`${provider}Key` as keyof typeof userSettings.llm]
         if (!apiKey) {
             throw new Error(`Missing API key for ${provider}`)
         }
@@ -68,7 +70,7 @@ export function useChat({ cards, onChatUpdate }: UseChatOptions): UseChatResult 
         const newProvider = await LLMFactory.createProvider(modelId, apiKey)
         providerCache.set(cacheKey, newProvider)
         return newProvider
-    }, [settings.llm, providerCache])
+    }, [userSettings.llm, providerCache])
 
     /**
      * Gets an assistant response for the given chat using the specified model

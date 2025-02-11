@@ -22,13 +22,33 @@ export function WelcomeScreen({ onChoose }: WelcomeScreenProps) {
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-4">
             Your personal space for notes, thoughts, and ideas.
           </p>
-          <div className="max-w-2xl mx-auto mb-8 mt-4">
+          <div className="max-w-2xl mx-auto mb-4">
             <h2 className="text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
               Chat with Advanced AI Models
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
               Notelets supports multiple AI models including Claude 3.5, Gemini 2.0, and GPT-o3. This is a bring-your-own-keys application, 
               which means you'll need to provide your own API keys in the settings to use these models.
+            </p>
+          </div>
+          <div className="max-w-2xl mx-auto mb-8">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Created by{' '}
+              <a 
+                href="mailto:clayton@claytronics.org"
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Clayton Grassick
+              </a>
+              {' • '}
+              <a 
+                href="https://github.com/grassick/notelets"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Open Source on GitHub
+              </a>
             </p>
           </div>
         </div>

@@ -2,17 +2,18 @@ import React, { useState } from 'react'
 import { useSettings } from '../../hooks/useSettings'
 import ChangePasswordForm from '../../modules/auth/components/ChangePasswordForm'
 import { useAuth } from '../../modules/auth/AuthContext'
+import { AboutTab } from './AboutTab'
 
 interface SettingsModalProps {
   isOpen: boolean
   onClose: () => void
 }
 
-type SettingsTab = 'appearance' | 'llm' | 'account' | 'storage'
+type SettingsTab = 'appearance' | 'llm' | 'account' | 'storage' | 'about'
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { settings, updateSettings } = useSettings()
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
   const [activeTab, setActiveTab] = useState<SettingsTab>('llm')
 
   if (!isOpen) return null
@@ -87,14 +88,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               >
                 Appearance
               </button>
-              {settings.storage.type === 'cloud' && (
+              {user && (
                 <button
                   onClick={() => setActiveTab('account')}
-                className={`w-full px-3 py-2 text-sm rounded-md text-left
-                  ${activeTab === 'account'
-                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                  }`}
+                  className={`w-full px-3 py-2 text-sm rounded-md text-left
+                    ${activeTab === 'account'
+                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    }`}
                 >
                   Account
                 </button>
@@ -108,6 +109,16 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   }`}
               >
                 Storage
+              </button>
+              <button
+                onClick={() => setActiveTab('about')}
+                className={`w-full px-3 py-2 text-sm rounded-md text-left
+                  ${activeTab === 'about'
+                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}
+              >
+                About
               </button>
             </nav>
           </div>
@@ -206,26 +217,32 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
             )}
 
-            {activeTab === 'account' && (
+            {activeTab === 'account' && user && (
               <div className="space-y-6">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Account Settings</h3>
                 <div className="space-y-6">
                   <div>
-                    <ChangePasswordForm onSuccess={onClose} onCancel={() => setActiveTab('llm')} />
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                      Manage your account settings and preferences.
+                    </p>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Signed in as: {user.email}
+                    </div>
                   </div>
+                  <ChangePasswordForm onSuccess={onClose} onCancel={() => setActiveTab('llm')} />
+                </div>
 
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Account Actions</h4>
-                    <button
-                      onClick={async () => {
-                        await logout()
-                        onClose()
-                      }}
-                      className="inline-flex justify-center rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:border-red-700 dark:bg-gray-800 dark:text-red-400 dark:hover:bg-red-900/50"
-                    >
-                      Sign Out
-                    </button>
-                  </div>
+                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Account Actions</h4>
+                  <button
+                    onClick={async () => {
+                      await logout()
+                      onClose()
+                    }}
+                    className="inline-flex justify-center rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:border-red-700 dark:bg-gray-800 dark:text-red-400 dark:hover:bg-red-900/50"
+                  >
+                    Sign Out
+                  </button>
                 </div>
               </div>
             )}
@@ -265,6 +282,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   </div>
                 )}
               </div>
+            )}
+
+            {activeTab === 'about' && (
+              <AboutTab />
             )}
           </div>
         </div>

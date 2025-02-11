@@ -102,7 +102,9 @@ export function TabsView(props: {
             <FaPlus size={12} />
           </Tab>
         </div>
-        <SettingsButton />
+        <div className="flex items-center gap-1">
+          <SettingsButton />
+        </div>
       </div>
       
       <div className="h-full overflow-auto">

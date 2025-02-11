@@ -1,5 +1,6 @@
 import { Store } from '../../Store'
-import type { Board, Card, Chat, ChatId } from '../../types'
+import type { Board, Card, Chat } from '../../types'
+import type { UserSettings } from '../../types/settings'
 
 /**
  * LocalStore implementation that uses IndexedDB for storage
@@ -38,6 +39,9 @@ export class LocalStore implements Store {
                 if (!db.objectStoreNames.contains('chats')) {
                     db.createObjectStore('chats', { keyPath: 'id' })
                 }
+                if (!db.objectStoreNames.contains('settings')) {
+                    db.createObjectStore('settings', { keyPath: 'id' })
+                }
             }
         })
     }
@@ -52,7 +56,7 @@ export class LocalStore implements Store {
         return this.db
     }
 
-    private getStore(name: 'boards' | 'cards' | 'chats', mode: IDBTransactionMode = 'readonly'): IDBObjectStore {
+    private getStore(name: 'boards' | 'cards' | 'chats' | 'settings', mode: IDBTransactionMode = 'readonly'): IDBObjectStore {
         const db = this.db
         if (!db) {
             throw new Error('Database not initialized')
@@ -254,7 +258,7 @@ export class LocalStore implements Store {
         })
     }
 
-    removeChat = async (chatId: ChatId): Promise<void> => {
+    removeChat = async (chatId: string): Promise<void> => {
         await this.ensureDB()
         return new Promise((resolve, reject) => {
             const store = this.getStore('chats', 'readwrite')
@@ -295,7 +299,7 @@ export class LocalStore implements Store {
         return this.addListener(`chats:${boardId}`, fetchAndNotify)
     }
 
-    getChat = (chatId: ChatId, callback: (chat: Chat | null) => void): () => void => {
+    getChat = (chatId: string, callback: (chat: Chat | null) => void): () => void => {
         const fetchAndNotify = async () => {
             await this.ensureDB()
             const store = this.getStore('chats')
@@ -306,5 +310,31 @@ export class LocalStore implements Store {
 
         fetchAndNotify()
         return this.addListener(`chat:${chatId}`, fetchAndNotify)
+    }
+
+    getUserSettings = (callback: (settings: UserSettings | null) => void): () => void => {
+        const fetchAndNotify = async () => {
+            await this.ensureDB()
+            const store = this.getStore('settings')
+            const request = store.get('user')
+            request.onerror = () => console.error('Failed to fetch settings:', request.error)
+            request.onsuccess = () => callback(request.result || null)
+        }
+
+        fetchAndNotify()
+        return this.addListener('settings:user', fetchAndNotify)
+    }
+
+    setUserSettings = async (settings: UserSettings): Promise<void> => {
+        await this.ensureDB()
+        return new Promise((resolve, reject) => {
+            const store = this.getStore('settings', 'readwrite')
+            const request = store.put({ id: 'user', ...settings })
+            request.onerror = () => reject(request.error)
+            request.onsuccess = () => {
+                this.notifyListeners('settings:user', settings)
+                resolve()
+            }
+        })
     }
 } 

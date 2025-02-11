@@ -1,5 +1,6 @@
-import { EncryptedBlob } from './EncryptedTypes'
+import type { EncryptedBlob } from './EncryptedTypes'
 import type { Board, Card, Chat } from '../../types'
+import type { UserSettings } from '../../types/settings'
 
 /**
  * Configuration for the encryption system
@@ -172,4 +173,25 @@ export async function encryptChatData(data: ChatData, password: string): Promise
 export async function decryptChatData(encrypted: EncryptedBlob, password: string): Promise<ChatData> {
     const decrypted = await decrypt(encrypted, password)
     return JSON.parse(decrypted) as ChatData
+}
+
+/**
+ * Encrypt user settings data
+ */
+export async function encryptUserSettings(
+    settings: UserSettings,
+    password: string
+): Promise<EncryptedBlob> {
+    return encrypt(JSON.stringify(settings), password)
+}
+
+/**
+ * Decrypt user settings data
+ */
+export async function decryptUserSettings(
+    encrypted: EncryptedBlob,
+    password: string
+): Promise<UserSettings> {
+    const decrypted = await decrypt(encrypted, password)
+    return JSON.parse(decrypted) as UserSettings
 } 

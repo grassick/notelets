@@ -4,7 +4,7 @@
 export interface EncryptedBlob {
     /** The encrypted data as a base64 string */
     ciphertext: string
-    /** The initialization vector used for encryption as a base64 string */
+    /** The initialization vector used for encryption */
     iv: string
 }
 
@@ -12,15 +12,15 @@ export interface EncryptedBlob {
  * Encrypted version of a Card
  */
 export interface EncryptedCard {
-    /** Unique identifier for the card */
-    id: CardId
-    /** Board that the card belongs to */
-    boardId: BoardId
-    /** Timestamp when the card was created in ISO 8601 format */
+    /** The document ID */
+    id: string
+    /** The board this card belongs to */
+    boardId: string
+    /** When the card was created in ISO 8601 format */
     createdAt: string
-    /** Timestamp when the card was last updated in ISO 8601 format */
+    /** When the card was last updated in ISO 8601 format */
     updatedAt: string
-    /** The encrypted card data (type, title, content, etc.) */
+    /** The encrypted card data */
     data: EncryptedBlob
 }
 
@@ -28,15 +28,15 @@ export interface EncryptedCard {
  * Encrypted version of a Chat
  */
 export interface EncryptedChat {
-    /** Unique identifier for the chat */
-    id: ChatId
-    /** Board that the chat belongs to */
-    boardId: BoardId
-    /** Timestamp when the chat was created in ISO 8601 format */
+    /** The document ID */
+    id: string
+    /** The board this chat belongs to */
+    boardId: string
+    /** When the chat was created in ISO 8601 format */
     createdAt: string
-    /** Timestamp when the chat was last updated in ISO 8601 format */
+    /** When the chat was last updated in ISO 8601 format */
     updatedAt: string
-    /** The encrypted chat data (title, messages, etc.) */
+    /** The encrypted chat data */
     data: EncryptedBlob
 }
 
@@ -44,17 +44,35 @@ export interface EncryptedChat {
  * Encrypted version of a Board
  */
 export interface EncryptedBoard {
-    /** Unique identifier for the board */
-    id: BoardId
+    /** The document ID */
+    id: string
     /** Timestamp when the board was created in ISO 8601 format */
     createdAt: string
     /** Timestamp when the board was last updated in ISO 8601 format */
     updatedAt: string
-    /** The encrypted board data (title, viewType, layoutConfig, etc.) */
+    /** The encrypted board data */
     data: EncryptedBlob
 }
 
-import type { BoardId, CardId, ChatId } from '../../types'
+/**
+ * Encrypted version of a Document
+ */
+export interface EncryptedDocument {
+    /** The document ID */
+    id: string
+    /** The encrypted data */
+    data: EncryptedBlob
+}
+
+/**
+ * Encrypted version of a User Settings
+ */
+export interface EncryptedUserSettings {
+    /** The settings ID (always 'user') */
+    id: 'user'
+    /** The encrypted settings data */
+    data: EncryptedBlob
+}
 
 /**
  * Interface for a store that handles encrypted data
@@ -105,12 +123,12 @@ export interface EncryptedStore {
     setCard(card: EncryptedCard): Promise<void>
 
     /**
-     * Removes an encrypted card
+     * Removes a card
      */
     removeCard(cardId: string): Promise<void>
 
     /**
-     * Retrieves all encrypted cards belonging to a board
+     * Retrieves all encrypted cards for a board
      */
     getCardsByBoard(boardId: string, callback: (cards: EncryptedCard[]) => void): () => void
 
@@ -125,17 +143,27 @@ export interface EncryptedStore {
     setChat(chat: EncryptedChat): Promise<void>
 
     /**
-     * Removes an encrypted chat
+     * Removes a chat
      */
-    removeChat(chatId: ChatId): Promise<void>
+    removeChat(chatId: string): Promise<void>
 
     /**
-     * Retrieves all encrypted chats belonging to a board
+     * Retrieves all encrypted chats for a board
      */
     getChatsByBoard(boardId: string, callback: (chats: EncryptedChat[]) => void): () => void
 
     /**
      * Retrieves a single encrypted chat by its ID
      */
-    getChat(chatId: ChatId, callback: (chat: EncryptedChat | null) => void): () => void
+    getChat(chatId: string, callback: (chat: EncryptedChat | null) => void): () => void
+
+    /**
+     * Retrieves encrypted user settings
+     */
+    getUserSettings(callback: (settings: EncryptedUserSettings | null) => void): () => void
+
+    /**
+     * Updates encrypted user settings
+     */
+    setUserSettings(settings: EncryptedUserSettings): Promise<void>
 } 

@@ -1,19 +1,12 @@
-/** Unique identifier for a board */
-export type BoardId = string
-/** Unique identifier for a card */
-export type CardId = string
-/** Unique identifier for a chat */
-export type ChatId = string
-
 /**
  * Base interface for all card types
  * Contains common properties shared across all cards
  */
 interface BaseCard {
     /** Unique identifier for the card */
-    id: CardId
+    id: string
     /** Board that the card belongs to */
-    boardId: BoardId
+    boardId: string
     /** Title of the card */
     title: string
     /** Timestamp when the card was created in ISO 8601 format */
@@ -86,9 +79,9 @@ export interface ChatMessage {
  */
 export interface Chat {
     /** Unique identifier for the chat */
-    id: ChatId
+    id: string
     /** Board that the chat belongs to */
-    boardId: BoardId
+    boardId: string
     /** Title of the chat thread */
     title: string
     /** Array of messages in the chat */
@@ -105,7 +98,7 @@ export interface Chat {
  */
 export interface Board {
     /** Unique identifier for the board */
-    id: BoardId
+    id: string
     /** Title of the board */
     title: string
     /** Visual layout type for displaying the board */
@@ -113,15 +106,15 @@ export interface Board {
     /** Layout configuration that varies by view type */
     layoutConfig: {
         /** For canvas view: store position/size per card */
-        canvas?: Record<CardId, {
+        canvas?: Record<string, {
             position: { x: number; y: number }
             size: { width: number; height: number }
         }>
         /** For vertical/sidebar views: store display order */
-        linear?: CardId[] // Array of card IDs in display order
+        linear?: string[] // Array of card IDs in display order
         /** For single view: store currently selected card */
         single?: {
-            currentCard: CardId
+            currentCard: string
         }
     }
     /** Timestamp when the board was created in ISO 8601 format */
@@ -138,5 +131,5 @@ export interface BoardTab {
     /** Unique identifier for the tab */
     id: string
     /** ID of the board being displayed */
-    boardId: BoardId
+    boardId: string
 }

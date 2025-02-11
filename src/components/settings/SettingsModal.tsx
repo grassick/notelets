@@ -12,7 +12,7 @@ interface SettingsModalProps {
 type SettingsTab = 'appearance' | 'llm' | 'account' | 'storage' | 'about'
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const { settings, updateSettings } = useSettings()
+  const { settings, updateSettings, loading } = useSettings()
   const { logout, user } = useAuth()
   const [activeTab, setActiveTab] = useState<SettingsTab>('llm')
 
@@ -125,7 +125,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
           {/* Main Content */}
           <div className="flex-1 p-6 overflow-y-auto">
-            {activeTab === 'llm' && (
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              </div>
+            ) : activeTab === 'llm' ? (
               <div className="space-y-6">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">LLM Settings</h3>
                 <div className="space-y-4">
@@ -192,9 +196,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <a href="https://platform.openai.com/" className="text-blue-600 dark:text-blue-400 hover:underline">OpenAI</a>. Your keys are never leave your device except for the API calls.
                 </p>
               </div>
-            )}
-
-            {activeTab === 'appearance' && (
+            ) : activeTab === 'appearance' ? (
               <div className="space-y-6">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Appearance</h3>
                 <div className="flex items-center justify-between">
@@ -215,9 +217,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   </button>
                 </div>
               </div>
-            )}
-
-            {activeTab === 'account' && user && (
+            ) : activeTab === 'account' && user ? (
               <div className="space-y-6">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Account Settings</h3>
                 <div className="space-y-6">
@@ -245,9 +245,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   </button>
                 </div>
               </div>
-            )}
-
-            {activeTab === 'storage' && (
+            ) : activeTab === 'storage' ? (
               <div className="space-y-6">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Storage Mode</h3>
 
@@ -282,11 +280,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   </div>
                 )}
               </div>
-            )}
-
-            {activeTab === 'about' && (
+            ) : activeTab === 'about' ? (
               <AboutTab />
-            )}
+            ) : null}
           </div>
         </div>
       </div>

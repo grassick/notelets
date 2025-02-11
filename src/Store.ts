@@ -1,5 +1,6 @@
-import type { Card, Board, Chat, ChatId } from "./types"
+import type { Card, Board, Chat } from "./types"
 import { useState, useEffect, useRef, useCallback } from "react"
+import type { UserSettings } from "./types/settings"
 
 export interface Store {
     /**
@@ -46,7 +47,7 @@ export interface Store {
     removeCard(cardId: string): Promise<void>
 
     /**
-     * Retrieves all cards belonging to a specific board
+     * Retrieves all cards for a board from the store
      * @param boardId The ID of the board whose cards to retrieve
      * @param callback Function called with array of cards
      * @returns Function to unsubscribe from updates
@@ -73,10 +74,10 @@ export interface Store {
      * @param chatId The ID of the chat to remove
      * @returns Promise that resolves when the chat is removed
      */
-    removeChat(chatId: ChatId): Promise<void>
+    removeChat(chatId: string): Promise<void>
 
     /**
-     * Retrieves all chats belonging to a specific board
+     * Retrieves all chats for a board from the store
      * @param boardId The ID of the board whose chats to retrieve
      * @param callback Function called with array of chats
      * @returns Function to unsubscribe from updates
@@ -89,7 +90,21 @@ export interface Store {
      * @param callback Function called with the chat or null if not found
      * @returns Function to unsubscribe from updates
      */
-    getChat(chatId: ChatId, callback: (chat: Chat | null) => void): () => void
+    getChat(chatId: string, callback: (chat: Chat | null) => void): () => void
+
+    /**
+     * Retrieves user settings from the store
+     * @param callback Function called with the settings or null if not found
+     * @returns Function to unsubscribe from updates
+     */
+    getUserSettings(callback: (settings: UserSettings | null) => void): () => void
+
+    /**
+     * Updates user settings in the store
+     * @param settings The settings to save
+     * @returns Promise that resolves when the settings are persisted
+     */
+    setUserSettings(settings: UserSettings): Promise<void>
 }
 
 
@@ -432,7 +447,7 @@ export function useChats(store: Store, boardId: string) {
  * @param store The store instance
  * @param chatId ID of the chat to load
  */
-export function useChat(store: Store, chatId: ChatId) {
+export function useChat(store: Store, chatId: string) {
     const { document, loading, error, setDocument, removeDocument } = useDocument<Chat>({
         getDocument: store.getChat,
         updateDocument: store.setChat,

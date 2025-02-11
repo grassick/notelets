@@ -1,25 +1,14 @@
-import {
-    collection,
-    doc,
-    setDoc,
-    deleteDoc,
-    query,
-    where,
-    onSnapshot,
-    getDoc,
-} from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
+import { collection, doc, setDoc, deleteDoc, onSnapshot, query, where, getDoc } from 'firebase/firestore'
 import { db } from '../firebase/config'
-import type { EncryptedStore, EncryptedBoard, EncryptedCard, EncryptedChat, EncryptedBlob } from './EncryptedTypes'
-import type { ChatId } from '../../types'
+import type { EncryptedStore, EncryptedBoard, EncryptedCard, EncryptedChat, EncryptedUserSettings, EncryptedBlob } from './EncryptedTypes'
 import { encrypt, decrypt } from './crypto'
 
 // Known text that we'll encrypt to validate the password
-const VALIDATION_TEXT = 'VALID_NOTELETS_ENCRYPTION_V1'
+const TEST_DATA = 'test-encryption'
 
 /**
  * Implementation of EncryptedStore using Firebase Firestore
- * Handles per-user data isolation and stores encrypted data
  */
 export class EncryptedFirestoreStore implements EncryptedStore {
     private getUserId(): string {
@@ -28,135 +17,196 @@ export class EncryptedFirestoreStore implements EncryptedStore {
         return user.uid
     }
 
-    private getValidationDocRef() {
-        const userId = this.getUserId()
-        return doc(db, `encrypted-users/${userId}/_validation/encryption`)
-    }
-
     async isInitialized(): Promise<boolean> {
-        const validationDoc = await getDoc(this.getValidationDocRef())
-        return validationDoc.exists()
+        const userId = this.getUserId()
+        const docRef = doc(db, `users/${userId}/settings/encryption`)
+        const snapshot = await getDoc(docRef)
+        return snapshot.exists()
     }
 
     async initialize(password: string): Promise<void> {
-        // Check if already initialized
         if (await this.isInitialized()) {
             throw new Error('Encryption already initialized')
         }
 
-        // Create validation document
-        const encrypted = await encrypt(VALIDATION_TEXT, password)
-        await setDoc(this.getValidationDocRef(), {
-            validation: encrypted
+        // Create test data to validate password later
+        const encrypted = await encrypt(TEST_DATA, password)
+        const userId = this.getUserId()
+        await setDoc(doc(db, `users/${userId}/settings/encryption`), {
+            test: encrypted
         })
     }
 
     async validatePassword(password: string): Promise<boolean> {
-        try {
-            const validationDoc = await getDoc(this.getValidationDocRef())
-            if (!validationDoc.exists()) {
-                return false
-            }
+        const userId = this.getUserId()
+        const docRef = doc(db, `users/${userId}/settings/encryption`)
+        const snapshot = await getDoc(docRef)
+        
+        if (!snapshot.exists()) {
+            return false
+        }
 
-            const data = validationDoc.data()
-            const encrypted = data.validation as EncryptedBlob
-            const decrypted = await decrypt(encrypted, password)
-            return decrypted === VALIDATION_TEXT
-        } catch (error) {
+        try {
+            const data = snapshot.data()
+            const decrypted = await decrypt(data.test, password)
+            return decrypted === TEST_DATA
+        } catch {
             return false
         }
     }
 
-    async setBoard(board: EncryptedBoard): Promise<void> {
+    setBoard = async (board: EncryptedBoard): Promise<void> => {
         const userId = this.getUserId()
-        await setDoc(doc(db, `encrypted-users/${userId}/boards/${board.id}`), board)
+        const { id, ...rest } = board
+        await setDoc(doc(db, `users/${userId}/boards/${id}`), rest)
     }
 
-    async removeBoard(boardId: string): Promise<void> {
+    removeBoard = async (boardId: string): Promise<void> => {
         const userId = this.getUserId()
-        await deleteDoc(doc(db, `encrypted-users/${userId}/boards/${boardId}`))
+        await deleteDoc(doc(db, `users/${userId}/boards/${boardId}`))
     }
 
-    getBoards(callback: (boards: EncryptedBoard[]) => void): () => void {
+    getBoards = (callback: (boards: EncryptedBoard[]) => void): () => void => {
         const userId = this.getUserId()
-        const q = collection(db, `encrypted-users/${userId}/boards`)
+        const q = collection(db, `users/${userId}/boards`)
         
         return onSnapshot(q, (snapshot) => {
-            const boards = snapshot.docs.map(doc => doc.data() as EncryptedBoard)
+            const boards = snapshot.docs.map(doc => ({
+                id: doc.id,
+                createdAt: doc.data().createdAt,
+                updatedAt: doc.data().updatedAt,
+                data: doc.data().data
+            }))
             callback(boards)
         })
     }
 
-    getBoard(boardId: string, callback: (board: EncryptedBoard | null) => void): () => void {
+    getBoard = (boardId: string, callback: (board: EncryptedBoard | null) => void): () => void => {
         const userId = this.getUserId()
-        const docRef = doc(db, `encrypted-users/${userId}/boards/${boardId}`)
+        const docRef = doc(db, `users/${userId}/boards/${boardId}`)
         
         return onSnapshot(docRef, (doc) => {
-            callback(doc.exists() ? doc.data() as EncryptedBoard : null)
+            if (!doc.exists()) {
+                callback(null)
+                return
+            }
+            const data = doc.data()
+            callback({
+                id: doc.id,
+                createdAt: data.createdAt,
+                updatedAt: data.updatedAt,
+                data: data.data
+            })
         })
     }
 
-    async setCard(card: EncryptedCard): Promise<void> {
+    setCard = async (card: EncryptedCard): Promise<void> => {
         const userId = this.getUserId()
-        await setDoc(doc(db, `encrypted-users/${userId}/cards/${card.id}`), card)
+        const { id, ...rest } = card
+        await setDoc(doc(db, `users/${userId}/cards/${id}`), rest)
     }
 
-    async removeCard(cardId: string): Promise<void> {
+    removeCard = async (cardId: string): Promise<void> => {
         const userId = this.getUserId()
-        await deleteDoc(doc(db, `encrypted-users/${userId}/cards/${cardId}`))
+        await deleteDoc(doc(db, `users/${userId}/cards/${cardId}`))
     }
 
-    getCardsByBoard(boardId: string, callback: (cards: EncryptedCard[]) => void): () => void {
+    getCardsByBoard = (boardId: string, callback: (cards: EncryptedCard[]) => void): () => void => {
         const userId = this.getUserId()
         const q = query(
-            collection(db, `encrypted-users/${userId}/cards`),
+            collection(db, `users/${userId}/cards`),
             where('boardId', '==', boardId)
         )
         
         return onSnapshot(q, (snapshot) => {
-            const cards = snapshot.docs.map(doc => doc.data() as EncryptedCard)
+            const cards = snapshot.docs.map(doc => ({
+                id: doc.id,
+                boardId: doc.data().boardId,
+                createdAt: doc.data().createdAt,
+                updatedAt: doc.data().updatedAt,
+                data: doc.data().data
+            }))
             callback(cards)
         })
     }
 
-    getCard(cardId: string, callback: (card: EncryptedCard | null) => void): () => void {
+    getCard = (cardId: string, callback: (card: EncryptedCard | null) => void): () => void => {
         const userId = this.getUserId()
-        const docRef = doc(db, `encrypted-users/${userId}/cards/${cardId}`)
+        const docRef = doc(db, `users/${userId}/cards/${cardId}`)
         
         return onSnapshot(docRef, (doc) => {
-            callback(doc.exists() ? doc.data() as EncryptedCard : null)
+            if (!doc.exists()) {
+                callback(null)
+                return
+            }
+            const data = doc.data()
+            callback({
+                id: doc.id,
+                boardId: data.boardId,
+                createdAt: data.createdAt,
+                updatedAt: data.updatedAt,
+                data: data.data
+            })
         })
     }
 
-    async setChat(chat: EncryptedChat): Promise<void> {
+    setChat = async (chat: EncryptedChat): Promise<void> => {
         const userId = this.getUserId()
-        await setDoc(doc(db, `encrypted-users/${userId}/chats/${chat.id}`), chat)
+        const { id, ...rest } = chat
+        await setDoc(doc(db, `users/${userId}/chats/${id}`), rest)
     }
 
-    async removeChat(chatId: ChatId): Promise<void> {
+    removeChat = async (chatId: string): Promise<void> => {
         const userId = this.getUserId()
-        await deleteDoc(doc(db, `encrypted-users/${userId}/chats/${chatId}`))
+        await deleteDoc(doc(db, `users/${userId}/chats/${chatId}`))
     }
 
-    getChatsByBoard(boardId: string, callback: (chats: EncryptedChat[]) => void): () => void {
+    getChatsByBoard = (boardId: string, callback: (chats: EncryptedChat[]) => void): () => void => {
         const userId = this.getUserId()
         const q = query(
-            collection(db, `encrypted-users/${userId}/chats`),
+            collection(db, `users/${userId}/chats`),
             where('boardId', '==', boardId)
         )
         
         return onSnapshot(q, (snapshot) => {
-            const chats = snapshot.docs.map(doc => doc.data() as EncryptedChat)
+            const chats = snapshot.docs.map(doc => ({
+                id: doc.id,
+                boardId: doc.data().boardId,
+                createdAt: doc.data().createdAt,
+                updatedAt: doc.data().updatedAt,
+                data: doc.data().data
+            }))
             callback(chats)
         })
     }
 
-    getChat(chatId: ChatId, callback: (chat: EncryptedChat | null) => void): () => void {
+    getChat = (chatId: string, callback: (chat: EncryptedChat | null) => void): () => void => {
         const userId = this.getUserId()
-        const docRef = doc(db, `encrypted-users/${userId}/chats/${chatId}`)
+        const docRef = doc(db, `users/${userId}/chats/${chatId}`)
         
         return onSnapshot(docRef, (doc) => {
-            callback(doc.exists() ? doc.data() as EncryptedChat : null)
+            callback(doc.exists() ? {
+                id: doc.id,
+                ...doc.data()
+            } as EncryptedChat : null)
         })
+    }
+
+    getUserSettings = (callback: (settings: EncryptedUserSettings | null) => void): () => void => {
+        const userId = this.getUserId()
+        const docRef = doc(db, `users/${userId}/settings/user`)
+        
+        return onSnapshot(docRef, (doc) => {
+            callback(doc.exists() ? {
+                id: 'user',
+                ...doc.data()
+            } as EncryptedUserSettings : null)
+        })
+    }
+
+    setUserSettings = async (settings: EncryptedUserSettings): Promise<void> => {
+        const userId = this.getUserId()
+        const { id, ...rest } = settings
+        await setDoc(doc(db, `users/${userId}/settings/user`), rest)
     }
 } 

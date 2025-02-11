@@ -84,7 +84,8 @@ function MainContent() {
           if (storedPassword) {
             const isValid = await encrypted.validatePassword(storedPassword)
             if (isValid) {
-              setStore(new EncryptedStoreWrapper(encrypted, storedPassword))
+              const wrapper = new EncryptedStoreWrapper(encrypted, storedPassword)
+              setStore(wrapper)
               setIsLoading(false)
               return
             }

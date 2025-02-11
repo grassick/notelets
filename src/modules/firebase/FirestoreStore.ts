@@ -8,7 +8,8 @@ import {
     onSnapshot,
 } from 'firebase/firestore'
 import type { Store } from '../../Store'
-import type { Board, Card, Chat, ChatId } from '../../types'
+import type { Board, Card, Chat } from '../../types'
+import type { UserSettings } from '../../types/settings'
 import { db } from './config'
 import { getAuth } from 'firebase/auth'
 
@@ -89,7 +90,7 @@ export class FirestoreStore implements Store {
         await setDoc(doc(db, `users/${userId}/chats/${chat.id}`), chat)
     }
 
-    removeChat = async (chatId: ChatId): Promise<void> => {
+    removeChat = async (chatId: string): Promise<void> => {
         const userId = this.getUserId()
         await deleteDoc(doc(db, `users/${userId}/chats/${chatId}`))
     }
@@ -107,12 +108,26 @@ export class FirestoreStore implements Store {
         })
     }
 
-    getChat = (chatId: ChatId, callback: (chat: Chat | null) => void): () => void => {
+    getChat = (chatId: string, callback: (chat: Chat | null) => void): () => void => {
         const userId = this.getUserId()
         const docRef = doc(db, `users/${userId}/chats/${chatId}`)
         
         return onSnapshot(docRef, (doc) => {
             callback(doc.exists() ? doc.data() as Chat : null)
         })
+    }
+
+    getUserSettings = (callback: (settings: UserSettings | null) => void): () => void => {
+        const userId = this.getUserId()
+        const docRef = doc(db, `users/${userId}/settings/user`)
+        
+        return onSnapshot(docRef, (doc) => {
+            callback(doc.exists() ? doc.data() as UserSettings : null)
+        })
+    }
+
+    setUserSettings = async (settings: UserSettings): Promise<void> => {
+        const userId = this.getUserId()
+        await setDoc(doc(db, `users/${userId}/settings/user`), settings)
     }
 } 

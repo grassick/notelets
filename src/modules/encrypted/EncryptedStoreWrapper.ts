@@ -1,5 +1,6 @@
 import type { Store } from '../../Store'
-import type { Board, Card, Chat, ChatId } from '../../types'
+import type { Board, Card, Chat } from '../../types'
+import type { UserSettings } from '../../types/settings'
 import type { EncryptedStore } from './EncryptedTypes'
 import {
     encryptBoardData,
@@ -7,7 +8,9 @@ import {
     encryptCardData,
     decryptCardData,
     encryptChatData,
-    decryptChatData
+    decryptChatData,
+    encryptUserSettings,
+    decryptUserSettings
 } from './crypto'
 
 /**
@@ -107,13 +110,19 @@ export class EncryptedStoreWrapper implements Store {
                         try {
                             const { id, boardId, createdAt, updatedAt, data } = encryptedCard
                             const decryptedData = await decryptCardData(data, this.password)
-                            return {
+                            const card = {
                                 ...decryptedData,
                                 id,
                                 boardId,
                                 createdAt,
                                 updatedAt
-                            } as Card
+                            }
+                            // Validate the card type
+                            if (!isValidCard(card)) {
+                                console.error('Invalid card data:', card)
+                                return null
+                            }
+                            return card
                         } catch (error) {
                             console.error('Failed to decrypt card:', error)
                             return null
@@ -138,13 +147,20 @@ export class EncryptedStoreWrapper implements Store {
             try {
                 const { id, boardId, createdAt, updatedAt, data } = encryptedCard
                 const decryptedData = await decryptCardData(data, this.password)
-                callback({
+                const card = {
                     ...decryptedData,
                     id,
                     boardId,
                     createdAt,
                     updatedAt
-                } as Card)
+                }
+                // Validate the card type
+                if (!isValidCard(card)) {
+                    console.error('Invalid card data:', card)
+                    callback(null)
+                    return
+                }
+                callback(card)
             } catch (error) {
                 console.error('Failed to decrypt card:', error)
                 callback(null)
@@ -165,7 +181,7 @@ export class EncryptedStoreWrapper implements Store {
         })
     }
 
-    removeChat = async (chatId: ChatId): Promise<void> => {
+    removeChat = async (chatId: string): Promise<void> => {
         await this.encryptedStore.removeChat(chatId)
     }
 
@@ -193,7 +209,7 @@ export class EncryptedStoreWrapper implements Store {
         })
     }
 
-    getChat = (chatId: ChatId, callback: (chat: Chat | null) => void): () => void => {
+    getChat = (chatId: string, callback: (chat: Chat | null) => void): () => void => {
         return this.encryptedStore.getChat(chatId, async (encryptedChat) => {
             if (!encryptedChat) {
                 callback(null)
@@ -215,5 +231,54 @@ export class EncryptedStoreWrapper implements Store {
                 callback(null)
             }
         })
+    }
+
+    getUserSettings = (callback: (settings: UserSettings | null) => void): () => void => {
+        return this.encryptedStore.getUserSettings(async (encryptedSettings) => {
+            if (!encryptedSettings) {
+                callback(null)
+                return
+            }
+
+            try {
+                const { data } = encryptedSettings
+                const decryptedData = await decryptUserSettings(data, this.password)
+                callback(decryptedData)
+            } catch (error) {
+                console.error('Failed to decrypt settings:', error)
+                callback(null)
+            }
+        })
+    }
+
+    setUserSettings = async (settings: UserSettings): Promise<void> => {
+        const encryptedData = await encryptUserSettings(settings, this.password)
+        
+        await this.encryptedStore.setUserSettings({
+            id: 'user',
+            data: encryptedData
+        })
+    }
+}
+
+/**
+ * Type guard to validate a card's type discriminator
+ */
+function isValidCard(card: any): card is Card {
+    if (!card || typeof card !== 'object') return false
+    
+    switch (card.type) {
+        case 'image':
+            return typeof card.content?.url === 'string' &&
+                   typeof card.content?.filename === 'string' &&
+                   typeof card.content?.mimeType === 'string'
+        case 'file':
+            return typeof card.content?.url === 'string' &&
+                   typeof card.content?.filename === 'string' &&
+                   typeof card.content?.mimeType === 'string'
+        case 'richtext':
+            return typeof card.content?.markdown === 'string'
+        default:
+            return false
     }
 }

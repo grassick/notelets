@@ -12,7 +12,15 @@ A modern note-taking application with integrated AI chat capabilities, built wit
 
 ## Features
 
-### 📝 Rich Text Editing
+### 🔒 Security & Privacy
+- End-to-end encryption for all data
+- User-provided password for encryption
+- Data encrypted at rest and in transit
+- Zero-knowledge architecture - server never sees unencrypted data
+- Secure password-based key derivation (PBKDF2)
+- AES-GCM encryption for all stored content
+
+### �� Rich Text Editing
 - Full-featured Markdown editor with real-time preview
 - Support for headings, bold, italic, and links
 - Bubble menu for quick formatting
@@ -30,6 +38,7 @@ A modern note-taking application with integrated AI chat capabilities, built wit
 - Contextual understanding of your notes (all notes in board are in context)
 - Message editing capabilities
 - Bring-your-own-keys model for API access
+- All chat history and API keys are encrypted
 
 ### 📋 Board Management
 - Organize notes into boards
@@ -77,6 +86,15 @@ Edit `.env` with your API keys and configuration.
 pnpm dev
 ```
 
+### Security Note
+All data in Cloud Mode is encrypted with your password before being stored or transmitted. This includes:
+- Notes and boards
+- Chat history and messages
+- API keys and settings
+- File attachments and metadata
+
+Your password never leaves your device and is used to derive encryption keys locally. The server only stores encrypted data and cannot access your content.
+
 ## Technology Stack
 
 - **Frontend Framework**: React with TypeScript
@@ -86,6 +104,7 @@ pnpm dev
 - **AI Integration**: Multiple LLM provider support
 - **Authentication**: Firebase Authentication
 - **Database**: Firestore
+- **Encryption**: AES-GCM with PBKDF2 key derivation
 
 ## Contributing
 

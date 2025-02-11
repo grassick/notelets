@@ -35,13 +35,22 @@ export function WelcomeScreen({ onChoose }: WelcomeScreenProps) {
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-4">
             Your personal space for notes, thoughts, and ideas.
           </p>
-          <div className="max-w-2xl mx-auto mb-4">
+          <div className="max-w-2xl mx-auto mb-6 mt-6">
             <h2 className="text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
               Chat with Advanced AI Models
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
               Notelets supports multiple AI models including Claude 3.5, Gemini 2.0, and GPT-o3. This is a bring-your-own-keys application, 
               which means you'll need to provide your own API keys in the settings to use these models.
+            </p>
+          </div>
+          <div className="max-w-2xl mx-auto mb-4 mt-6">
+            <h2 className="text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
+              End-to-End Encryption
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+              In Cloud Mode, all your data is encrypted with your password before being stored or transmitted. 
+              This includes notes, chat history, and API keys. Your password never leaves your device and the server only sees encrypted data.
             </p>
           </div>
           <div className="max-w-2xl mx-auto mb-8">
@@ -94,8 +103,8 @@ export function WelcomeScreen({ onChoose }: WelcomeScreenProps) {
               Cloud Mode
             </h3>
             <p className="mt-3 text-gray-600 dark:text-gray-400">
-              Access your notes from anywhere. Your content syncs automatically across all your devices.
-              Includes secure backup and collaboration features. Requires a free account.
+              Access your notes from anywhere with end-to-end encryption. Your content is encrypted with your password before syncing,
+              ensuring only you can access it. Includes secure backup and collaboration features. Requires a free account.
             </p>
           </button>
         </div>

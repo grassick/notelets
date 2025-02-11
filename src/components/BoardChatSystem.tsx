@@ -61,13 +61,6 @@ export function BoardChatSystem({
   const [selectedModel, setSelectedModel] = usePersist<ModelId>('selectedModel', getDefaultModel(userSettings.llm))
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
-  // Listen for settings open request from ModelSelector
-  useEffect(() => {
-    const handleOpenSettings = () => setIsSettingsOpen(true)
-    window.addEventListener('open-llm-settings', handleOpenSettings)
-    return () => window.removeEventListener('open-llm-settings', handleOpenSettings)
-  }, [])
-
   // Validate selected model on settings change
   useEffect(() => {
     if (!isModelAvailable(selectedModel, userSettings.llm)) {

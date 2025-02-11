@@ -199,18 +199,6 @@ export function SidebarBoardView(props: {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Desktop view controls */}
-      {!isMobile && (
-        <div className="h-10 px-2 flex items-center justify-end border-b border-gray-200 dark:border-gray-700">
-          <ViewControls
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            showAllNotes={showAllNotes}
-            onShowAllNotesChange={setShowAllNotes}
-          />
-        </div>
-      )}
-
       <div id="board-container" className={`
         flex flex-1 overflow-hidden
         ${isMobile ? 'relative' : ''}

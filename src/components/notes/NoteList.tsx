@@ -1,5 +1,6 @@
 import React from 'react'
 import type { RichTextCard, ViewMode } from '../../types'
+import { ViewControls } from '../ViewControls'
 
 /** Get a preview of the card content */
 const getCardPreview = (card: RichTextCard): string => {
@@ -72,7 +73,10 @@ export function ListPanel({
   isExpanded, 
   width, 
   onToggle, 
-  viewMode
+  viewMode,
+  onViewModeChange,
+  showAllNotes,
+  onShowAllNotesChange
 }: ListPanelProps) {
   // Sort cards by creation date, newest first
   const sortedCards = [...cards].sort((a, b) => 
@@ -87,7 +91,7 @@ export function ListPanel({
     >
       <div className="p-2 border-b border-gray-200 dark:border-gray-700">
         {isExpanded ? (
-          <div className="flex items-center justify-between gap-1">
+          <div className="flex items-center gap-1">
             <button
               onClick={onToggle}
               className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-400"
@@ -97,6 +101,14 @@ export function ListPanel({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
               </svg>
             </button>
+            <ViewControls
+              viewMode={viewMode}
+              onViewModeChange={onViewModeChange}
+              showAllNotes={showAllNotes}
+              onShowAllNotesChange={onShowAllNotesChange}
+              isMobileBar={false}
+            />
+            <div className="flex-1" />
             <button
               onClick={onCreateCard}
               className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-400"

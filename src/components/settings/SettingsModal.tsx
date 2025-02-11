@@ -38,13 +38,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       )
       if (!confirmed) return
     }
-    
+
     updateSettings('storage', { type: newMode })
     window.location.reload() // Ensure clean state
   }
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50"
       onClick={handleBackdropClick}
     >
@@ -87,16 +87,18 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               >
                 Appearance
               </button>
-              <button
-                onClick={() => setActiveTab('account')}
+              {settings.storage.type === 'cloud' && (
+                <button
+                  onClick={() => setActiveTab('account')}
                 className={`w-full px-3 py-2 text-sm rounded-md text-left
                   ${activeTab === 'account'
                     ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                   }`}
-              >
-                Account
-              </button>
+                >
+                  Account
+                </button>
+              )}
               <button
                 onClick={() => setActiveTab('storage')}
                 className={`w-full px-3 py-2 text-sm rounded-md text-left
@@ -173,6 +175,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     />
                   </div>
                 </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  You can get API keys from <a href="https://console.anthropic.com/" className="text-blue-600 dark:text-blue-400 hover:underline">Anthropic</a>, {' '}
+                  <a href="https://aistudio.google.com/" className="text-blue-600 dark:text-blue-400 hover:underline">Google AI</a>, or {' '}
+                  <a href="https://platform.openai.com/" className="text-blue-600 dark:text-blue-400 hover:underline">OpenAI</a>. Your keys are never leave your device except for the API calls.
+                </p>
               </div>
             )}
 
@@ -182,12 +189,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="flex items-center justify-between">
                   <label className="text-sm text-gray-700 dark:text-gray-300">Dark Mode</label>
                   <button
-                    onClick={() => updateSettings('appearance', { 
-                      darkMode: !settings.appearance.darkMode 
+                    onClick={() => updateSettings('appearance', {
+                      darkMode: !settings.appearance.darkMode
                     })}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full
-                      ${settings.appearance.darkMode 
-                        ? 'bg-blue-600' 
+                      ${settings.appearance.darkMode
+                        ? 'bg-blue-600'
                         : 'bg-gray-200 dark:bg-gray-700'}`}
                   >
                     <span
@@ -226,19 +233,19 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {activeTab === 'storage' && (
               <div className="space-y-6">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Storage Mode</h3>
-                
+
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       Current Mode: {settings.storage.type === 'local' ? 'Local' : 'Cloud'}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      {settings.storage.type === 'local' 
+                      {settings.storage.type === 'local'
                         ? 'Storing data on this device only'
                         : 'Syncing data through your account'}
                     </p>
                   </div>
-                  
+
                   <button
                     onClick={() => handleChange(
                       settings.storage.type === 'local' ? 'cloud' : 'local'
@@ -252,7 +259,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 {settings.storage.type === 'local' && (
                   <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
                     <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                      ⚠️ Local Mode Notice: Your notes are only saved on this device/browser. 
+                      ⚠️ Local Mode Notice: Your notes are only saved on this device/browser.
                       Back them up regularly to avoid data loss.
                     </p>
                   </div>

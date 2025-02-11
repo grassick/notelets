@@ -20,7 +20,7 @@ export class EncryptedStoreWrapper implements Store {
         private password: string
     ) {}
 
-    async setBoard(board: Board): Promise<void> {
+    setBoard = async (board: Board): Promise<void> => {
         const { id, createdAt, updatedAt, ...data } = board
         const encryptedData = await encryptBoardData(data, this.password)
         
@@ -32,11 +32,11 @@ export class EncryptedStoreWrapper implements Store {
         })
     }
 
-    async removeBoard(boardId: string): Promise<void> {
+    removeBoard = async (boardId: string): Promise<void> => {
         await this.encryptedStore.removeBoard(boardId)
     }
 
-    getBoards(callback: (boards: Board[]) => void): () => void {
+    getBoards = (callback: (boards: Board[]) => void): () => void => {
         return this.encryptedStore.getBoards(async (encryptedBoards) => {
             try {
                 const boards = await Promise.all(
@@ -59,7 +59,7 @@ export class EncryptedStoreWrapper implements Store {
         })
     }
 
-    getBoard(boardId: string, callback: (board: Board | null) => void): () => void {
+    getBoard = (boardId: string, callback: (board: Board | null) => void): () => void => {
         return this.encryptedStore.getBoard(boardId, async (encryptedBoard) => {
             if (!encryptedBoard) {
                 callback(null)
@@ -82,7 +82,7 @@ export class EncryptedStoreWrapper implements Store {
         })
     }
 
-    async setCard(card: Card): Promise<void> {
+    setCard = async (card: Card): Promise<void> => {
         const { id, boardId, createdAt, updatedAt, ...data } = card
         const encryptedData = await encryptCardData(data, this.password)
         
@@ -95,11 +95,11 @@ export class EncryptedStoreWrapper implements Store {
         })
     }
 
-    async removeCard(cardId: string): Promise<void> {
+    removeCard = async (cardId: string): Promise<void> => {
         await this.encryptedStore.removeCard(cardId)
     }
 
-    getCardsByBoard(boardId: string, callback: (cards: Card[]) => void): () => void {
+    getCardsByBoard = (boardId: string, callback: (cards: Card[]) => void): () => void => {
         return this.encryptedStore.getCardsByBoard(boardId, async (encryptedCards) => {
             try {
                 const cards = await Promise.all(
@@ -128,7 +128,7 @@ export class EncryptedStoreWrapper implements Store {
         })
     }
 
-    getCard(cardId: string, callback: (card: Card | null) => void): () => void {
+    getCard = (cardId: string, callback: (card: Card | null) => void): () => void => {
         return this.encryptedStore.getCard(cardId, async (encryptedCard) => {
             if (!encryptedCard) {
                 callback(null)
@@ -152,7 +152,7 @@ export class EncryptedStoreWrapper implements Store {
         })
     }
 
-    async setChat(chat: Chat): Promise<void> {
+    setChat = async (chat: Chat): Promise<void> => {
         const { id, boardId, createdAt, updatedAt, ...data } = chat
         const encryptedData = await encryptChatData(data, this.password)
         
@@ -165,11 +165,11 @@ export class EncryptedStoreWrapper implements Store {
         })
     }
 
-    async removeChat(chatId: ChatId): Promise<void> {
+    removeChat = async (chatId: ChatId): Promise<void> => {
         await this.encryptedStore.removeChat(chatId)
     }
 
-    getChatsByBoard(boardId: string, callback: (chats: Chat[]) => void): () => void {
+    getChatsByBoard = (boardId: string, callback: (chats: Chat[]) => void): () => void => {
         return this.encryptedStore.getChatsByBoard(boardId, async (encryptedChats) => {
             try {
                 const chats = await Promise.all(
@@ -193,7 +193,7 @@ export class EncryptedStoreWrapper implements Store {
         })
     }
 
-    getChat(chatId: ChatId, callback: (chat: Chat | null) => void): () => void {
+    getChat = (chatId: ChatId, callback: (chat: Chat | null) => void): () => void => {
         return this.encryptedStore.getChat(chatId, async (encryptedChat) => {
             if (!encryptedChat) {
                 callback(null)
@@ -216,4 +216,4 @@ export class EncryptedStoreWrapper implements Store {
             }
         })
     }
-} 
+}

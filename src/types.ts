@@ -102,20 +102,19 @@ export interface Board {
     /** Title of the board */
     title: string
     /** Visual layout type for displaying the board */
-    viewType: 'canvas' | 'vertical' | 'sidebar' | 'single'
+    viewType: 'vertical'
     /** Layout configuration that varies by view type */
     layoutConfig: {
-        /** For canvas view: store position/size per card */
-        canvas?: Record<string, {
-            position: { x: number; y: number }
-            size: { width: number; height: number }
-        }>
-        /** For vertical/sidebar views: store display order */
-        linear?: string[] // Array of card IDs in display order
-        /** For single view: store currently selected card */
-        single?: {
-            currentCard: string
-        }
+        // /** For canvas view: store position/size per card */
+        // canvas?: Record<string, {
+        //     position: { x: number; y: number }
+        //     size: { width: number; height: number }
+        // }>
+        // /** For vertical/sidebar views: store display order */
+        // linear?: string[] // Array of card IDs in display order
+
+        /** Currently selected card */
+        currentCardId?: string
     }
     /** Timestamp when the board was created in ISO 8601 format */
     createdAt: string

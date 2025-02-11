@@ -47,14 +47,9 @@ describe('crypto utilities', () => {
     describe('board data encryption/decryption', () => {
         const sampleBoard: Omit<Board, 'id' | 'createdAt' | 'updatedAt'> = {
             title: 'Test Board',
-            viewType: 'canvas',
+            viewType: 'vertical',
             layoutConfig: {
-                canvas: {
-                    'card1': {
-                        position: { x: 100, y: 200 },
-                        size: { width: 300, height: 200 }
-                    }
-                }
+                currentCardId: 'card1'
             }
         }
 
@@ -85,8 +80,8 @@ describe('crypto utilities', () => {
             // Check specific field types
             expect(typeof decrypted.title).toBe('string')
             expect(typeof decrypted.viewType).toBe('string')
-            expect(decrypted.viewType).toBe('canvas')
-            expect(typeof decrypted.layoutConfig.canvas?.['card1'].position.x).toBe('number')
+            expect(decrypted.viewType).toBe('vertical')
+            expect(typeof decrypted.layoutConfig.currentCardId).toBe('string')
         })
     })
 

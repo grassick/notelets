@@ -74,7 +74,7 @@ export function TabsView(props: {
       const newBoard: Board = { 
         id: uuidv4(), 
         title: name, 
-        viewType: 'sidebar', 
+        viewType: 'vertical', 
         layoutConfig: {}, 
         createdAt: new Date().toISOString(), 
         updatedAt: new Date().toISOString() 

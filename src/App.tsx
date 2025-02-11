@@ -5,7 +5,6 @@ import "./index.css"
 import { TabsView } from './TabsView'
 import { Store } from './Store'
 import { useSettings } from './hooks/useSettings'
-import { usePersist } from './hooks/usePersist'
 import { AuthProvider, useAuth } from './modules/auth/AuthContext'
 import { LoginPage } from './modules/auth/LoginPage'
 import { SignupPage } from './modules/auth/SignupPage'
@@ -22,7 +21,7 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { settings } = useSettings()
 
   if (loading) {
-    return <div>Loading...</div>
+    return <div className="p-4 text-gray-900 dark:text-gray-100">Loading...</div>
   }
 
   // If we're in cloud mode and not logged in, redirect to login
@@ -58,7 +57,7 @@ function MainContent() {
 
   // If store not initialized yet, show loading
   if (!store) {
-    return <div>Loading...</div>
+    return <div className="p-4 text-gray-900 dark:text-gray-100">Loading...</div>
   }
 
   return (

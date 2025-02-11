@@ -11,11 +11,11 @@ export function BoardView(props: {
   const { board, loading, error } = useBoard(store, boardId)
 
   if (loading) {
-    return <div className="p-4">Loading...</div>
+    return <div className="p-4 text-gray-900 dark:text-gray-100">Loading...</div>
   }
 
   if (error || !board) {
-    return <div className="p-4">Board not found</div>
+    return <div className="p-4 text-gray-900 dark:text-gray-100">Board not found</div>
   }
 
   // Render appropriate view based on board type

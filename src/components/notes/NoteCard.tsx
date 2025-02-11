@@ -448,7 +448,7 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
         ref={ref}
         className="pt-4 -mt-4"
       >
-        <div className={`px-4 py-1.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50`}>
+        <div className={`px-4 py-1 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50`}>
           <NoteCardHeader
             card={card}
             onUpdateTitle={onUpdateCardTitle}

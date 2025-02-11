@@ -1,6 +1,6 @@
 Use pnpm. No semicolons.
 
-User interfaces should start with the exported component at the top and then ones they depend on lower down in the file.
+User interfaces should start with the exported component at the top and then ones they depend on lower down in the file. Be sure they are in the right order!
 
 Don't add semicolons for Typescript. For functional React components, use this style:
 

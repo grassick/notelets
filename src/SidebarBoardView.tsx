@@ -111,15 +111,15 @@ export function SidebarBoardView(props: {
   }, [isDragging, listPanelState.width, listPanelState.isExpanded, viewMode])
 
   if (boardLoading || cardsLoading) {
-    return <div className="p-4">Loading...</div>
+    return <div className="p-4 text-gray-900 dark:text-gray-100">Loading...</div>
   }
 
   if (boardError || !board) {
-    return <div className="p-4">Board not found</div>
+    return <div className="p-4 text-gray-900 dark:text-gray-100">Board not found</div>
   }
 
   if (cardsError) {
-    return <div className="p-4">Error loading cards</div>
+    return <div className="p-4 text-gray-900 dark:text-gray-100">Error loading cards</div>
   }
 
   const handleCreateCard = async () => {

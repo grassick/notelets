@@ -7,6 +7,7 @@ import { useBoards } from "./Store";
 import { BoardView } from "./BoardView";
 import { usePersist } from "./hooks/usePersist";
 import { SettingsModal } from "./components/settings/SettingsModal";
+import { BoardNameModal } from "./components/BoardNameModal";
 
 export function TabsView(props: {
   store: Store
@@ -16,6 +17,15 @@ export function TabsView(props: {
   const [activeTabIndex, setActiveTabIndex] = usePersist<number>("activeTabIndex", -1)
   const { boards, loading, error, setBoard, removeBoard } = useBoards(store)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [boardNameModal, setBoardNameModal] = useState<{
+    isOpen: boolean
+    type: 'create' | 'edit'
+    initialValue?: string
+    boardId?: string
+  }>({
+    isOpen: false,
+    type: 'create'
+  })
 
   // Only show pages that correspond to existing boards
   const validPages = pages.filter(pageId => boards.some(board => board.id === pageId))
@@ -28,10 +38,12 @@ export function TabsView(props: {
       // Double click - edit title
       const board = boards.find(b => b.id === validPages[index])
       if (board) {
-        const newTitle = prompt("Enter new title", board.title)
-        if (newTitle && newTitle !== board.title) {
-          setBoard({ ...board, title: newTitle })
-        }
+        setBoardNameModal({
+          isOpen: true,
+          type: 'edit',
+          initialValue: board.title,
+          boardId: board.id
+        })
       }
     }
   }
@@ -46,11 +58,17 @@ export function TabsView(props: {
   }
 
   function handleCreateBoard() {
-    const title = prompt("New Board Name")
-    if (title) {
+    setBoardNameModal({
+      isOpen: true,
+      type: 'create'
+    })
+  }
+
+  function handleBoardNameSubmit(name: string) {
+    if (boardNameModal.type === 'create') {
       const newBoard: Board = { 
         id: uuidv4(), 
-        title, 
+        title: name, 
         viewType: 'sidebar', 
         layoutConfig: {}, 
         createdAt: new Date().toISOString(), 
@@ -59,6 +77,11 @@ export function TabsView(props: {
       setBoard(newBoard)
       setPages([...validPages, newBoard.id])
       setActiveTabIndex(validPages.length)
+    } else if (boardNameModal.type === 'edit' && boardNameModal.boardId) {
+      const board = boards.find(b => b.id === boardNameModal.boardId)
+      if (board) {
+        setBoard({ ...board, title: name })
+      }
     }
   }
 
@@ -144,6 +167,15 @@ export function TabsView(props: {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         store={store}
+      />
+
+      <BoardNameModal
+        isOpen={boardNameModal.isOpen}
+        onClose={() => setBoardNameModal({ isOpen: false, type: 'create' })}
+        initialValue={boardNameModal.initialValue}
+        title={boardNameModal.type === 'create' ? 'New Board' : 'Edit Board Name'}
+        submitText={boardNameModal.type === 'create' ? 'Create' : 'Save'}
+        onSubmit={handleBoardNameSubmit}
       />
     </div>
   )

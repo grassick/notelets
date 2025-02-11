@@ -250,6 +250,7 @@ export function TabsView(props: {
           />
         ) : (
           <BoardView 
+            key={validPages[currentTabIndex]}
             store={store}
             boardId={validPages[currentTabIndex]}
           />

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { FaPlus, FaTimes } from 'react-icons/fa';
+import { FaPlus, FaTimes, FaFolder, FaSearch } from 'react-icons/fa';
 import type { Board } from "./types";
 import type { Store } from "./Store";
 import { useBoards } from "./Store";
@@ -73,9 +73,9 @@ export function TabsView(props: {
   }
 
   return (
-    <div className="h-full grid grid-rows-[auto_1fr] bg-white dark:bg-gray-800">
-      <div className="px-4 py-1 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-        <div className="flex items-center gap-1">
+    <div className="h-full grid grid-rows-[auto_1fr] bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
+      <div className="px-4 py-2 border-b border-gray-200/80 dark:border-gray-700/80 flex items-center justify-between backdrop-blur-sm bg-white/50 dark:bg-gray-800/50">
+        <div className="flex items-center gap-2">
           {validPages.map((pageId, index) => {
             const board = boards.find(b => b.id === pageId)
             return (
@@ -92,11 +92,12 @@ export function TabsView(props: {
           <Tab
             isSelected={currentTabIndex === -1}
             onClick={() => setActiveTabIndex(-1)}
+            className="hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400"
           >
             <FaPlus size={12} />
           </Tab>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <SettingsButton />
         </div>
       </div>
@@ -134,26 +135,29 @@ interface TabProps {
   onClick: () => void
   onRemove?: (ev: React.MouseEvent) => void
   children: React.ReactNode
+  className?: string
 }
 
-function Tab({ isSelected, onClick, onRemove, children }: TabProps) {
+function Tab({ isSelected, onClick, onRemove, children, className = '' }: TabProps) {
   return (
     <div 
       onClick={onClick}
       className={`
-        group px-3 py-1.5 cursor-pointer font-sans flex items-center text-sm
-        transition-colors duration-150 ease-in-out rounded-md ${onRemove ? 'pl-6' : ''}
+        group px-4 py-2 cursor-pointer font-medium flex items-center text-sm
+        transition-all duration-200 ease-in-out rounded-lg
+        ${onRemove ? 'pl-4' : ''}
         ${isSelected 
-          ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100' 
-          : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'
+          ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' 
+          : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:shadow-sm'
         }
+        ${className}
       `}
     >
       {children}
       {onRemove && (
         <FaTimes 
           onClick={onRemove} 
-          className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-500 cursor-pointer" 
+          className="ml-2 opacity-0 group-hover:opacity-100 transition-all hover:text-red-500 cursor-pointer" 
           size={12}
         />
       )}
@@ -181,65 +185,100 @@ interface BoardListProps {
 
 function BoardList(props: BoardListProps) {
   const { loading, boards, pages, onSelectBoard, onCreateBoard, onDeleteBoard } = props
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const filteredBoards = boards.filter(board => 
+    board.title.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   return (
-    <div className="p-5 max-w-2xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-medium text-gray-600 dark:text-gray-400">Select a Board</h2>
+    <div className="p-8 max-w-3xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-400 bg-clip-text text-transparent">Your Boards</h2>
         <button
           onClick={onCreateBoard}
-          className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 
-                   text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300
-                   transition-colors duration-150"
+          className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white
+                   transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow"
         >
           <FaPlus size={14} />
+          <span>New Board</span>
         </button>
       </div>
+
+      <div className="relative mb-4">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <FaSearch className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+        </div>
+        <input
+          type="text"
+          placeholder="Search boards..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 
+                   bg-white dark:bg-gray-800/50 rounded-lg
+                   text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400
+                   transition-all duration-200"
+        />
+      </div>
+
       {loading ? (
-        <div className="text-gray-600 dark:text-gray-400">Loading boards...</div>
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 dark:border-gray-400 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading your boards...</p>
+        </div>
       ) : boards.length === 0 ? (
-        <div className="text-center py-12 px-4">
-          <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">Welcome to Notelets!</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">Get started by creating your first board to organize your notes and ideas.</p>
+        <div className="text-center py-16 px-4">
+          <div className="mb-6 text-gray-400 dark:text-gray-500">
+            <FaFolder size={48} className="mx-auto" />
+          </div>
+          <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-3">Welcome to Notelets!</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">Get started by creating your first board to organize your notes and ideas.</p>
           <button
             onClick={onCreateBoard}
-            className="inline-flex items-center px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 
-                     text-white transition-colors duration-150"
+            className="inline-flex items-center px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 
+                     text-white transition-all duration-200 shadow-sm hover:shadow-md gap-2"
           >
-            <FaPlus size={14} className="mr-2" />
+            <FaPlus size={14} />
             Create Your First Board
           </button>
         </div>
+      ) : filteredBoards.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-gray-600 dark:text-gray-400">No boards found matching "{searchQuery}"</p>
+        </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          {boards.map((board, i) => (
+        <div className="grid gap-2">
+          {filteredBoards.map((board) => (
             <div 
               key={board.id}
-              className={`
-                px-4 py-3 
-                ${i !== 0 ? 'border-t border-gray-200 dark:border-gray-700' : ''}
-                group flex items-center justify-between
-              `}
+              className="group px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 
+                       bg-white dark:bg-gray-800/50 hover:shadow-sm transition-all duration-200
+                       hover:border-gray-300 dark:hover:border-gray-600 cursor-pointer"
+              onClick={() => onSelectBoard(board.id, pages.indexOf(board.id))}
             >
-              <div
-                className="flex-1 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 text-gray-800 dark:text-gray-200"
-                onClick={() => onSelectBoard(board.id, pages.indexOf(board.id))}
-              >
-                {board.title}
+              <div className="flex items-center justify-between">
+                <div
+                  className="flex-1 hover:text-gray-900 dark:hover:text-gray-100 
+                           text-gray-700 dark:text-gray-300 font-medium transition-colors duration-200"
+                >
+                  {board.title}
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (window.confirm(`Are you sure you want to delete "${board.title}"? This cannot be undone.`)) {
+                      onDeleteBoard(board.id)
+                    }
+                  }}
+                  className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md
+                           hover:bg-red-50 dark:hover:bg-red-900/30
+                           text-gray-400 hover:text-red-600 dark:hover:text-red-400
+                           transition-all duration-200"
+                >
+                  <FaTimes size={14} />
+                </button>
               </div>
-              <button
-                onClick={() => {
-                  if (window.confirm(`Are you sure you want to delete "${board.title}"? This cannot be undone.`)) {
-                    onDeleteBoard(board.id)
-                  }
-                }}
-                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md 
-                         hover:bg-red-100 dark:hover:bg-red-900/30
-                         text-gray-400 hover:text-red-600 dark:hover:text-red-400
-                         transition-all duration-150"
-              >
-                <FaTimes size={14} />
-              </button>
             </div>
           ))}
         </div>

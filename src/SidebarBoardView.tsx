@@ -236,19 +236,24 @@ export function SidebarBoardView(props: {
               onCreateCard={handleCreateCard}
               isMobile={isMobile}
             />
-            {!isMobile && viewMode === 'split' && (
-              <ResizeHandle onDragStart={() => setIsDragging(true)} />
-            )}
           </div>
+        )}
+
+        {/* Resize handle for chat panel */}
+        {!isMobile && viewMode === 'split' && (
+          <ResizeHandle onDragStart={() => setIsDragging(true)} />
         )}
 
         {/* Chat Panel - Show in split mode or when chat mode is active */}
         {(viewMode === 'split' || viewMode === 'chat') && (
-          <div className={`
-            flex flex-col min-h-0 overflow-hidden
-            ${isMobile ? 'w-full' : ''}
-            ${!isMobile && viewMode === 'split' ? `w-[${chatPanelState.width}px] min-w-[250px]` : 'flex-1'}
-          `}>
+          <div 
+            style={!isMobile && viewMode === 'split' ? { width: `${chatPanelState.width}px` } : undefined}
+            className={`
+              flex flex-col min-h-0 overflow-hidden min-w-[250px]
+              ${isMobile ? 'w-full' : ''}
+              ${!isMobile && viewMode === 'split' ? '' : 'flex-1'}
+            `}
+          >
             <BoardChatSystem
               store={store}
               boardId={boardId}

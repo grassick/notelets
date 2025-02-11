@@ -1,6 +1,6 @@
 import React from 'react'
 import { useState, useEffect, useRef } from 'react'
-import { FaStop } from 'react-icons/fa'
+import { FaMicrophone } from 'react-icons/fa'
 import { OpenAIClient } from '../api/openai'
 
 /** Props for the VoiceRecordModal component */
@@ -129,34 +129,40 @@ export function VoiceRecordModal(props: VoiceRecordModalProps) {
                     </h2>
 
                     <div className="flex flex-col items-center gap-4">
-                        <div className={`
-                            w-24 h-24 rounded-full flex items-center justify-center
-                            transition-colors duration-200
-                            ${isProcessing 
-                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
-                                : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                            }
-                            ${!isProcessing && 'animate-pulse'}
-                        `}>
-                            <FaStop 
+                        <button
+                            className={`
+                                w-24 h-24 rounded-full flex items-center justify-center
+                                transition-all duration-200
+                                ${isProcessing 
+                                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                                    : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'
+                                }
+                                ${!isProcessing && 'animate-pulse'}
+                                disabled:opacity-50 disabled:cursor-not-allowed
+                                focus:outline-none
+                            `}
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                if (!isProcessing) handleStopRecording()
+                            }}
+                            disabled={isProcessing}
+                            aria-label={isProcessing ? "Processing..." : "Stop recording"}
+                        >
+                            <FaMicrophone 
                                 size={32}
-                                onMouseDown={(e) => e.preventDefault()}
-                                onClick={(e) => {
-                                    e.preventDefault()
-                                    e.stopPropagation()
-                                    if (!isProcessing) handleStopRecording()
-                                }}
                                 className={`
-                                    cursor-pointer hover:scale-110 transition-transform
-                                    ${isProcessing && 'opacity-50 cursor-not-allowed'}
+                                    transition-transform
+                                    ${!isProcessing && 'hover:scale-110'}
                                 `}
                             />
-                        </div>
+                        </button>
 
                         <p className="text-sm text-gray-600 dark:text-gray-400">
                             {isProcessing 
                                 ? 'Converting speech to text...' 
-                                : "Click stop when you're done speaking"
+                                : "Tap microphone when you're done speaking"
                             }
                         </p>
                     </div>

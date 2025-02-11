@@ -126,6 +126,28 @@ export function NotesPanel({
   // Multi-note view
   return (
     <div className="flex flex-col border-r border-gray-200 dark:border-gray-700 flex-1">
+      {isMobile && (
+        <div className="flex items-center justify-end gap-2 p-2 border-b border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => onShowAllNotesChange(!showAllNotes)}
+            className={`p-1.5 rounded-lg transition-colors ${
+              showAllNotes 
+                ? 'text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' 
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }`}
+            title={showAllNotes ? "Show single note" : "Show all notes"}
+          >
+            <FaLayerGroup className="w-4 h-4" />
+          </button>
+          <button
+            onClick={onCreateCard}
+            className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+            title="New note"
+          >
+            <FaPlus className="w-4 h-4" />
+          </button>
+        </div>
+      )}
       <div className="flex-1 overflow-auto p-4
                      [scrollbar-width:thin] 
                      [scrollbar-color:rgba(148,163,184,0.2)_transparent] 
@@ -145,7 +167,7 @@ export function NotesPanel({
             onUpdateCardTitle={(title) => onUpdateCardTitle(card.id, title)}
             onDelete={() => onDelete(card.id)}
             ref={(el) => cardRefs.current[card.id] = el}
-            extraControls={card.id === selectedCard?.id ? mobileControls : undefined}
+            // extraControls={card.id === selectedCard?.id ? mobileControls : undefined}
           />
         ))}
       </div>

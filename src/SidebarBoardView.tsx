@@ -110,7 +110,7 @@ export function SidebarBoardView(props: {
     }
   }, [isDragging, listPanelState.width, listPanelState.isExpanded, viewMode])
 
-  if (boardLoading || cardsLoading) {
+  if (boardLoading && !board) {
     return <div className="p-4 text-gray-900 dark:text-gray-100">Loading...</div>
   }
 

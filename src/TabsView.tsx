@@ -9,6 +9,8 @@ import { usePersist } from "./hooks/usePersist";
 import { SettingsModal } from "./components/settings/SettingsModal";
 import { BoardNameModal } from "./components/BoardNameModal";
 import { VoiceRecordModal } from "./components/VoiceRecordModal";
+import { OpenAIClient } from "./api/openai";
+import { useUserSettings } from "./hooks/useSettings";
 
 export function TabsView(props: {
   store: Store
@@ -20,6 +22,8 @@ export function TabsView(props: {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isVoiceRecordOpen, setIsVoiceRecordOpen] = useState(false)
   const [lastActiveElement, setLastActiveElement] = useState<HTMLElement | null>(null)
+  const { settings } = useUserSettings(store)
+  const openaiClient = new OpenAIClient(settings.llm.openaiKey || '')
   const [boardNameModal, setBoardNameModal] = useState<{
     isOpen: boolean
     type: 'create' | 'edit'
@@ -205,6 +209,7 @@ export function TabsView(props: {
         isOpen={isVoiceRecordOpen}
         onClose={() => setIsVoiceRecordOpen(false)}
         onTranscriptionComplete={handleTranscriptionComplete}
+        openaiClient={openaiClient}
       />
 
       <SettingsModal

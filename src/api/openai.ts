@@ -83,4 +83,27 @@ export class OpenAIClient implements LLMProvider {
             }
         }
     }
+
+    /**
+     * Transcribe audio using Whisper
+     * @param audioBlob The audio blob to transcribe
+     * @returns The transcribed text
+     */
+    async transcribeAudio(audioBlob: Blob): Promise<string> {
+        // Convert blob to file
+        const file = new File([audioBlob], 'audio.webm', { type: audioBlob.type })
+        
+        try {
+            const response = await this.client.audio.transcriptions.create({
+                file,
+                model: 'whisper-1',
+                language: 'en'
+            })
+
+            return response.text
+        } catch (error) {
+            console.error('Transcription error:', error)
+            throw error
+        }
+    }
 }

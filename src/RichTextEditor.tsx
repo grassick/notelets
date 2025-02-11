@@ -163,11 +163,14 @@ export function RichTextEditor({
   }
 
   return (
-    <div className="rounded-md bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+    <div className="flex flex-col flex-1 min-h-0 text-gray-800 dark:text-gray-200">
       {showToolbar && <RichTextToolbar editor={editor} />}
       <RichTextBubbleMenu editor={editor} />
-      <div className="p-1">
-        <EditorContent editor={editor} />
+      <div className="flex-1 min-h-0">
+        <EditorContent 
+          editor={editor} 
+          className="h-full [&_.ProseMirror]:h-full [&_.ProseMirror]:min-h-full" 
+        />
       </div>
     </div>
   )

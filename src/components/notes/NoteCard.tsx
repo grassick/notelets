@@ -206,7 +206,7 @@ interface NoteCardBodyProps {
 /** Body component for a note card containing the rich text editor */
 function NoteCardBody({ content, onChange, isMarkdownMode, className = '' }: NoteCardBodyProps) {
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative flex flex-col flex-1 min-h-0 ${className}`}>
       {isMarkdownMode ? (
         <MarkdownEditor
           content={content}
@@ -320,10 +320,10 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
 
   if (isSingleView) {
     return (
-      <div className={`flex flex-col flex-1 ${className}`}>
+      <div className={`flex flex-col flex-1 min-h-0 ${className}`}>
         <div 
           ref={ref}
-          className="pt-4 -mt-4"
+          className="flex flex-col flex-1 min-h-0"
         >
           <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
             <div className="flex justify-between items-center">
@@ -389,7 +389,7 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
             content={card.content.markdown}
             onChange={onUpdateCard}
             isMarkdownMode={isMarkdownMode}
-            className="flex-1 overflow-auto p-4
+            className="flex-1 min-h-0 overflow-auto px-4 py-2
                       [scrollbar-width:thin] 
                       [scrollbar-color:rgba(148,163,184,0.2)_transparent] 
                       dark:[scrollbar-color:rgba(148,163,184,0.15)_transparent]

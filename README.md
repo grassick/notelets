@@ -26,9 +26,10 @@ A modern note-taking application with integrated AI chat capabilities, built wit
   - Notes only
   - Chat only
   - Split view
-- Support for multiple AI models
+- Support for multiple AI models (Claude 3.5, Gemini 2.0, GPT-o3)
 - Contextual understanding of your notes (all notes in board are in context)
 - Message editing capabilities
+- Bring-your-own-keys model for API access
 
 ### 📋 Board Management
 - Organize notes into boards
@@ -56,7 +57,7 @@ A modern note-taking application with integrated AI chat capabilities, built wit
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/notelets.git
+git clone https://github.com/grassick/notelets.git
 cd notelets
 ```
 
@@ -89,6 +90,12 @@ pnpm dev
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Contact
+
+- **Creator**: Clayton Grassick
+- **Email**: clayton@claytronics.org
+- **GitHub**: [github.com/grassick/notelets](https://github.com/grassick/notelets)
 
 ## License
 

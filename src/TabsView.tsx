@@ -10,6 +10,7 @@ import { SettingsModal } from "./components/settings/SettingsModal";
 import { BoardNameModal } from "./components/BoardNameModal";
 import { OpenAIClient } from "./api/openai";
 import { useUserSettings } from "./hooks/useSettings";
+import { VoiceInput } from "./components/VoiceInput";
 
 export function TabsView(props: {
   store: Store
@@ -213,37 +214,7 @@ export function TabsView(props: {
           </Tab>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={handleVoiceButtonClick}
-            disabled={isProcessing}
-            className={`
-              p-2 rounded-md transition-all duration-200
-              ${isProcessing 
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
-                : isRecording
-                  ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 animate-pulse'
-                  : 'text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-              }
-              disabled:opacity-50 disabled:cursor-not-allowed
-              focus:outline-none
-            `}
-            aria-label={
-              isProcessing ? "Processing voice input..." 
-              : isRecording ? "Stop recording" 
-              : "Start voice input"
-            }
-            title={
-              isProcessing ? "Converting speech to text..." 
-              : isRecording ? "Tap to stop recording" 
-              : "Tap to start voice input"
-            }
-          >
-            <FaMicrophone className={`
-              w-5 h-5 transition-transform
-              ${!isProcessing && 'hover:scale-110'}
-            `} />
-          </button>
+          <VoiceInput openaiClient={openaiClient} />
           <button
             onClick={() => setIsSettingsOpen(true)}
             className="p-2 rounded-md text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300

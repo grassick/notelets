@@ -15,6 +15,7 @@ export function ChatInterface({
   error = null
 }: ChatInterfaceProps) {
   const [message, setMessage] = useState('')
+  const [lastAttemptedMessage, setLastAttemptedMessage] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -41,13 +42,16 @@ export function ChatInterface({
     return () => textarea.removeEventListener('input', adjustHeight)
   }, [message]) // Re-run when message changes
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!message.trim() || isLoading) return
+  const handleSubmit = async (e: React.FormEvent, retryMessage?: string) => {
+    e?.preventDefault()
+    const messageToSend = retryMessage || message.trim()
+    if (!messageToSend || isLoading) return
 
     try {
-      await onSendMessage(message.trim(), selectedModel)
+      setLastAttemptedMessage(messageToSend)
+      await onSendMessage(messageToSend, selectedModel)
       setMessage('')
+      setLastAttemptedMessage(null)
 
       // Reset textarea height
       if (textareaRef.current) {
@@ -88,25 +92,31 @@ export function ChatInterface({
             onSaveToNotes={!msg.role || msg.role === 'assistant' ? onSaveToNotes : undefined}
           />
         ))}
-        {/* {isLoading && (
-          <div className="flex justify-start mb-4">
-            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 rounded-bl-none animate-pulse">
-              <div className="w-6 h-4 bg-gray-300 dark:bg-gray-600 rounded"></div>
-            </div>
-          </div>
-        )} */}
         {error && (
-          <div className="flex justify-center mb-4">
+          <div className="flex flex-col items-center gap-2 mb-4">
             <div className="bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-200 rounded-lg p-3 text-sm">
               {error.message}
             </div>
+            {lastAttemptedMessage && (
+              <button
+                onClick={(e) => handleSubmit(e, lastAttemptedMessage)}
+                className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 
+                         flex items-center gap-1"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Retry
+              </button>
+            )}
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700">
+      <form onSubmit={e => handleSubmit(e)} className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700">
         <div className="relative p-2">
           <textarea
             ref={textareaRef}

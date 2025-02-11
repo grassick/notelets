@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { FaPlus, FaTimes, FaFolder, FaSearch, FaTrash, FaMicrophone } from 'react-icons/fa';
 import type { Board } from "./types";
@@ -8,7 +8,6 @@ import { BoardView } from "./BoardView";
 import { usePersist } from "./hooks/usePersist";
 import { SettingsModal } from "./components/settings/SettingsModal";
 import { BoardNameModal } from "./components/BoardNameModal";
-import { VoiceRecordModal } from "./components/VoiceRecordModal";
 import { OpenAIClient } from "./api/openai";
 import { useUserSettings } from "./hooks/useSettings";
 
@@ -20,10 +19,13 @@ export function TabsView(props: {
   const [activeTabIndex, setActiveTabIndex] = usePersist<number>("activeTabIndex", -1)
   const { boards, loading, error, setBoard, removeBoard } = useBoards(store)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const [isVoiceRecordOpen, setIsVoiceRecordOpen] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
   const [lastActiveElement, setLastActiveElement] = useState<HTMLElement | null>(null)
   const { settings } = useUserSettings(store)
   const openaiClient = new OpenAIClient(settings.llm.openaiKey || '')
+  const mediaRecorder = useRef<MediaRecorder | null>(null)
+  const chunks = useRef<Blob[]>([])
   const [boardNameModal, setBoardNameModal] = useState<{
     isOpen: boolean
     type: 'create' | 'edit'
@@ -103,26 +105,85 @@ export function TabsView(props: {
     }
   }
 
-  function handleOpenVoiceRecord(e: React.MouseEvent) {
-    // Prevent any default button behavior
+  // Cleanup recording on unmount
+  useEffect(() => {
+    return () => {
+      if (mediaRecorder.current && isRecording) {
+        mediaRecorder.current.stop()
+        mediaRecorder.current.stream.getTracks().forEach(track => track.stop())
+      }
+    }
+  }, [isRecording])
+
+  async function startRecording(e: React.MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
     
     // Store the currently focused element
     setLastActiveElement(document.activeElement as HTMLElement)
-    setIsVoiceRecordOpen(true)
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      mediaRecorder.current = new MediaRecorder(stream)
+      chunks.current = []
+
+      mediaRecorder.current.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunks.current.push(e.data)
+        }
+      }
+
+      mediaRecorder.current.start()
+      setIsRecording(true)
+    } catch (error) {
+      console.error('Error starting recording:', error)
+    }
   }
 
-  function handleTranscriptionComplete(text: string) {
-    // Use the stored active element
-    const input = lastActiveElement
-    
-    if (input) {
-      // Make sure the element has focus
-      input.focus()
+  async function stopRecording() {
+    if (!mediaRecorder.current) return
+
+    setIsRecording(false)
+    setIsProcessing(true)
+
+    try {
+      // Create a promise that resolves when the mediaRecorder stops
+      const stopPromise = new Promise<void>((resolve) => {
+        if (mediaRecorder.current) {
+          mediaRecorder.current.onstop = () => resolve()
+        }
+      })
+
+      // Stop recording
+      mediaRecorder.current.stop()
+      await stopPromise
+
+      // Stop all tracks
+      mediaRecorder.current.stream.getTracks().forEach(track => track.stop())
+
+      // Create blob from chunks
+      const audioBlob = new Blob(chunks.current, { type: 'audio/webm' })
       
-      // Use execCommand to insert text at current cursor position
-      document.execCommand('insertText', false, text)
+      // Transcribe audio
+      const transcription = await openaiClient.transcribeAudio(audioBlob)
+      
+      // Insert text at cursor position
+      if (lastActiveElement) {
+        lastActiveElement.focus()
+        document.execCommand('insertText', false, transcription)
+      }
+    } catch (error) {
+      console.error('Error processing audio:', error)
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  function handleVoiceButtonClick(e: React.MouseEvent) {
+    if (isRecording) {
+      stopRecording()
+    } else {
+      startRecording(e)
     }
   }
 
@@ -153,16 +214,35 @@ export function TabsView(props: {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onMouseDown={(e) => {
-              // Prevent the button from taking focus
-              e.preventDefault()
-            }}
-            onClick={handleOpenVoiceRecord}
-            className="p-2 rounded-md text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300
-                     hover:bg-gray-100 dark:hover:bg-gray-800"
-            aria-label="Voice Input"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={handleVoiceButtonClick}
+            disabled={isProcessing}
+            className={`
+              p-2 rounded-md transition-all duration-200
+              ${isProcessing 
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                : isRecording
+                  ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 animate-pulse'
+                  : 'text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }
+              disabled:opacity-50 disabled:cursor-not-allowed
+              focus:outline-none
+            `}
+            aria-label={
+              isProcessing ? "Processing voice input..." 
+              : isRecording ? "Stop recording" 
+              : "Start voice input"
+            }
+            title={
+              isProcessing ? "Converting speech to text..." 
+              : isRecording ? "Tap to stop recording" 
+              : "Tap to start voice input"
+            }
           >
-            <FaMicrophone className="w-5 h-5" />
+            <FaMicrophone className={`
+              w-5 h-5 transition-transform
+              ${!isProcessing && 'hover:scale-110'}
+            `} />
           </button>
           <button
             onClick={() => setIsSettingsOpen(true)}
@@ -204,13 +284,6 @@ export function TabsView(props: {
           />
         )}
       </div>
-
-      <VoiceRecordModal
-        isOpen={isVoiceRecordOpen}
-        onClose={() => setIsVoiceRecordOpen(false)}
-        onTranscriptionComplete={handleTranscriptionComplete}
-        openaiClient={openaiClient}
-      />
 
       <SettingsModal
         isOpen={isSettingsOpen}

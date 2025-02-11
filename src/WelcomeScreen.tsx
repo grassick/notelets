@@ -1,4 +1,6 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from './modules/auth/AuthContext'
 
 /**
  * Props for the WelcomeScreen component
@@ -12,6 +14,17 @@ interface WelcomeScreenProps {
  * Initial welcome screen shown to new users to choose their storage mode
  */
 export function WelcomeScreen({ onChoose }: WelcomeScreenProps) {
+  const navigate = useNavigate()
+  const { user } = useAuth()
+
+  const handleCloudChoice = () => {
+    if (!user) {
+      navigate('/login')
+    } else {
+      onChoose('cloud')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
       <div className="max-w-3xl w-full">
@@ -71,7 +84,7 @@ export function WelcomeScreen({ onChoose }: WelcomeScreenProps) {
           </button>
 
           <button
-            onClick={() => onChoose('cloud')}
+            onClick={handleCloudChoice}
             className="w-full p-8 text-left rounded-xl border-2 border-blue-200 dark:border-blue-800 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all transform hover:scale-[1.02]"
           >
             <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400 flex items-center">

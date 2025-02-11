@@ -20,12 +20,23 @@ interface ProtectedRouteProps {
   children: React.ReactNode
 }
 
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-gray-100 mx-auto mb-4"></div>
+        <p className="text-gray-900 dark:text-gray-100">Loading...</p>
+      </div>
+    </div>
+  )
+}
+
 function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading } = useAuth()
   const { settings } = useSettings()
 
   if (loading) {
-    return <div className="p-4 text-gray-900 dark:text-gray-100">Loading...</div>
+    return <LoadingScreen />
   }
 
   // If we're in cloud mode and not logged in, redirect to login
@@ -49,6 +60,11 @@ function MainContent() {
   useEffect(() => {
     const initializeStore = async () => {
       setIsLoading(true)
+      setStore(null) // Clear any existing store
+      setEncryptedStore(null)
+      setNeedsPasswordSetup(false)
+      setNeedsUnlock(false)
+
       try {
         if (settings.storage.type === 'cloud' && user) {
           // Create encrypted store
@@ -139,7 +155,7 @@ function MainContent() {
 
   // Show loading state
   if (isLoading) {
-    return <div className="p-4 text-gray-900 dark:text-gray-100">Loading...</div>
+    return <LoadingScreen />
   }
 
   // Show encryption setup if needed
@@ -154,7 +170,7 @@ function MainContent() {
 
   // If store not initialized yet, show loading
   if (!store) {
-    return <div className="p-4 text-gray-900 dark:text-gray-100">Loading...</div>
+    return <LoadingScreen />
   }
 
   return (

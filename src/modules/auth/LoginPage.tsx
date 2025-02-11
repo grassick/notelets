@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 import { NoteletsLogo } from './components/NoteletsLogo'
+import { useSettings } from '../../hooks/useSettings'
 
 /**
  * Login page component that handles user authentication
@@ -14,6 +15,7 @@ export function LoginPage() {
     
     const navigate = useNavigate()
     const { login } = useAuth()
+    const { updateSettings } = useSettings()
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -22,6 +24,8 @@ export function LoginPage() {
 
         try {
             await login(email, password)
+            // Set storage type to cloud after successful login
+            updateSettings('storage', { type: 'cloud' })
             navigate('/')
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to sign in')
@@ -82,7 +86,7 @@ export function LoginPage() {
                     </div>
 
                     {error && (
-                        <div className="text-red-500 text-sm text-center">
+                        <div className="text-red-600 dark:text-red-400 text-sm text-center">
                             {error}
                         </div>
                     )}

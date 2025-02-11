@@ -133,3 +133,6 @@ export interface BoardTab {
     /** ID of the board being displayed */
     boardId: string
 }
+
+/** View mode for the board layout */
+export type ViewMode = 'chat' | 'notes' | 'split'

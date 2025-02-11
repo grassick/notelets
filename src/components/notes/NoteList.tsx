@@ -1,5 +1,5 @@
 import React from 'react'
-import { Card, RichTextCard } from '../../types'
+import type { RichTextCard, ViewMode } from '../../types'
 
 /** Get a preview of the card content */
 const getCardPreview = (card: RichTextCard): string => {
@@ -11,7 +11,7 @@ const getCardPreview = (card: RichTextCard): string => {
 
 interface CardListItemProps {
   /** The card to display */
-  card: Card
+  card: RichTextCard
   /** Whether this card is selected */
   isSelected: boolean
   /** Callback when the card is clicked */
@@ -37,25 +37,26 @@ function CardListItem({ card, isSelected, onClick }: CardListItemProps) {
   )
 }
 
+/** Props for the ListPanel component */
 interface ListPanelProps {
   /** The list of cards to display */
-  cards: Card[]
-  /** The ID of the selected card */
+  cards: RichTextCard[]
+  /** The currently selected card ID */
   selectedCardId: string | null
   /** Callback when a card is selected */
   onCardSelect: (cardId: string) => void
-  /** Callback to create a new card */
+  /** Callback when the create card button is clicked */
   onCreateCard: () => void
   /** Whether the panel is expanded */
   isExpanded: boolean
   /** The width of the panel when expanded */
   width: number
-  /** Callback to toggle the panel expansion */
+  /** Callback when the toggle button is clicked */
   onToggle: () => void
-  /** The current view mode */
-  viewMode: 'chat' | 'notes' | 'split'
-  /** Callback when the view mode changes */
-  onViewModeChange: (mode: 'chat' | 'notes' | 'split') => void
+  /** Current view mode */
+  viewMode: ViewMode
+  /** Callback when view mode changes */
+  onViewModeChange: (mode: ViewMode) => void
   /** Whether to show all notes */
   showAllNotes: boolean
   /** Callback when show all notes changes */
@@ -71,10 +72,7 @@ export function ListPanel({
   isExpanded, 
   width, 
   onToggle, 
-  viewMode, 
-  onViewModeChange, 
-  showAllNotes, 
-  onShowAllNotesChange 
+  viewMode
 }: ListPanelProps) {
   // Sort cards by creation date, newest first
   const sortedCards = [...cards].sort((a, b) => 
@@ -90,71 +88,15 @@ export function ListPanel({
       <div className="p-2 border-b border-gray-200 dark:border-gray-700">
         {isExpanded ? (
           <div className="flex items-center justify-between gap-1">
-            <div className="flex items-center gap-1">
-              <button
-                onClick={onToggle}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-400"
-                title="Toggle card list"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                </svg>
-              </button>
-              <button
-                onClick={() => onShowAllNotesChange(!showAllNotes)}
-                className={`p-1 rounded ${
-                  showAllNotes 
-                    ? 'text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' 
-                    : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'
-                }`}
-                title={showAllNotes ? "Show single note" : "Show all notes"}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                </svg>
-              </button>
-            </div>
-            <div className="flex items-center justify-center gap-1">
-              <button
-                onClick={() => onViewModeChange('notes')}
-                className={`p-1 rounded ${
-                  viewMode === 'notes' 
-                    ? 'text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' 
-                    : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'
-                }`}
-                title="Notes only"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </button>
-              <button
-                onClick={() => onViewModeChange('split')}
-                className={`p-1 rounded ${
-                  viewMode === 'split' 
-                    ? 'text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' 
-                    : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'
-                }`}
-                title="Split view"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4L12 20M4 4h16v16H4z" />
-                </svg>
-              </button>
-              <button
-                onClick={() => onViewModeChange('chat')}
-                className={`p-1 rounded ${
-                  viewMode === 'chat' 
-                    ? 'text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' 
-                    : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'
-                }`}
-                title="Chat only"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-              </button>
-            </div>
+            <button
+              onClick={onToggle}
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-400"
+              title="Toggle card list"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              </svg>
+            </button>
             <button
               onClick={onCreateCard}
               className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-400"

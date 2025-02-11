@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react'
 import type { Store } from './Store'
 import { useBoard, useCards } from './Store'
-import type { RichTextCard } from './types'
+import type { RichTextCard, ViewMode } from './types'
 import { v4 as uuidv4 } from 'uuid'
 import { BoardChatSystem } from './components/BoardChatSystem'
 import { usePersist } from './hooks/usePersist'
 import { ListPanel } from './components/notes/NoteList'
 import { NotesPanel } from './components/notes/NotesPanel'
 import { ResizeHandle } from './components/ui/ResizeHandle'
-
-type ViewMode = 'chat' | 'notes' | 'split'
+import { ViewControls } from './components/ViewControls'
+import { MobileNoteHeader } from './components/notes/MobileNoteHeader'
 
 interface PanelState {
   isExpanded: boolean
@@ -48,6 +48,7 @@ export function SidebarBoardView(props: {
   const [viewMode, setViewMode] = useState<ViewMode>('split')
   const [isDragging, setIsDragging] = useState(false)
   const [showAllNotes, setShowAllNotes] = usePersist<boolean>("showAllNotes", false)
+  const [isMobile, setIsMobile] = useState(false)
 
   // Panel state management with persistence
   const [listPanelState, setListPanelState] = usePersist<PanelState>("listPanelWidth", { 
@@ -60,6 +61,20 @@ export function SidebarBoardView(props: {
     width: 250 
   })
 
+  // Handle mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768) // md breakpoint
+      if (window.innerWidth < 768 && viewMode === 'split') {
+        setViewMode('notes') // Default to notes view on mobile
+      }
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [viewMode])
+
   // Select first card if none selected
   useEffect(() => {
     if (!selectedCardId && cards.length > 0) {
@@ -69,7 +84,7 @@ export function SidebarBoardView(props: {
 
   // Handle panel resizing
   useEffect(() => {
-    if (!isDragging || viewMode !== 'split') return
+    if (!isDragging || viewMode !== 'split' || isMobile) return
 
     const handleMouseMove = (e: MouseEvent) => {
       e.preventDefault()
@@ -97,9 +112,7 @@ export function SidebarBoardView(props: {
       document.body.style.cursor = 'default'
     }
 
-    // Set cursor for entire document while dragging
     document.body.style.cursor = 'col-resize'
-
     document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseup', handleMouseUp)
 
@@ -108,7 +121,7 @@ export function SidebarBoardView(props: {
       document.removeEventListener('mouseup', handleMouseUp)
       document.body.style.cursor = 'default'
     }
-  }, [isDragging, listPanelState.width, listPanelState.isExpanded, viewMode])
+  }, [isDragging, listPanelState.width, listPanelState.isExpanded, viewMode, isMobile])
 
   if (boardLoading && !board) {
     return <div className="p-4 text-gray-900 dark:text-gray-100">Loading...</div>
@@ -127,7 +140,7 @@ export function SidebarBoardView(props: {
       id: uuidv4(),
       boardId,
       type: 'richtext',
-      title: '',  // Empty title by default
+      title: '',
       content: {
         markdown: ''
       },
@@ -142,7 +155,7 @@ export function SidebarBoardView(props: {
   const handleCardSelect = (cardId: string) => {
     setSelectedCardId(cardId)
     if (viewMode === 'chat') {
-      setViewMode('split')
+      setViewMode(isMobile ? 'notes' : 'split')
     }
   }
 
@@ -186,45 +199,76 @@ export function SidebarBoardView(props: {
 
   return (
     <div className="flex flex-col h-full">
-      <div id="board-container" className="flex flex-1 overflow-hidden">
-        <ListPanel
-          cards={cards}
-          selectedCardId={selectedCardId}
-          onCardSelect={handleCardSelect}
-          onCreateCard={handleCreateCard}
-          isExpanded={listPanelState.isExpanded}
-          width={listPanelState.width}
-          onToggle={() => setListPanelState((prev: PanelState) => ({ ...prev, isExpanded: !prev.isExpanded }))}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          showAllNotes={showAllNotes}
-          onShowAllNotesChange={setShowAllNotes}
-        />
-
-        {viewMode !== 'chat' && (
-          <NotesPanel
-            cards={cards.filter((c): c is RichTextCard => c.type === 'richtext')}
-            selectedCard={selectedCard}
-            onUpdateCard={handleUpdateCard}
-            onUpdateCardTitle={handleUpdateCardTitle}
-            onDelete={handleDeleteCard}
+      {/* Desktop view controls */}
+      {!isMobile && (
+        <div className="h-10 px-2 flex items-center justify-end border-b border-gray-200 dark:border-gray-700">
+          <ViewControls
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
             showAllNotes={showAllNotes}
+            onShowAllNotesChange={setShowAllNotes}
+          />
+        </div>
+      )}
+
+      <div id="board-container" className={`
+        flex flex-1 overflow-hidden
+        ${isMobile ? 'relative' : ''}
+      `}>
+        {/* Only show list panel on desktop */}
+        {!isMobile && (
+          <ListPanel
+            cards={cards.filter((c): c is RichTextCard => c.type === 'richtext')}
+            selectedCardId={selectedCardId}
+            onCardSelect={handleCardSelect}
+            onCreateCard={handleCreateCard}
+            isExpanded={listPanelState.isExpanded}
+            width={listPanelState.width}
+            onToggle={() => setListPanelState((prev: PanelState) => ({ ...prev, isExpanded: !prev.isExpanded }))}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            showAllNotes={showAllNotes}
+            onShowAllNotesChange={setShowAllNotes}
           />
         )}
 
-        {viewMode === 'split' && (
-          <ResizeHandle onDragStart={() => setIsDragging(true)} />
+        {/* Notes Panel - Show in split mode or when notes mode is active */}
+        {(viewMode === 'split' || viewMode === 'notes') && (
+          <div className={`
+            flex flex-col flex-1
+            ${isMobile ? 'w-full' : ''}
+          `}>
+            {isMobile && viewMode === 'notes' && (
+              <MobileNoteHeader
+                cards={cards.filter((c): c is RichTextCard => c.type === 'richtext')}
+                selectedCardId={selectedCardId}
+                onCardSelect={handleCardSelect}
+                onCreateCard={handleCreateCard}
+                showAllNotes={showAllNotes}
+                onShowAllNotesChange={setShowAllNotes}
+              />
+            )}
+            <NotesPanel
+              cards={cards.filter((c): c is RichTextCard => c.type === 'richtext')}
+              selectedCard={selectedCard}
+              onUpdateCard={handleUpdateCard}
+              onUpdateCardTitle={handleUpdateCardTitle}
+              onDelete={handleDeleteCard}
+              showAllNotes={showAllNotes}
+            />
+            {!isMobile && viewMode === 'split' && (
+              <ResizeHandle onDragStart={() => setIsDragging(true)} />
+            )}
+          </div>
         )}
 
-        {viewMode !== 'notes' && (
-          <div 
-            className="flex flex-col min-h-0 overflow-hidden"
-            style={{ 
-              width: viewMode === 'split' ? `${chatPanelState.width}px` : undefined,
-              minWidth: viewMode === 'split' ? '250px' : undefined,
-              flex: viewMode === 'split' ? 'none' : '1'
-            }}
-          >
+        {/* Chat Panel - Show in split mode or when chat mode is active */}
+        {(viewMode === 'split' || viewMode === 'chat') && (
+          <div className={`
+            flex flex-col min-h-0 overflow-hidden
+            ${isMobile ? 'w-full' : ''}
+            ${!isMobile && viewMode === 'split' ? `w-[${chatPanelState.width}px] min-w-[250px]` : 'flex-1'}
+          `}>
             <BoardChatSystem
               store={store}
               boardId={boardId}
@@ -233,6 +277,17 @@ export function SidebarBoardView(props: {
           </div>
         )}
       </div>
+
+      {/* Mobile bottom navigation */}
+      {isMobile && (
+        <ViewControls
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          showAllNotes={showAllNotes}
+          onShowAllNotesChange={setShowAllNotes}
+          isMobileBar={true}
+        />
+      )}
     </div>
   )
 } 

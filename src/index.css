@@ -14,3 +14,8 @@ body,
   --background-contrast: #ddd;
   --background-contrast-faded: #aaa;
 }
+
+body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}

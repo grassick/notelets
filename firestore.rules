@@ -20,5 +20,25 @@ service cloud.firestore {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
+
+    // Encrypted collections
+    match /encrypted-users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Encrypted boards collection
+      match /boards/{boardId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Encrypted cards collection
+      match /cards/{cardId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Encrypted chats collection
+      match /chats/{chatId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
   }
 } 

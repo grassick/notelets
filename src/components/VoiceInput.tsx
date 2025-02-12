@@ -1,21 +1,31 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { FaMicrophone } from 'react-icons/fa'
 import { OpenAIClient } from '../api/openai'
+import { UserSettings } from '../types/settings'
 
 /** Props for the VoiceInput component */
 interface VoiceInputProps {
-    /** OpenAI client instance */
-    openaiClient: OpenAIClient
+    /** User settings */
+    userSettings: UserSettings
     /** Optional class name for the button */
     className?: string
     /** Optional size for the microphone icon */
     iconSize?: number
+    /** Callback function called with transcribed text */
+    onTranscription: (text: string) => void
 }
 
 /**
- * A voice input button that handles recording, transcription, and text insertion
+ * A voice input button that handles recording and transcription
  */
-export function VoiceInput({ openaiClient, className = '', iconSize = 20 }: VoiceInputProps) {
+export function VoiceInput({ userSettings, className = '', iconSize = 20, onTranscription }: VoiceInputProps) {
+    const openaiClient = useMemo(() => {
+        if (!userSettings.llm.openaiKey) {
+            return null
+        }
+        return new OpenAIClient(userSettings.llm.openaiKey)
+    }, [userSettings.llm.openaiKey])
+
     const [isRecording, setIsRecording] = useState(false)
     const [isProcessing, setIsProcessing] = useState(false)
     const [lastActiveElement, setLastActiveElement] = useState<HTMLElement | null>(null)
@@ -82,13 +92,12 @@ export function VoiceInput({ openaiClient, className = '', iconSize = 20 }: Voic
             const audioBlob = new Blob(chunks.current, { type: 'audio/webm' })
             
             // Transcribe audio
-            const transcription = await openaiClient.transcribeAudio(audioBlob)
+            const transcription = await openaiClient!.transcribeAudio(audioBlob)
+
+            console.log('Transcription:', transcription)
             
-            // Insert text at cursor position
-            if (lastActiveElement) {
-                lastActiveElement.focus()
-                document.execCommand('insertText', false, transcription)
-            }
+            // Call the transcription callback
+            onTranscription(transcription)
         } catch (error) {
             console.error('Error processing audio:', error)
         } finally {
@@ -102,6 +111,10 @@ export function VoiceInput({ openaiClient, className = '', iconSize = 20 }: Voic
         } else {
             startRecording(e)
         }
+    }
+
+    if (!openaiClient) {
+        return null
     }
 
     return (

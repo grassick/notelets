@@ -281,6 +281,7 @@ export function BoardChatSystem({
             isLoading={isLoading}
             selectedModel={selectedModel}
             error={error || chatError}
+            userSettings={userSettings}
           />
         )}
       </div>

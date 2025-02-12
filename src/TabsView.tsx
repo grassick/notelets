@@ -8,9 +8,6 @@ import { BoardView } from "./BoardView";
 import { usePersist } from "./hooks/usePersist";
 import { SettingsModal } from "./components/settings/SettingsModal";
 import { BoardNameModal } from "./components/BoardNameModal";
-import { OpenAIClient } from "./api/openai";
-import { useUserSettings } from "./hooks/useSettings";
-import { VoiceInput } from "./components/VoiceInput";
 
 export function TabsView(props: {
   store: Store
@@ -20,8 +17,6 @@ export function TabsView(props: {
   const [activeTabIndex, setActiveTabIndex] = usePersist<number>("activeTabIndex", -1)
   const { boards, loading, error, setBoard, removeBoard } = useBoards(store)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const { settings } = useUserSettings(store)
-  const openaiClient = new OpenAIClient(settings.llm.openaiKey || '')
   const [boardNameModal, setBoardNameModal] = useState<{
     isOpen: boolean
     type: 'create' | 'edit'
@@ -163,7 +158,6 @@ export function TabsView(props: {
           </Tab>
         </div>
         <div className="flex items-center gap-2">
-          <VoiceInput openaiClient={openaiClient} />
           <button
             onClick={() => setIsSettingsOpen(true)}
             className="p-2 rounded-md text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300

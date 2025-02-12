@@ -3,7 +3,29 @@ import type { Chat, ChatMessage } from '../types'
 import type { ModelId } from '../api/llm'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { VoiceInput } from './VoiceInput'
+import { OpenAIClient } from '../api/openai'
+import { UserSettings } from '../types/settings'
 
+interface ChatInterfaceProps {
+  chat: Chat | null
+  onSendMessage: (content: string, modelConfig: ModelId) => Promise<void>
+  onEditMessage: (messageIndex: number, newContent: string) => Promise<void>
+  onSaveToNotes?: (content: string) => Promise<void>
+  className?: string
+  isLoading?: boolean
+  selectedModel: ModelId
+  error?: Error | null
+  userSettings: UserSettings
+}
+
+/**
+ * ChatInterface component
+ * 
+ * This component provides a chat interface for the user to interact with the AI.
+ * It displays messages, allows the user to send messages, and has a text input for typing messages.
+ * 
+ */
 export function ChatInterface({ 
   chat, 
   onSendMessage,
@@ -12,35 +34,17 @@ export function ChatInterface({
   className = '', 
   isLoading = false,
   selectedModel,
-  error = null
+  error,
+  userSettings
 }: ChatInterfaceProps) {
   const [message, setMessage] = useState('')
   const [lastAttemptedMessage, setLastAttemptedMessage] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chat?.messages])
-
-  // Auto-resize textarea
-  useEffect(() => {
-    const textarea = textareaRef.current
-    if (!textarea) return
-
-    const adjustHeight = () => {
-      textarea.style.height = 'auto'
-      const newHeight = Math.min(textarea.scrollHeight, 200) // Max height of 200px
-      textarea.style.height = `${newHeight}px`
-    }
-
-    // Initial adjustment
-    adjustHeight()
-
-    textarea.addEventListener('input', adjustHeight)
-    return () => textarea.removeEventListener('input', adjustHeight)
-  }, [message]) // Re-run when message changes
 
   const handleSubmit = async (e: React.FormEvent, retryMessage?: string) => {
     e?.preventDefault()
@@ -52,21 +56,9 @@ export function ChatInterface({
       await onSendMessage(messageToSend, selectedModel)
       setMessage('')
       setLastAttemptedMessage(null)
-
-      // Reset textarea height
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto'
-      }
     } catch (err) {
       // Error will be handled by parent component
       console.error('Failed to send message:', err)
-    }
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSubmit(e)
     }
   }
 
@@ -116,49 +108,16 @@ export function ChatInterface({
       </div>
 
       {/* Input */}
-      <form onSubmit={e => handleSubmit(e)} className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700">
-        <div className="relative p-2">
-          <textarea
-            ref={textareaRef}
-            value={message}
-            onChange={e => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type a message..."
-            className="w-full resize-none rounded-lg border border-gray-200 dark:border-gray-700 
-                     bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 
-                     p-3 pr-12 overflow-y-hidden
-                     focus:outline-none focus:ring-2 focus:ring-blue-500
-                     disabled:opacity-50 disabled:cursor-not-allowed"
-            rows={1}
-            disabled={isLoading}
-          />
-          <button
-            type="submit"
-            disabled={!message.trim() || isLoading}
-            className="absolute right-4 bottom-5 p-2 rounded-md
-                     text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300
-                     disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <svg className="w-5 h-5 rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
-          </button>
-        </div>
-      </form>
+      <ChatInput
+        message={message}
+        onMessageChange={setMessage}
+        onSendMessage={handleSubmit}
+        isLoading={isLoading}
+        userSettings={userSettings}
+      />
     </div>
   )
 } 
-
-interface ChatInterfaceProps {
-  chat: Chat | null
-  onSendMessage: (content: string, modelConfig: ModelId) => Promise<void>
-  onEditMessage: (messageIndex: number, newContent: string) => Promise<void>
-  onSaveToNotes?: (content: string) => Promise<void>
-  className?: string
-  isLoading?: boolean
-  selectedModel: ModelId
-  error?: Error | null
-}
 
 function ChatMessage({ message, index, onEdit, onSaveToNotes }: { 
   message: ChatMessage, 
@@ -286,4 +245,98 @@ function ChatMessage({ message, index, onEdit, onSaveToNotes }: {
       </div>
     </div>
   )
+}
+
+/** Props for the ChatInput component */
+interface ChatInputProps {
+    /** The current message text */
+    message: string
+    /** Called when the message text changes */
+    onMessageChange: (message: string) => void
+    /** Called when a message should be sent */
+    onSendMessage: (e: React.FormEvent) => void
+    /** Whether the chat is currently loading/processing */
+    isLoading?: boolean
+    /** User settings */
+    userSettings: UserSettings
+}
+
+/**
+ * Text input area for the chat interface with auto-resizing textarea
+ */
+function ChatInput({ message, onMessageChange, onSendMessage, isLoading = false, userSettings }: ChatInputProps) {
+    const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+    // Auto-resize textarea
+    useEffect(() => {
+        const textarea = textareaRef.current
+        if (!textarea) return
+
+        const adjustHeight = () => {
+            textarea.style.height = 'auto'
+            const newHeight = Math.min(textarea.scrollHeight, 200) // Max height of 200px
+            textarea.style.height = `${newHeight}px`
+        }
+
+        // Initial adjustment
+        adjustHeight()
+
+        textarea.addEventListener('input', adjustHeight)
+        return () => textarea.removeEventListener('input', adjustHeight)
+    }, [message]) // Re-run when message changes
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault()
+            onSendMessage(e)
+        }
+    }
+
+    const handleVoiceTranscription = (text: string) => {
+        // Append the transcribed text to the current message
+        const newMessage = message.trim() 
+            ? `${message.trim()} ${text}` 
+            : text
+        onMessageChange(newMessage)
+    }
+
+    return (
+        <form onSubmit={onSendMessage} className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700">
+            <div className="relative p-2">
+                <textarea
+                    ref={textareaRef}
+                    value={message}
+                    onChange={e => onMessageChange(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Type a message..."
+                    className="w-full resize-none rounded-lg border border-gray-200 dark:border-gray-700 
+                             bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 
+                             p-3 pr-24 overflow-y-hidden
+                             focus:outline-none focus:ring-2 focus:ring-blue-500
+                             disabled:opacity-50 disabled:cursor-not-allowed"
+                    rows={1}
+                    disabled={isLoading}
+                />
+                <div className="absolute right-4 bottom-5 flex gap-1">
+                    <VoiceInput 
+                        userSettings={userSettings}
+                        onTranscription={handleVoiceTranscription}
+                        iconSize={18}
+                        className="p-1.5"
+                    />
+                    <button
+                        type="submit"
+                        disabled={!message.trim() || isLoading}
+                        className="p-2 rounded-md
+                                text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300
+                                disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <svg className="w-5 h-5 rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </form>
+    )
 }

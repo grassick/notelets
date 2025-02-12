@@ -5,6 +5,7 @@ import type { RichTextCard, ViewMode } from './types'
 import { v4 as uuidv4 } from 'uuid'
 import { BoardChatSystem } from './components/BoardChatSystem'
 import { usePersist } from './hooks/usePersist'
+import { useIsMobile } from './hooks/useIsMobile'
 import { ListPanel } from './components/notes/NoteList'
 import { NotesPanel } from './components/notes/NotesPanel'
 import { ResizeHandle } from './components/ui/ResizeHandle'
@@ -46,7 +47,7 @@ export function BoardView(props: {
   const [viewMode, setViewMode] = useState<ViewMode>('split')
   const [isDragging, setIsDragging] = useState(false)
   const [showAllNotes, setShowAllNotes] = usePersist<boolean>("showAllNotes", false)
-  const [isMobile, setIsMobile] = useState(false)
+  const isMobile = useIsMobile()
 
   // Panel state management with persistence
   const [listPanelState, setListPanelState] = usePersist<PanelState>("listPanelWidth", { 
@@ -59,19 +60,12 @@ export function BoardView(props: {
     width: 250 
   })
 
-  // Handle mobile detection
+  // Update view mode when switching to mobile
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768) // md breakpoint
-      if (window.innerWidth < 768 && viewMode === 'split') {
-        setViewMode('notes') // Default to notes view on mobile
-      }
+    if (isMobile && viewMode === 'split') {
+      setViewMode('notes') // Default to notes view on mobile
     }
-    
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [viewMode])
+  }, [isMobile, viewMode])
 
   const selectedCardId = board?.layoutConfig.selectedCardId ?? null
 

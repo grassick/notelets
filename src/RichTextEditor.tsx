@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useMemo, useRef } from 'react'
+import React, { useEffect, useCallback, useMemo, useRef, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
@@ -9,6 +9,8 @@ import { gfm } from 'turndown-plugin-gfm'
 import { RichTextToolbar } from './RichTextToolbar'
 import { RichTextBubbleMenu } from './RichTextBubbleMenu'
 import { useDebouncedCallback } from 'use-debounce'
+import { VoiceInput } from './components/VoiceInput'
+import { UserSettings } from './types/settings'
 
 const md = MarkdownIt('commonmark', {
   html: true,
@@ -54,15 +56,18 @@ interface RichTextEditorProps {
   onChange: (markdown: string) => void
   placeholder?: string
   showToolbar?: boolean
+  userSettings: UserSettings
 }
 
 export function RichTextEditor({ 
   content, 
   onChange, 
   placeholder,
-  showToolbar = false 
+  showToolbar = false,
+  userSettings
 }: RichTextEditorProps) {
   const lastPushedContent = useRef(content)
+  const [hasFocus, setHasFocus] = useState(false)
 
   // Debounce the markdown conversion and onChange callback
   const debouncedOnChange = useDebouncedCallback((html: string) => {
@@ -130,8 +135,16 @@ export function RichTextEditor({
         console.log(editor.getHTML())
       }
       debouncedOnChange(editor.getHTML())
-    }
+    },
+    onFocus: () => setHasFocus(true),
+    onBlur: () => setHasFocus(false)
   })
+
+  const handleVoiceTranscription = useCallback((text: string) => {
+    if (editor && text) {
+      editor.commands.insertContent(text)
+    }
+  }, [editor])
 
   // Update editor content when content prop changes significantly and differs from what we last pushed
   useEffect(() => {
@@ -163,7 +176,7 @@ export function RichTextEditor({
   }
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 text-gray-800 dark:text-gray-200">
+    <div className="flex flex-col flex-1 min-h-0 text-gray-800 dark:text-gray-200 relative">
       {showToolbar && <RichTextToolbar editor={editor} />}
       <RichTextBubbleMenu editor={editor} />
       <div className="flex-1 min-h-0">
@@ -171,6 +184,17 @@ export function RichTextEditor({
           editor={editor} 
           className="h-full [&_.ProseMirror]:h-full [&_.ProseMirror]:min-h-full" 
         />
+        <div className={`
+          absolute bottom-2 right-2 transition-all duration-200
+          ${hasFocus ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}
+        `}>
+          <VoiceInput
+            userSettings={userSettings}
+            onTranscription={handleVoiceTranscription}
+            iconSize={16}
+            className="bg-white dark:bg-gray-800 shadow-sm"
+          />
+        </div>
       </div>
     </div>
   )

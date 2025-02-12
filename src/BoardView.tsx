@@ -243,6 +243,7 @@ export function BoardView(props: {
                 onShowAllNotesChange={setShowAllNotes}
                 onCreateCard={handleCreateCard}
                 isMobile={isMobile}
+                store={store}
               />
             )}
           </div>

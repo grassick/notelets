@@ -3,6 +3,7 @@ import { RichTextEditor } from '../../RichTextEditor'
 import { RichTextCard } from '../../types'
 import MarkdownIt from 'markdown-it'
 import { FaTrash } from 'react-icons/fa'
+import { UserSettings } from '../../types/settings'
 
 /** Props for the NoteCardHeader component */
 interface NoteCardHeaderProps {
@@ -212,10 +213,12 @@ interface NoteCardBodyProps {
   isMarkdownMode: boolean
   /** Optional class name for styling */
   className?: string
+  /** User settings */
+  userSettings: UserSettings
 }
 
 /** Body component for a note card containing the rich text editor */
-function NoteCardBody({ content, onChange, isMarkdownMode, className = '' }: NoteCardBodyProps) {
+function NoteCardBody({ content, onChange, isMarkdownMode, className = '', userSettings }: NoteCardBodyProps) {
   return (
     <div className={`relative flex flex-col flex-1 min-h-0 ${className}`}>
       {isMarkdownMode ? (
@@ -229,6 +232,7 @@ function NoteCardBody({ content, onChange, isMarkdownMode, className = '' }: Not
           content={content}
           onChange={onChange}
           placeholder="Start typing..."
+          userSettings={userSettings}
         />
       )}
     </div>
@@ -251,6 +255,8 @@ interface NoteCardProps {
   className?: string
   /** Additional controls to render in the header */
   extraControls?: React.ReactNode
+  /** User settings */
+  userSettings: UserSettings
 }
 
 /** A component that renders a note card in either single or multi view mode */
@@ -261,7 +267,8 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
   onUpdateCardTitle, 
   onDelete, 
   className = '',
-  extraControls
+  extraControls,
+  userSettings
 }, ref) => {
   const [isMarkdownMode, setIsMarkdownMode] = useState(false)
   const [showCopyMenu, setShowCopyMenu] = useState(false)
@@ -365,6 +372,7 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
                       dark:[::-webkit-scrollbar-thumb]:bg-slate-500/25
                       dark:hover:[::-webkit-scrollbar-thumb]:bg-slate-400/25
                       [::-webkit-scrollbar-track]:bg-transparent"
+            userSettings={userSettings}
           />
         </div>
       </div>
@@ -393,6 +401,7 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
           onChange={onUpdateCard}
           isMarkdownMode={isMarkdownMode}
           className="px-4 py-3 flex-1"
+          userSettings={userSettings}
         />
       </div>
     </div>

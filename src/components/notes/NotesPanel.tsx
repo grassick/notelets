@@ -2,6 +2,8 @@ import React, { useEffect } from 'react'
 import { RichTextCard } from '../../types'
 import { NoteCard } from './NoteCard'
 import { FaLayerGroup, FaPlus } from 'react-icons/fa'
+import { useUserSettings } from '../../hooks/useSettings'
+import { Store } from '../../Store'
 
 /** Props for the NotesPanel component */
 interface NotesPanelProps {
@@ -23,6 +25,8 @@ interface NotesPanelProps {
   onCreateCard: () => void
   /** Whether we're in mobile view */
   isMobile: boolean
+  /** The data store instance */
+  store: Store
 }
 
 /** Panel component that displays notes in either single or multi view mode */
@@ -35,8 +39,11 @@ export function NotesPanel({
   showAllNotes,
   onShowAllNotesChange,
   onCreateCard,
-  isMobile
+  isMobile,
+  store
 }: NotesPanelProps) {
+  const { settings: userSettings } = useUserSettings(store)
+
   // Sort cards by creation date, newest first
   const sortedCards = [...cards].sort((a, b) => 
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -117,6 +124,7 @@ export function NotesPanel({
             onUpdateCardTitle={(title) => onUpdateCardTitle(selectedCard.id, title)}
             onDelete={() => onDelete(selectedCard.id)}
             extraControls={mobileControls}
+            userSettings={userSettings}
           />
         )}
       </div>
@@ -167,6 +175,7 @@ export function NotesPanel({
             onUpdateCardTitle={(title) => onUpdateCardTitle(card.id, title)}
             onDelete={() => onDelete(card.id)}
             ref={(el) => cardRefs.current[card.id] = el}
+            userSettings={userSettings}
             // extraControls={card.id === selectedCard?.id ? mobileControls : undefined}
           />
         ))}

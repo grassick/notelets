@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import type { Store } from '../Store'
 import { useCards, useChats } from '../Store'
-import type { Chat, RichTextCard } from '../types'
+import type { Card, Chat, RichTextCard } from '../types'
 import { ModelId, getDefaultModel, isModelAvailable } from '../api/llm'
 import { v4 as uuidv4 } from 'uuid'
 import { ChatInterface } from './ChatInterface'
@@ -19,31 +19,10 @@ interface BoardChatSystemProps {
   boardId: string
   /** Additional class names */
   className?: string
-}
-
-interface ChatHeaderProps {
-  /** Currently active chat */
-  chat: Chat | null
-  /** All available chats */
-  chats: Chat[]
-  /** Create new chat callback */
-  onNewChat: () => void
-  /** Selected model */
-  selectedModel: ModelId
-  /** Model change callback */
-  onModelChange: (model: ModelId) => void
-  /** Callback when a chat is selected from history */
-  onChatSelect: (chat: Chat) => void
-  /** Callback when a chat is deleted */
-  onChatDelete: (chatId: string) => void
-  /** Callback to open settings modal */
-  onOpenSettings: () => void
-  /** Whether history mode is active */
-  isHistoryMode: boolean
-  /** Toggle history mode */
-  onToggleHistory: () => void
-  /** The data store instance */
-  store: Store
+  /** The cards on the board */
+  cards: Card[]
+  /** The function to set a card */
+  setCard: (card: Card) => void
 }
 
 /**
@@ -56,9 +35,10 @@ export function BoardChatSystem({
   store,
   boardId,
   className = '',
+  cards,
+  setCard
 }: BoardChatSystemProps) {
   const { settings: userSettings } = useUserSettings(store)
-  const { cards, setCard } = useCards(store, boardId)
   const { chats, setChat: storeSetChat, removeChat } = useChats(store, boardId)
   const [chat, setChat] = useState<Chat | null>(null)
   const [error, setError] = useState<Error | null>(null)
@@ -292,6 +272,31 @@ export function BoardChatSystem({
       />
     </>
   )
+}
+
+interface ChatHeaderProps {
+  /** Currently active chat */
+  chat: Chat | null
+  /** All available chats */
+  chats: Chat[]
+  /** Create new chat callback */
+  onNewChat: () => void
+  /** Selected model */
+  selectedModel: ModelId
+  /** Model change callback */
+  onModelChange: (model: ModelId) => void
+  /** Callback when a chat is selected from history */
+  onChatSelect: (chat: Chat) => void
+  /** Callback when a chat is deleted */
+  onChatDelete: (chatId: string) => void
+  /** Callback to open settings modal */
+  onOpenSettings: () => void
+  /** Whether history mode is active */
+  isHistoryMode: boolean
+  /** Toggle history mode */
+  onToggleHistory: () => void
+  /** The data store instance */
+  store: Store
 }
 
 function ChatHeader({ 

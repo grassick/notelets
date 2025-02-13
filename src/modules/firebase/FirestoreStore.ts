@@ -24,7 +24,7 @@ export class FirestoreStore implements Store {
         const user = getAuth().currentUser
         if (!user) throw new Error('Not authenticated')
         return user.uid
-}
+    }
 
     setBoard = async (board: Board): Promise<void> => {
         const userId = this.getUserId()
@@ -65,7 +65,7 @@ export class FirestoreStore implements Store {
     getBoards = (callback: (boards: Board[]) => void): () => void => {
         const userId = this.getUserId()
         const q = collection(db, `users/${userId}/boards`)
-        
+
         return onSnapshot(q, (snapshot) => {
             const boards = snapshot.docs.map(doc => doc.data() as Board)
             callback(boards)
@@ -75,7 +75,7 @@ export class FirestoreStore implements Store {
     getBoard = (boardId: string, callback: (board: Board | null) => void): () => void => {
         const userId = this.getUserId()
         const docRef = doc(db, `users/${userId}/boards/${boardId}`)
-        
+
         return onSnapshot(docRef, (doc) => {
             callback(doc.exists() ? doc.data() as Board : null)
         })
@@ -97,7 +97,7 @@ export class FirestoreStore implements Store {
             collection(db, `users/${userId}/cards`),
             where('boardId', '==', boardId)
         )
-        
+
         return onSnapshot(q, (snapshot) => {
             const cards = snapshot.docs.map(doc => doc.data() as Card)
             callback(cards)
@@ -107,7 +107,7 @@ export class FirestoreStore implements Store {
     getCard = (cardId: string, callback: (card: Card | null) => void): () => void => {
         const userId = this.getUserId()
         const docRef = doc(db, `users/${userId}/cards/${cardId}`)
-        
+
         return onSnapshot(docRef, (doc) => {
             callback(doc.exists() ? doc.data() as Card : null)
         })
@@ -129,7 +129,7 @@ export class FirestoreStore implements Store {
             collection(db, `users/${userId}/chats`),
             where('boardId', '==', boardId)
         )
-        
+
         return onSnapshot(q, (snapshot) => {
             const chats = snapshot.docs.map(doc => doc.data() as Chat)
             callback(chats)
@@ -139,7 +139,7 @@ export class FirestoreStore implements Store {
     getChat = (chatId: string, callback: (chat: Chat | null) => void): () => void => {
         const userId = this.getUserId()
         const docRef = doc(db, `users/${userId}/chats/${chatId}`)
-        
+
         return onSnapshot(docRef, (doc) => {
             callback(doc.exists() ? doc.data() as Chat : null)
         })
@@ -148,7 +148,7 @@ export class FirestoreStore implements Store {
     getUserSettings = (callback: (settings: UserSettings | null) => void): () => void => {
         const userId = this.getUserId()
         const docRef = doc(db, `users/${userId}/settings/user`)
-        
+
         return onSnapshot(docRef, (doc) => {
             callback(doc.exists() ? doc.data() as UserSettings : null)
         })

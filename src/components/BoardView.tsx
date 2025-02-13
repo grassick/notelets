@@ -9,7 +9,7 @@ import { useIsMobile } from '../hooks/useIsMobile'
 import { ListPanel } from './notes/NoteList'
 import { NotesPanel } from './notes/NotesPanel'
 import { ResizeHandle } from './ui/ResizeHandle'
-import { ViewControls } from './ViewControls'
+import ViewControls from './ViewControls'
 
 interface PanelState {
   isExpanded: boolean
@@ -278,8 +278,6 @@ export function BoardView(props: {
         <ViewControls
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-          showAllNotes={showAllNotes}
-          onShowAllNotesChange={setShowAllNotes}
           isMobileBar={true}
         />
       )}

@@ -31,6 +31,10 @@ interface NoteCardHeaderProps {
   showVoiceInHeader?: boolean
   /** Callback when voice input provides transcription */
   onVoiceTranscription?: (text: string) => void
+  /** Whether all notes are currently shown */
+  showAllNotes: boolean
+  /** Callback when show all notes changes */
+  onShowAllNotesChange: (show: boolean) => void
 }
 
 /** Header component for a note card with title editing and actions */
@@ -45,7 +49,9 @@ function NoteCardHeader({
   extraControls,
   userSettings,
   showVoiceInHeader,
-  onVoiceTranscription
+  onVoiceTranscription,
+  showAllNotes,
+  onShowAllNotesChange
 }: NoteCardHeaderProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
@@ -167,6 +173,19 @@ function NoteCardHeader({
       </div>
       <div className={`flex items-center gap-2 ${!alwaysShowActions ? 'opacity-0 group-hover:opacity-100 transition-opacity duration-150' : ''}`}>
         {extraControls}
+        <button
+          onClick={() => onShowAllNotesChange(!showAllNotes)}
+          className={`p-1 rounded transition-colors ${
+            showAllNotes 
+              ? 'text-blue-500 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30' 
+              : 'text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400'
+          }`}
+          title={showAllNotes ? "Focus on this note" : "Show all notes"}
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm3 4h2m-2 4h2m-2 4h2" />
+          </svg>
+        </button>
         {showVoiceInHeader && onVoiceTranscription && (
           <VoiceInput
             userSettings={userSettings}
@@ -298,6 +317,10 @@ interface NoteCardProps {
   extraControls?: React.ReactNode
   /** User settings */
   userSettings: UserSettings
+  /** Whether all notes are currently shown */
+  showAllNotes: boolean
+  /** Callback when show all notes changes */
+  onShowAllNotesChange: (show: boolean) => void
 }
 
 /** A component that renders a note card in either single or multi view mode */
@@ -309,7 +332,9 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
   onDelete, 
   className = '',
   extraControls,
-  userSettings
+  userSettings,
+  showAllNotes,
+  onShowAllNotesChange
 }, ref) => {
   const [isMarkdownMode, setIsMarkdownMode] = useState(false)
   const [showCopyMenu, setShowCopyMenu] = useState(false)
@@ -396,7 +421,7 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
           ref={ref}
           className="flex flex-col flex-1 min-h-0"
         >
-          <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+          <div className="px-3 py-1 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
             <NoteCardHeader
               card={card}
               onUpdateTitle={onUpdateCardTitle}
@@ -408,6 +433,8 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
               userSettings={userSettings}
               showVoiceInHeader={showVoiceInHeader}
               onVoiceTranscription={handleVoiceTranscription}
+              showAllNotes={showAllNotes}
+              onShowAllNotesChange={onShowAllNotesChange}
             />
           </div>
           <NoteCardBody
@@ -451,6 +478,8 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
             userSettings={userSettings}
             showVoiceInHeader={showVoiceInHeader}
             onVoiceTranscription={handleVoiceTranscription}
+            showAllNotes={showAllNotes}
+            onShowAllNotesChange={onShowAllNotesChange}
           />
         </div>
         <NoteCardBody

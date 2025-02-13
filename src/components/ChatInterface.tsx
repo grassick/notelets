@@ -170,7 +170,7 @@ function ChatMessage({ message, index, onEdit, onSaveToNotes }: {
   }
   
   return (
-    <div className="group mb-8">
+    <div className="group mb-6">
       {isUser && (
         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity mb-2">
           <button
@@ -292,8 +292,8 @@ function ChatInput({ message, onMessageChange, onSendMessage, isLoading = false,
     }
 
     return (
-        <form onSubmit={onSendMessage} className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
-            <div className="max-w-4xl mx-auto relative">
+        <form onSubmit={onSendMessage} className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-2">
+            <div className="relative">
                 <textarea
                     ref={textareaRef}
                     value={message}

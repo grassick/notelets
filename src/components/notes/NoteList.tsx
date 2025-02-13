@@ -1,6 +1,6 @@
 import React from 'react'
 import type { RichTextCard, ViewMode } from '../../types'
-import { ViewControls } from '../ViewControls'
+import ViewControls from '../ViewControls'
 
 /** Get a preview of the card content */
 const getCardPreview = (card: RichTextCard): string => {
@@ -104,8 +104,6 @@ export function ListPanel({
             <ViewControls
               viewMode={viewMode}
               onViewModeChange={onViewModeChange}
-              showAllNotes={showAllNotes}
-              onShowAllNotesChange={onShowAllNotesChange}
               isMobileBar={false}
             />
             <div className="flex-1" />

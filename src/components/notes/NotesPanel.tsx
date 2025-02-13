@@ -123,8 +123,9 @@ export function NotesPanel({
             onUpdateCard={(content) => onUpdateCard(selectedCard.id, content)}
             onUpdateCardTitle={(title) => onUpdateCardTitle(selectedCard.id, title)}
             onDelete={() => onDelete(selectedCard.id)}
-            extraControls={mobileControls}
             userSettings={userSettings}
+            showAllNotes={showAllNotes}
+            onShowAllNotesChange={onShowAllNotesChange}
           />
         )}
       </div>
@@ -176,7 +177,8 @@ export function NotesPanel({
             onDelete={() => onDelete(card.id)}
             ref={(el) => cardRefs.current[card.id] = el}
             userSettings={userSettings}
-            // extraControls={card.id === selectedCard?.id ? mobileControls : undefined}
+            showAllNotes={showAllNotes}
+            onShowAllNotesChange={onShowAllNotesChange}
           />
         ))}
       </div>

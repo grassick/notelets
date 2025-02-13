@@ -126,7 +126,7 @@ export function BoardView(props: {
     }
   }, [isDragging, listPanelState.width, listPanelState.isExpanded, viewMode, isMobile])
 
-  if (boardLoading && !board) {
+  if (boardLoading && !board || cardsLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="flex flex-col items-center min-w-[200px]">
@@ -236,27 +236,18 @@ export function BoardView(props: {
             flex flex-col flex-1
             ${isMobile ? 'w-full' : ''}
           `}>
-            {cardsLoading ? (
-              <div className="flex flex-col items-center justify-center flex-1 p-8 text-center">
-                <div className="w-16 h-16 mb-6 text-gray-300 dark:text-gray-600">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 dark:border-gray-400 mx-auto mb-4"></div>
-                  <p className="text-gray-600 dark:text-gray-400">Loading your notes...</p>
-                </div>
-              </div>
-            ) : (
-              <NotesPanel
-                cards={cards.filter((c): c is RichTextCard => c.type === 'richtext')}
-                selectedCard={selectedCard}
-                onUpdateCard={handleUpdateCard}
-                onUpdateCardTitle={handleUpdateCardTitle}
-                onDelete={handleDeleteCard}
-                showAllNotes={showAllNotes}
-                onShowAllNotesChange={setShowAllNotes}
-                onCreateCard={handleCreateCard}
-                isMobile={isMobile}
-                store={store}
-              />
-            )}
+            <NotesPanel
+              cards={cards.filter((c): c is RichTextCard => c.type === 'richtext')}
+              selectedCard={selectedCard}
+              onUpdateCard={handleUpdateCard}
+              onUpdateCardTitle={handleUpdateCardTitle}
+              onDelete={handleDeleteCard}
+              showAllNotes={showAllNotes}
+              onShowAllNotesChange={setShowAllNotes}
+              onCreateCard={handleCreateCard}
+              isMobile={isMobile}
+              store={store}
+            />
           </div>
         )}
 

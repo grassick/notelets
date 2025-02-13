@@ -124,7 +124,7 @@ function SingleBoardView({ store, boardId, onBack }: SingleBoardViewProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="sticky top-0 border-b border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
+      <div className="sticky top-0 border-b border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm z-10">
         <div className="px-4 py-3 flex items-center gap-4">
           <button
             onClick={onBack}
@@ -143,7 +143,7 @@ function SingleBoardView({ store, boardId, onBack }: SingleBoardViewProps) {
               <FaEllipsisV size={20} />
             </button>
             {showMenu && (
-              <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
+              <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-50">
                 <div className="py-1">
                   <button
                     onClick={() => {
@@ -245,7 +245,7 @@ export function MobileTabsView({ store }: MobileTabsViewProps) {
         <>
           <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
             <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              My Boards
+              Boards
             </h1>
             <button
               onClick={() => setShowNewBoardModal(true)}

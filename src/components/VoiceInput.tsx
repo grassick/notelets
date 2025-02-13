@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { FaMicrophone } from 'react-icons/fa'
 import { OpenAIClient } from '../api/openai'
 import { UserSettings } from '../types/settings'
+import RecordRTC, { RecordRTCPromisesHandler } from 'recordrtc'
 
 /** Props for the VoiceInput component */
 interface VoiceInputProps {
@@ -16,7 +17,8 @@ interface VoiceInputProps {
 }
 
 /**
- * A voice input button that handles recording and transcription
+ * A voice input button that handles recording and transcription using RecordRTC
+ * for better cross-platform compatibility, especially on iOS
  */
 export function VoiceInput({ userSettings, className = '', iconSize = 20, onTranscription }: VoiceInputProps) {
     const openaiClient = useMemo(() => {
@@ -28,15 +30,17 @@ export function VoiceInput({ userSettings, className = '', iconSize = 20, onTran
 
     const [isRecording, setIsRecording] = useState(false)
     const [isProcessing, setIsProcessing] = useState(false)
-    const mediaRecorder = useRef<MediaRecorder | null>(null)
-    const chunks = useRef<Blob[]>([])
+    const recorder = useRef<RecordRTCPromisesHandler | null>(null)
+    const stream = useRef<MediaStream | null>(null)
 
     // Cleanup recording on unmount
     useEffect(() => {
         return () => {
-            if (mediaRecorder.current && isRecording) {
-                mediaRecorder.current.stop()
-                mediaRecorder.current.stream.getTracks().forEach(track => track.stop())
+            if (recorder.current && isRecording) {
+                recorder.current.stopRecording()
+                if (stream.current) {
+                    stream.current.getTracks().forEach(track => track.stop())
+                }
             }
         }
     }, [isRecording])
@@ -46,93 +50,51 @@ export function VoiceInput({ userSettings, className = '', iconSize = 20, onTran
         e.stopPropagation()
         
         try {
-            // Add iOS-compatible constraints
-            const stream = await navigator.mediaDevices.getUserMedia({ 
+            stream.current = await navigator.mediaDevices.getUserMedia({ 
                 audio: {
-                    sampleRate: 44100,
-                    channelCount: 1,
                     echoCancellation: true,
                     noiseSuppression: true,
-                    autoGainControl: true
-                } 
-            })
-            
-            // Specify codec for iOS compatibility
-            mediaRecorder.current = new MediaRecorder(stream, {
-                mimeType: 'audio/webm;codecs=opus'
-            })
-            chunks.current = []
-
-            mediaRecorder.current.ondataavailable = (e) => {
-                if (e.data.size > 0) {
-                    chunks.current.push(e.data)
+                    sampleRate: 44100
                 }
-            }
+            })
 
-            mediaRecorder.current.start()
+            recorder.current = new RecordRTCPromisesHandler(stream.current, {
+                type: 'audio',
+                mimeType: 'audio/webm;codecs=opus' as any,
+                recorderType: RecordRTC.StereoAudioRecorder,
+                numberOfAudioChannels: 1,
+                desiredSampRate: 16000, // Optimal for speech recognition
+                timeSlice: 1000,
+                // Opus-specific settings for voice
+                bitsPerSecond: 24000, // 24kbps is good for speech
+                frameRate: 48000,
+                bufferSize: 16384
+            })
+
+            await recorder.current.startRecording()
             setIsRecording(true)
         } catch (error) {
             console.error('Error starting recording:', error)
-            
-            // Add fallback for unsupported codec
-            if (error instanceof DOMException && error.name === 'NotSupportedError') {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ 
-                        audio: {
-                            sampleRate: 44100,
-                            channelCount: 1,
-                            echoCancellation: true,
-                            noiseSuppression: true,
-                            autoGainControl: true
-                        } 
-                    })
-                    
-                    // Try without specifying codec
-                    mediaRecorder.current = new MediaRecorder(stream)
-                    chunks.current = []
-                    
-                    mediaRecorder.current.ondataavailable = (e) => {
-                        if (e.data.size > 0) {
-                            chunks.current.push(e.data)
-                        }
-                    }
-
-                    mediaRecorder.current.start()
-                    setIsRecording(true)
-                } catch (fallbackError) {
-                    console.error('Fallback recording failed:', fallbackError)
-                }
-            }
         }
     }
 
     async function stopRecording() {
-        if (!mediaRecorder.current) return
+        if (!recorder.current) return
 
         setIsRecording(false)
         setIsProcessing(true)
 
         try {
-            // Create a promise that resolves when the mediaRecorder stops
-            const stopPromise = new Promise<void>((resolve) => {
-                if (mediaRecorder.current) {
-                    mediaRecorder.current.onstop = () => resolve()
-                }
-            })
-
-            // Stop recording
-            mediaRecorder.current.stop()
-            await stopPromise
+            await recorder.current.stopRecording()
+            const blob = await recorder.current.getBlob()
 
             // Stop all tracks
-            mediaRecorder.current.stream.getTracks().forEach(track => track.stop())
-
-            // Create blob from chunks
-            const audioBlob = new Blob(chunks.current, { type: 'audio/webm' })
+            if (stream.current) {
+                stream.current.getTracks().forEach(track => track.stop())
+            }
             
             // Transcribe audio
-            const transcription = await openaiClient!.transcribeAudio(audioBlob)
-
+            const transcription = await openaiClient!.transcribeAudio(blob)
             console.log('Transcription:', transcription)
             
             // Call the transcription callback
@@ -141,6 +103,10 @@ export function VoiceInput({ userSettings, className = '', iconSize = 20, onTran
             console.error('Error processing audio:', error)
         } finally {
             setIsProcessing(false)
+            if (recorder.current) {
+                await recorder.current.reset()
+                recorder.current = null
+            }
         }
     }
 

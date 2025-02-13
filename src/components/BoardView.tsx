@@ -46,7 +46,11 @@ export function BoardView(props: {
   const { cards, loading: cardsLoading, error: cardsError, setCard, removeCard } = useCards(store, boardId)
   const [viewMode, setViewMode] = usePersist<ViewMode>("viewMode", 'split')
   const [isDragging, setIsDragging] = useState(false)
-  const [showAllNotes, setShowAllNotes] = usePersist<boolean>("showAllNotes", false)
+  const [showAllNotes, setShowAllNotes] = usePersist<boolean>(
+    "showAllNotes",
+    false,
+    (stored) => cards.length > 50 ? false : stored
+  )
   const isMobile = useIsMobile()
 
   // Panel state management with persistence

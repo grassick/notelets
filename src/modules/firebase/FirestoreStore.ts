@@ -24,7 +24,7 @@ export class FirestoreStore implements Store {
         const user = getAuth().currentUser
         if (!user) throw new Error('Not authenticated')
         return user.uid
-    }
+}
 
     setBoard = async (board: Board): Promise<void> => {
         const userId = this.getUserId()

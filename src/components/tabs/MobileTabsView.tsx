@@ -20,15 +20,6 @@ interface BoardListViewProps {
 function BoardListView({ store, onSelectBoard }: BoardListViewProps) {
   const { boards, loading, removeBoard } = useBoards(store)
   const [searchQuery, setSearchQuery] = useState("")
-  const [deleteBoardModal, setDeleteBoardModal] = useState<{
-    isOpen: boolean
-    boardId: string
-    boardTitle: string
-  }>({
-    isOpen: false,
-    boardId: "",
-    boardTitle: ""
-  })
 
   const filteredBoards = boards.filter(board => 
     board.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -78,7 +69,7 @@ function BoardListView({ store, onSelectBoard }: BoardListViewProps) {
             {filteredBoards.map((board) => (
               <div 
                 key={board.id}
-                className="group px-4 py-3 flex items-center justify-between
+                className="group px-4 py-3 flex items-center
                          hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
                 onClick={() => onSelectBoard(board.id)}
               >
@@ -90,39 +81,11 @@ function BoardListView({ store, onSelectBoard }: BoardListViewProps) {
                     {new Date(board.updatedAt).toLocaleDateString()}
                   </p>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setDeleteBoardModal({
-                      isOpen: true,
-                      boardId: board.id,
-                      boardTitle: board.title
-                    })
-                  }}
-                  className="opacity-0 group-hover:opacity-100 p-2 rounded-md
-                           hover:bg-red-50 dark:hover:bg-red-900/30
-                           text-gray-400 hover:text-red-600 dark:hover:text-red-400
-                           transition-all duration-200"
-                >
-                  <FaTrash size={16} />
-                </button>
               </div>
             ))}
           </div>
         )}
       </div>
-
-      <DeleteBoardModal
-        isOpen={deleteBoardModal.isOpen}
-        onClose={() => setDeleteBoardModal({ isOpen: false, boardId: "", boardTitle: "" })}
-        onConfirm={() => {
-          removeBoard(deleteBoardModal.boardId)
-          setDeleteBoardModal({ isOpen: false, boardId: "", boardTitle: "" })
-        }}
-        store={store}
-        boardId={deleteBoardModal.boardId}
-        boardTitle={deleteBoardModal.boardTitle}
-      />
     </div>
   )
 }

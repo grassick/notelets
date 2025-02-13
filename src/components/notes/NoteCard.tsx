@@ -357,60 +357,6 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const handleCopyText = (format: 'markdown' | 'html') => {
-    if (format === 'markdown') {
-      navigator.clipboard.writeText(card.content.markdown)
-        .then(() => {
-          console.log('Copied as markdown')
-          setShowCopyMenu(false)
-        })
-        .catch(err => {
-          console.error('Failed to copy text:', err)
-        })
-    } else {
-      const md = new MarkdownIt({
-        html: true,
-        breaks: true,
-        linkify: true
-      })
-      const html = md.render(card.content.markdown)
-      const tempDiv = document.createElement('div')
-      tempDiv.innerHTML = html
-      const plainText = tempDiv.innerText
-      const textarea = document.createElement('textarea')
-      textarea.setAttribute('readonly', '')
-      textarea.style.position = 'absolute'
-      textarea.style.left = '-9999px'
-      document.body.appendChild(textarea)
-
-      const listener = (e: ClipboardEvent) => {
-        e.preventDefault()
-        if (e.clipboardData) {
-          e.clipboardData.setData('text/html', html)
-          e.clipboardData.setData('text/plain', plainText)
-        }
-      }
-
-      try {
-        document.addEventListener('copy', listener)
-        textarea.value = plainText
-        textarea.select()
-        
-        const success = document.execCommand('copy')
-        if (success) {
-          console.log('Copied as formatted text')
-        } else {
-          navigator.clipboard.writeText(plainText)
-            .then(() => console.log('Copied as plain text (fallback)'))
-            .catch(err => console.error('Failed to copy text:', err))
-        }
-      } finally {
-        document.removeEventListener('copy', listener)
-        document.body.removeChild(textarea)
-        setShowCopyMenu(false)
-      }
-    }
-  }
 
   if (isSingleView) {
     return (

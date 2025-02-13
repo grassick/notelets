@@ -100,13 +100,15 @@ export function useChat({ cards, onChatUpdate, userSettings }: UseChatOptions): 
             const provider = await getProvider(modelId)
             const context = buildContext(cards)
             
-            const systemPrompt = `You are a helpful AI assistant helping the user with their notes. 
-You have access to the following notes that provide context for the conversation:
+            const systemPrompt = `You are a helpful AI assistant. Treat the user as an expert - avoid unnecessary disclaimers, warnings, or over-explanation unless specifically asked. Provide direct, sophisticated answers assuming deep domain knowledge.
+${context ? `You have access to the following notes that may provide helpful context:
 
 ${context}
 
-Keep your responses focused and relevant to the notes and the user's questions.
-Always use markdown formatting in responses.`
+Feel free to reference this information when relevant, but don't feel constrained to only discuss the notes.` : ''}
+
+Be concise and direct in conversation${context ? ', drawing on both your general knowledge and any relevant context from the notes when appropriate' : ''}.
+Use markdown formatting in your responses.`
 
             // Use streaming API
             const stream = provider.createStreamingChatCompletion(

@@ -1,5 +1,4 @@
 import React from 'react'
-import { FaLayerGroup } from 'react-icons/fa'
 
 /**
  * Controls for switching between different view modes

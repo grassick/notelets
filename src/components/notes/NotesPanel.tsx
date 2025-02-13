@@ -65,22 +65,13 @@ export function NotesPanel({
   const mobileControls = isMobile ? (
     <>
       <button
-        onClick={() => onShowAllNotesChange(!showAllNotes)}
-        className={`p-1.5 rounded-lg transition-colors ${
-          showAllNotes 
-            ? 'text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' 
-            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-        }`}
-        title={showAllNotes ? "Show single note" : "Show all notes"}
-      >
-        <FaLayerGroup className="w-4 h-4" />
-      </button>
-      <button
         onClick={onCreateCard}
         className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
         title="New note"
       >
-        <FaPlus className="w-4 h-4" />
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
       </button>
     </>
   ) : null
@@ -114,7 +105,7 @@ export function NotesPanel({
   if (!showAllNotes) {
     // Single note view
     return (
-      <div className="flex flex-col border-r border-gray-200 dark:border-gray-700 flex-1">
+      <div className="flex flex-col border-r border-gray-200 dark:border-gray-700 flex-1 h-full">
         {selectedCard && (
           <NoteCard
             key={selectedCard.id}
@@ -126,6 +117,7 @@ export function NotesPanel({
             userSettings={userSettings}
             showAllNotes={showAllNotes}
             onShowAllNotesChange={onShowAllNotesChange}
+            extraControls={mobileControls}
           />
         )}
       </div>
@@ -134,26 +126,17 @@ export function NotesPanel({
 
   // Multi-note view
   return (
-    <div className="flex flex-col border-r border-gray-200 dark:border-gray-700 flex-1">
+    <div className="flex flex-col border-r border-gray-200 dark:border-gray-700 flex-1 h-full">
       {isMobile && (
         <div className="flex items-center justify-end gap-2 p-2 border-b border-gray-200 dark:border-gray-700">
-          <button
-            onClick={() => onShowAllNotesChange(!showAllNotes)}
-            className={`p-1.5 rounded-lg transition-colors ${
-              showAllNotes 
-                ? 'text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' 
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-            }`}
-            title={showAllNotes ? "Show single note" : "Show all notes"}
-          >
-            <FaLayerGroup className="w-4 h-4" />
-          </button>
           <button
             onClick={onCreateCard}
             className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
             title="New note"
           >
-            <FaPlus className="w-4 h-4" />
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
           </button>
         </div>
       )}

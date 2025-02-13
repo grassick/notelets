@@ -3,6 +3,7 @@ import { useDeviceSettings, useUserSettings } from '../../hooks/useSettings'
 import ChangePasswordForm from '../../modules/auth/components/ChangePasswordForm'
 import { useAuth } from '../../modules/auth/AuthContext'
 import { AboutTab } from './AboutTab'
+import { ImportExportTab } from './ImportExportTab'
 import type { Store } from '../../Store'
 import { FaTimes } from 'react-icons/fa'
 import { clearStoredPassword } from '../../modules/encrypted/passwordStorage'
@@ -16,7 +17,7 @@ interface SettingsModalProps {
   store: Store
 }
 
-type SettingsTab = 'appearance' | 'llm' | 'account' | 'storage' | 'about'
+type SettingsTab = 'appearance' | 'llm' | 'account' | 'storage' | 'about' | 'import-export'
 
 export function SettingsModal({ isOpen, onClose, store }: SettingsModalProps) {
   // Use device settings for appearance and storage type
@@ -125,6 +126,16 @@ export function SettingsModal({ isOpen, onClose, store }: SettingsModalProps) {
                   }`}
               >
                 Storage
+              </button>
+              <button
+                onClick={() => setActiveTab('import-export')}
+                className={`w-full px-3 py-2 text-sm rounded-md text-left
+                  ${activeTab === 'import-export'
+                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}
+              >
+                Import/Export
               </button>
               <button
                 onClick={() => setActiveTab('about')}
@@ -313,6 +324,8 @@ export function SettingsModal({ isOpen, onClose, store }: SettingsModalProps) {
                   </div>
                 )}
               </div>
+            ) : activeTab === 'import-export' ? (
+              <ImportExportTab store={store} />
             ) : activeTab === 'about' ? (
               <AboutTab />
             ) : null}

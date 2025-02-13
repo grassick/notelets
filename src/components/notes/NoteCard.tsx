@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, forwardRef } from 'react'
 import { RichTextEditor } from '../../RichTextEditor'
 import { RichTextCard } from '../../types'
 import MarkdownIt from 'markdown-it'
-import { FaTrash } from 'react-icons/fa'
+import { FaTrash, FaExpandAlt, FaCompressAlt } from 'react-icons/fa'
 import { UserSettings } from '../../types/settings'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { VoiceInput } from '../VoiceInput'
@@ -182,9 +182,7 @@ function NoteCardHeader({
           }`}
           title={showAllNotes ? "Focus on this note" : "Show all notes"}
         >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm3 4h2m-2 4h2m-2 4h2" />
-          </svg>
+          {showAllNotes ? <FaExpandAlt size={14} /> : <FaCompressAlt size={14} />}
         </button>
         {showVoiceInHeader && onVoiceTranscription && (
           <VoiceInput

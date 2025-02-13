@@ -118,6 +118,15 @@ export function NotesPanel({
             showAllNotes={showAllNotes}
             onShowAllNotesChange={onShowAllNotesChange}
             extraControls={mobileControls}
+            allCards={cards}
+            onCreateCard={onCreateCard}
+            onCardSelect={(cardId) => {
+              // Update selected card
+              const card = cards.find(c => c.id === cardId)
+              if (card) {
+                onUpdateCard(cardId, card.content.markdown)
+              }
+            }}
           />
         )}
       </div>

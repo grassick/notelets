@@ -24,6 +24,43 @@ const DEFAULT_CONFIG: CryptoConfig = {
 }
 
 /**
+ * Cache for derived keys
+ */
+const keyCache = new Map<string, {
+    key: CryptoKey
+    salt: Uint8Array
+}>()
+
+/**
+ * Gets or derives an encryption key
+ */
+async function getCachedKey(password: string, salt?: Uint8Array): Promise<{key: CryptoKey, salt: Uint8Array}> {
+    const cached = keyCache.get(password)
+    
+    // If we have a cached key and it matches the salt (if provided)
+    if (cached && (!salt || arraysEqual(cached.salt, salt))) {
+        return cached
+    }
+    
+    // Generate new salt if not provided
+    const newSalt = salt || crypto.getRandomValues(new Uint8Array(DEFAULT_CONFIG.saltLength))
+    const key = await deriveKey(password, newSalt)
+    
+    // Cache the new key
+    const entry = { key, salt: newSalt }
+    keyCache.set(password, entry)
+    
+    return entry
+}
+
+/**
+ * Helper to compare Uint8Arrays
+ */
+function arraysEqual(a: Uint8Array, b: Uint8Array): boolean {
+    return a.length === b.length && a.every((val, i) => val === b[i])
+}
+
+/**
  * Derives an encryption key from a password using PBKDF2
  */
 async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
@@ -57,9 +94,8 @@ async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey>
  */
 export async function encrypt(data: string, password: string): Promise<EncryptedBlob> {
     const encoder = new TextEncoder()
-    const salt = crypto.getRandomValues(new Uint8Array(DEFAULT_CONFIG.saltLength))
+    const { key, salt } = await getCachedKey(password)
     const iv = crypto.getRandomValues(new Uint8Array(12))
-    const key = await deriveKey(password, salt)
     
     const encryptedData = await crypto.subtle.encrypt(
         {
@@ -94,7 +130,7 @@ export async function decrypt(encrypted: EncryptedBlob, password: string): Promi
     const salt = combined.slice(0, DEFAULT_CONFIG.saltLength)
     const encryptedData = combined.slice(DEFAULT_CONFIG.saltLength)
     
-    const key = await deriveKey(password, salt)
+    const { key } = await getCachedKey(password, salt)
     
     try {
         const decryptedData = await crypto.subtle.decrypt(

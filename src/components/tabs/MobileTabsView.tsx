@@ -7,6 +7,7 @@ import { useBoards } from '../../Store'
 import { BoardView } from '../BoardView'
 import { BoardNameModal } from '../BoardNameModal'
 import { SettingsModal } from '../settings/SettingsModal'
+import { DeleteBoardModal } from '../DeleteBoardModal'
 
 interface BoardListViewProps {
   store: Store
@@ -19,6 +20,15 @@ interface BoardListViewProps {
 function BoardListView({ store, onSelectBoard }: BoardListViewProps) {
   const { boards, loading, removeBoard } = useBoards(store)
   const [searchQuery, setSearchQuery] = useState("")
+  const [deleteBoardModal, setDeleteBoardModal] = useState<{
+    isOpen: boolean
+    boardId: string
+    boardTitle: string
+  }>({
+    isOpen: false,
+    boardId: "",
+    boardTitle: ""
+  })
 
   const filteredBoards = boards.filter(board => 
     board.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -83,9 +93,11 @@ function BoardListView({ store, onSelectBoard }: BoardListViewProps) {
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    if (window.confirm(`Are you sure you want to delete "${board.title}"? This cannot be undone.`)) {
-                      removeBoard(board.id)
-                    }
+                    setDeleteBoardModal({
+                      isOpen: true,
+                      boardId: board.id,
+                      boardTitle: board.title
+                    })
                   }}
                   className="opacity-0 group-hover:opacity-100 p-2 rounded-md
                            hover:bg-red-50 dark:hover:bg-red-900/30
@@ -99,6 +111,18 @@ function BoardListView({ store, onSelectBoard }: BoardListViewProps) {
           </div>
         )}
       </div>
+
+      <DeleteBoardModal
+        isOpen={deleteBoardModal.isOpen}
+        onClose={() => setDeleteBoardModal({ isOpen: false, boardId: "", boardTitle: "" })}
+        onConfirm={() => {
+          removeBoard(deleteBoardModal.boardId)
+          setDeleteBoardModal({ isOpen: false, boardId: "", boardTitle: "" })
+        }}
+        store={store}
+        boardId={deleteBoardModal.boardId}
+        boardTitle={deleteBoardModal.boardTitle}
+      />
     </div>
   )
 }
@@ -117,6 +141,7 @@ function SingleBoardView({ store, boardId, onBack }: SingleBoardViewProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [showRenameModal, setShowRenameModal] = useState(false)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   const currentBoard = boards.find((b: Board) => b.id === boardId)
   if (!currentBoard) return null
@@ -165,10 +190,8 @@ function SingleBoardView({ store, boardId, onBack }: SingleBoardViewProps) {
                   </button>
                   <button
                     onClick={() => {
-                      if (window.confirm(`Delete "${currentBoard.title}"? This cannot be undone.`)) {
-                        removeBoard(currentBoard.id)
-                        onBack()
-                      }
+                      setShowMenu(false)
+                      setShowDeleteModal(true)
                     }}
                     className="block w-full text-left px-4 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
@@ -202,6 +225,18 @@ function SingleBoardView({ store, boardId, onBack }: SingleBoardViewProps) {
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
         store={store}
+      />
+
+      <DeleteBoardModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={() => {
+          removeBoard(currentBoard.id)
+          onBack()
+        }}
+        store={store}
+        boardId={currentBoard.id}
+        boardTitle={currentBoard.title}
       />
     </div>
   )

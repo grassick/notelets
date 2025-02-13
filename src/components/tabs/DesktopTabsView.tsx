@@ -8,6 +8,7 @@ import { BoardView } from "../BoardView";
 import { usePersist } from "../../hooks/usePersist";
 import { SettingsModal } from "../settings/SettingsModal";
 import { BoardNameModal } from "../BoardNameModal";
+import { DeleteBoardModal } from "../DeleteBoardModal";
 
 export function DesktopTabsView(props: {
   store: Store
@@ -120,6 +121,7 @@ export function DesktopTabsView(props: {
         }}
         onCreateBoard={handleCreateBoard}
         onDeleteBoard={handleDeleteBoard}
+        store={store}
       />
     ) 
     } else {
@@ -248,11 +250,22 @@ interface BoardListProps {
   onCreateBoard: () => void
   /** Called when a board should be deleted */
   onDeleteBoard: (boardId: string) => void
+  /** The store instance */
+  store: Store
 }
 
 function BoardList(props: BoardListProps) {
-  const { loading, boards, pages, onSelectBoard, onCreateBoard, onDeleteBoard } = props
+  const { loading, boards, pages, onSelectBoard, onCreateBoard, onDeleteBoard, store } = props
   const [searchQuery, setSearchQuery] = useState("")
+  const [deleteBoardModal, setDeleteBoardModal] = useState<{
+    isOpen: boolean
+    boardId: string
+    boardTitle: string
+  }>({
+    isOpen: false,
+    boardId: "",
+    boardTitle: ""
+  })
 
   const filteredBoards = boards.filter(board => 
     board.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -334,9 +347,11 @@ function BoardList(props: BoardListProps) {
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    if (window.confirm(`Are you sure you want to delete "${board.title}"? This cannot be undone.`)) {
-                      onDeleteBoard(board.id)
-                    }
+                    setDeleteBoardModal({
+                      isOpen: true,
+                      boardId: board.id,
+                      boardTitle: board.title
+                    })
                   }}
                   className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md
                            hover:bg-red-50 dark:hover:bg-red-900/30
@@ -350,6 +365,18 @@ function BoardList(props: BoardListProps) {
           ))}
         </div>
       )}
+
+      <DeleteBoardModal
+        isOpen={deleteBoardModal.isOpen}
+        onClose={() => setDeleteBoardModal({ isOpen: false, boardId: "", boardTitle: "" })}
+        onConfirm={() => {
+          onDeleteBoard(deleteBoardModal.boardId)
+          setDeleteBoardModal({ isOpen: false, boardId: "", boardTitle: "" })
+        }}
+        store={store}
+        boardId={deleteBoardModal.boardId}
+        boardTitle={deleteBoardModal.boardTitle}
+      />
     </div>
   )
 }

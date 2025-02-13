@@ -205,7 +205,7 @@ This will ADD to or REPLACE (if the board, card, or chat already exists) your ex
           id: uuidv4(),
           boardId,
           type: 'richtext',
-          title: note.title || 'Untitled Note',
+          title: note.title || '',
           content: {
             markdown
           },

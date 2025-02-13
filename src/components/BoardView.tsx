@@ -123,7 +123,14 @@ export function BoardView(props: {
   }, [isDragging, listPanelState.width, listPanelState.isExpanded, viewMode, isMobile])
 
   if (boardLoading && !board) {
-    return <div className="p-4 text-gray-900 dark:text-gray-100"></div>
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="flex flex-col items-center min-w-[200px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 dark:border-gray-400 mb-4"></div>
+          <span className="text-gray-600 dark:text-gray-400 whitespace-nowrap">Loading board...</span>
+        </div>
+      </div>
+    )
   }
 
   if (boardError || !board) {

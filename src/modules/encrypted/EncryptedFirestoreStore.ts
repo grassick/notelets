@@ -2,7 +2,7 @@ import { getAuth } from 'firebase/auth'
 import { collection, doc, setDoc, deleteDoc, onSnapshot, query, where, getDoc, writeBatch, getDocs } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import type { EncryptedStore, EncryptedBoard, EncryptedCard, EncryptedChat, EncryptedUserSettings, EncryptedBlob } from './EncryptedTypes'
-import { encrypt, decrypt } from './crypto'
+import { encrypt, decrypt, generateMasterSalt, deriveMasterKey } from './crypto'
 
 // Known text that we'll encrypt to validate the password
 const TEST_DATA = 'test-encryption'
@@ -11,10 +11,18 @@ const TEST_DATA = 'test-encryption'
  * Implementation of EncryptedStore using Firebase Firestore
  */
 export class EncryptedFirestoreStore implements EncryptedStore {
+    private masterKey: CryptoKey | null = null
+
     private getUserId(): string {
         const user = getAuth().currentUser
         if (!user) throw new Error('Not authenticated')
         return user.uid
+    }
+
+    private assertKeyAvailable(): void {
+        if (!this.masterKey) {
+            throw new Error('Encryption key not available. Call validatePassword first.')
+        }
     }
 
     async isInitialized(): Promise<boolean> {
@@ -29,11 +37,19 @@ export class EncryptedFirestoreStore implements EncryptedStore {
             throw new Error('Encryption already initialized')
         }
 
+        // Generate a new master salt
+        const masterSalt = generateMasterSalt()
+        
+        // Derive the master key
+        this.masterKey = await deriveMasterKey(password, masterSalt)
+
         // Create test data to validate password later
-        const encrypted = await encrypt(TEST_DATA, password)
+        const encrypted = await encrypt(TEST_DATA, this.masterKey)
+        
         const userId = this.getUserId()
         await setDoc(doc(db, `users/${userId}/settings/encryption`), {
-            test: encrypted
+            test: encrypted,
+            salt: btoa(String.fromCharCode(...masterSalt)) // Store salt as base64
         })
     }
 
@@ -48,20 +64,37 @@ export class EncryptedFirestoreStore implements EncryptedStore {
 
         try {
             const data = snapshot.data()
-            const decrypted = await decrypt(data.test, password)
-            return decrypted === TEST_DATA
+            // Convert stored salt from base64 back to Uint8Array
+            const masterSalt = Uint8Array.from(atob(data.salt), c => c.charCodeAt(0))
+            
+            // Derive the master key
+            const key = await deriveMasterKey(password, masterSalt)
+            
+            // Try to decrypt test data
+            const decrypted = await decrypt(data.test, key)
+            const isValid = decrypted === TEST_DATA
+            
+            // If valid, store the key
+            if (isValid) {
+                this.masterKey = key
+            }
+            
+            return isValid
         } catch {
+            this.masterKey = null
             return false
         }
     }
 
     setBoard = async (board: EncryptedBoard): Promise<void> => {
+        this.assertKeyAvailable()
         const userId = this.getUserId()
         const { id, ...rest } = board
         await setDoc(doc(db, `users/${userId}/boards/${id}`), rest)
     }
 
     removeBoard = async (boardId: string): Promise<void> => {
+        this.assertKeyAvailable()
         const userId = this.getUserId()
         const batch = writeBatch(db)
 
@@ -93,6 +126,7 @@ export class EncryptedFirestoreStore implements EncryptedStore {
     }
 
     getBoards = (callback: (boards: EncryptedBoard[]) => void): () => void => {
+        this.assertKeyAvailable()
         const userId = this.getUserId()
         const q = collection(db, `users/${userId}/boards`)
         
@@ -108,6 +142,7 @@ export class EncryptedFirestoreStore implements EncryptedStore {
     }
 
     getBoard = (boardId: string, callback: (board: EncryptedBoard | null) => void): () => void => {
+        this.assertKeyAvailable()
         const userId = this.getUserId()
         const docRef = doc(db, `users/${userId}/boards/${boardId}`)
         
@@ -127,17 +162,20 @@ export class EncryptedFirestoreStore implements EncryptedStore {
     }
 
     setCard = async (card: EncryptedCard): Promise<void> => {
+        this.assertKeyAvailable()
         const userId = this.getUserId()
         const { id, ...rest } = card
         await setDoc(doc(db, `users/${userId}/cards/${id}`), rest)
     }
 
     removeCard = async (cardId: string): Promise<void> => {
+        this.assertKeyAvailable()
         const userId = this.getUserId()
         await deleteDoc(doc(db, `users/${userId}/cards/${cardId}`))
     }
 
     getCardsByBoard = (boardId: string, callback: (cards: EncryptedCard[]) => void): () => void => {
+        this.assertKeyAvailable()
         const userId = this.getUserId()
         const q = query(
             collection(db, `users/${userId}/cards`),
@@ -157,6 +195,7 @@ export class EncryptedFirestoreStore implements EncryptedStore {
     }
 
     getCard = (cardId: string, callback: (card: EncryptedCard | null) => void): () => void => {
+        this.assertKeyAvailable()
         const userId = this.getUserId()
         const docRef = doc(db, `users/${userId}/cards/${cardId}`)
         
@@ -177,17 +216,20 @@ export class EncryptedFirestoreStore implements EncryptedStore {
     }
 
     setChat = async (chat: EncryptedChat): Promise<void> => {
+        this.assertKeyAvailable()
         const userId = this.getUserId()
         const { id, ...rest } = chat
         await setDoc(doc(db, `users/${userId}/chats/${id}`), rest)
     }
 
     removeChat = async (chatId: string): Promise<void> => {
+        this.assertKeyAvailable()
         const userId = this.getUserId()
         await deleteDoc(doc(db, `users/${userId}/chats/${chatId}`))
     }
 
     getChatsByBoard = (boardId: string, callback: (chats: EncryptedChat[]) => void): () => void => {
+        this.assertKeyAvailable()
         const userId = this.getUserId()
         const q = query(
             collection(db, `users/${userId}/chats`),
@@ -207,6 +249,7 @@ export class EncryptedFirestoreStore implements EncryptedStore {
     }
 
     getChat = (chatId: string, callback: (chat: EncryptedChat | null) => void): () => void => {
+        this.assertKeyAvailable()
         const userId = this.getUserId()
         const docRef = doc(db, `users/${userId}/chats/${chatId}`)
         
@@ -219,6 +262,7 @@ export class EncryptedFirestoreStore implements EncryptedStore {
     }
 
     getUserSettings = (callback: (settings: EncryptedUserSettings | null) => void): () => void => {
+        this.assertKeyAvailable()
         const userId = this.getUserId()
         const docRef = doc(db, `users/${userId}/settings/user`)
         
@@ -231,6 +275,7 @@ export class EncryptedFirestoreStore implements EncryptedStore {
     }
 
     setUserSettings = async (settings: EncryptedUserSettings): Promise<void> => {
+        this.assertKeyAvailable()
         const userId = this.getUserId()
         const { id, ...rest } = settings
         await setDoc(doc(db, `users/${userId}/settings/user`), rest)

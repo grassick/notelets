@@ -10,7 +10,8 @@ import {
     encryptChatData,
     decryptChatData,
     encryptUserSettings,
-    decryptUserSettings
+    decryptUserSettings,
+    deriveMasterKey
 } from './crypto'
 
 /**
@@ -18,14 +19,23 @@ import {
  * Handles encryption/decryption transparently
  */
 export class EncryptedStoreWrapper implements Store {
+    private masterKey: CryptoKey
+
     constructor(
         private encryptedStore: EncryptedStore,
-        private password: string
-    ) {}
+        password: string
+    ) {
+        // The constructor is called after password validation, so we know the password is correct
+        // We'll get the master key from the store
+        if (!(encryptedStore as any).masterKey) {
+            throw new Error('EncryptedStore must have a valid master key')
+        }
+        this.masterKey = (encryptedStore as any).masterKey
+    }
 
     setBoard = async (board: Board): Promise<void> => {
         const { id, createdAt, updatedAt, ...data } = board
-        const encryptedData = await encryptBoardData(data, this.password)
+        const encryptedData = await encryptBoardData(data, this.masterKey)
         
         await this.encryptedStore.setBoard({
             id,
@@ -45,7 +55,7 @@ export class EncryptedStoreWrapper implements Store {
                 const boards = await Promise.all(
                     encryptedBoards.map(async (encryptedBoard) => {
                         const { id, createdAt, updatedAt, data } = encryptedBoard
-                        const decryptedData = await decryptBoardData(data, this.password)
+                        const decryptedData = await decryptBoardData(data, this.masterKey)
                         return {
                             ...decryptedData,
                             id,
@@ -71,7 +81,7 @@ export class EncryptedStoreWrapper implements Store {
 
             try {
                 const { id, createdAt, updatedAt, data } = encryptedBoard
-                const decryptedData = await decryptBoardData(data, this.password)
+                const decryptedData = await decryptBoardData(data, this.masterKey)
                 callback({
                     ...decryptedData,
                     id,
@@ -87,7 +97,7 @@ export class EncryptedStoreWrapper implements Store {
 
     setCard = async (card: Card): Promise<void> => {
         const { id, boardId, createdAt, updatedAt, ...data } = card
-        const encryptedData = await encryptCardData(data, this.password)
+        const encryptedData = await encryptCardData(data, this.masterKey)
         
         await this.encryptedStore.setCard({
             id,
@@ -109,7 +119,7 @@ export class EncryptedStoreWrapper implements Store {
                     encryptedCards.map(async (encryptedCard) => {
                         try {
                             const { id, boardId, createdAt, updatedAt, data } = encryptedCard
-                            const decryptedData = await decryptCardData(data, this.password)
+                            const decryptedData = await decryptCardData(data, this.masterKey)
                             const card = {
                                 ...decryptedData,
                                 id,
@@ -146,7 +156,7 @@ export class EncryptedStoreWrapper implements Store {
 
             try {
                 const { id, boardId, createdAt, updatedAt, data } = encryptedCard
-                const decryptedData = await decryptCardData(data, this.password)
+                const decryptedData = await decryptCardData(data, this.masterKey)
                 const card = {
                     ...decryptedData,
                     id,
@@ -170,7 +180,7 @@ export class EncryptedStoreWrapper implements Store {
 
     setChat = async (chat: Chat): Promise<void> => {
         const { id, boardId, createdAt, updatedAt, ...data } = chat
-        const encryptedData = await encryptChatData(data, this.password)
+        const encryptedData = await encryptChatData(data, this.masterKey)
         
         await this.encryptedStore.setChat({
             id,
@@ -191,7 +201,7 @@ export class EncryptedStoreWrapper implements Store {
                 const chats = await Promise.all(
                     encryptedChats.map(async (encryptedChat) => {
                         const { id, boardId, createdAt, updatedAt, data } = encryptedChat
-                        const decryptedData = await decryptChatData(data, this.password)
+                        const decryptedData = await decryptChatData(data, this.masterKey)
                         return {
                             ...decryptedData,
                             id,
@@ -218,7 +228,7 @@ export class EncryptedStoreWrapper implements Store {
 
             try {
                 const { id, boardId, createdAt, updatedAt, data } = encryptedChat
-                const decryptedData = await decryptChatData(data, this.password)
+                const decryptedData = await decryptChatData(data, this.masterKey)
                 callback({
                     ...decryptedData,
                     id,
@@ -242,7 +252,7 @@ export class EncryptedStoreWrapper implements Store {
 
             try {
                 const { data } = encryptedSettings
-                const decryptedData = await decryptUserSettings(data, this.password)
+                const decryptedData = await decryptUserSettings(data, this.masterKey)
                 callback(decryptedData)
             } catch (error) {
                 console.error('Failed to decrypt settings:', error)
@@ -252,7 +262,7 @@ export class EncryptedStoreWrapper implements Store {
     }
 
     setUserSettings = async (settings: UserSettings): Promise<void> => {
-        const encryptedData = await encryptUserSettings(settings, this.password)
+        const encryptedData = await encryptUserSettings(settings, this.masterKey)
         
         await this.encryptedStore.setUserSettings({
             id: 'user',

@@ -193,8 +193,8 @@ export function RichTextEditor({
         />
         {showVoiceInput && (
           <div className={`
-            absolute -bottom-2 -right-2 transition-all duration-200
-            ${hasFocus ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}
+            absolute -bottom-1 right-0 transition-all duration-200
+            ${hasFocus ? 'opacity-100' : 'opacity-0 pointer-events-none'}
           `}>
             <VoiceInput
               userSettings={userSettings}

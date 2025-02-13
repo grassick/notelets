@@ -315,7 +315,7 @@ function ChatHeader({
   return (
     <div className="h-8 px-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
       <span className="text-sm text-gray-600 dark:text-gray-400">
-        {isHistoryMode ? 'Chat History' : 'Chat'}
+        {/* {isHistoryMode ? 'Chat History' : 'Chat'} */}
       </span>
       <div className="flex items-center gap-2">
         <ModelSelector

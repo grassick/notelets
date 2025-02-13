@@ -414,7 +414,7 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
             content={card.content.markdown}
             onChange={onUpdateCard}
             isMarkdownMode={isMarkdownMode}
-            className="flex-1 min-h-0 overflow-auto px-4 py-2
+            className="flex-1 min-h-0 overflow-auto px-4 py-4
                       [scrollbar-width:thin] 
                       [scrollbar-color:rgba(148,163,184,0.2)_transparent] 
                       dark:[scrollbar-color:rgba(148,163,184,0.15)_transparent]

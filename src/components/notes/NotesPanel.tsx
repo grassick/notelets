@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { RichTextCard } from '../../types'
 import { NoteCard } from './NoteCard'
 import { FaLayerGroup, FaPlus } from 'react-icons/fa'
 import { useUserSettings } from '../../hooks/useSettings'
 import { Store } from '../../Store'
+import { MobileNoteMenu } from './MobileNoteMenu'
 
 /** Props for the NotesPanel component */
 interface NotesPanelProps {
@@ -43,6 +44,7 @@ export function NotesPanel({
   store
 }: NotesPanelProps) {
   const { settings: userSettings } = useUserSettings(store)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   // Sort cards by creation date, newest first
   const sortedCards = [...cards].sort((a, b) => 
@@ -62,19 +64,14 @@ export function NotesPanel({
     }
   }, [selectedCard?.id, showAllNotes])
 
-  const mobileControls = isMobile ? (
-    <>
-      <button
-        onClick={onCreateCard}
-        className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-        title="New note"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
-    </>
-  ) : null
+  const handleCardSelect = (cardId: string) => {
+    // Find the card
+    const card = cards.find(c => c.id === cardId)
+    if (card) {
+      // Update selected card
+      onUpdateCard(cardId, card.content.markdown)
+    }
+  }
 
   if (cards.length === 0) {
     return (
@@ -117,7 +114,7 @@ export function NotesPanel({
             userSettings={userSettings}
             showAllNotes={showAllNotes}
             onShowAllNotesChange={onShowAllNotesChange}
-            extraControls={mobileControls}
+            extraControls={null}
             allCards={cards}
             onCreateCard={onCreateCard}
             onCardSelect={(cardId) => {
@@ -137,17 +134,37 @@ export function NotesPanel({
   return (
     <div className="flex flex-col border-r border-gray-200 dark:border-gray-700 flex-1 h-full">
       {isMobile && (
-        <div className="flex items-center justify-end gap-2 p-2 border-b border-gray-200 dark:border-gray-700">
-          <button
-            onClick={onCreateCard}
-            className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-            title="New note"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-          </button>
-        </div>
+        <>
+          <MobileNoteMenu
+            isOpen={isMobileMenuOpen}
+            onClose={() => setIsMobileMenuOpen(false)}
+            cards={cards}
+            selectedCardId={selectedCard?.id ?? null}
+            onCardSelect={handleCardSelect}
+            onCreateCard={onCreateCard}
+          />
+          <div className="flex items-center gap-2 p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="p-1.5 -ml-1 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+              title="Show all notes"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <div className="flex-1" />
+            <button
+              onClick={onCreateCard}
+              className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+              title="New note"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+          </div>
+        </>
       )}
       <div className="flex-1 overflow-auto p-4
                      [scrollbar-width:thin] 

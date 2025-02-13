@@ -20,7 +20,7 @@ A modern note-taking application with integrated AI chat capabilities, built wit
 - Secure password-based key derivation (PBKDF2)
 - AES-GCM encryption for all stored content
 
-### �� Rich Text Editing
+### 📄 Rich Text Editing
 - Full-featured Markdown editor with real-time preview
 - Support for headings, bold, italic, and links
 - Bubble menu for quick formatting
@@ -48,6 +48,14 @@ A modern note-taking application with integrated AI chat capabilities, built wit
   - Multi-note view
   - Split view with chat
 - Persistent layout settings
+
+### 📤 Import & Export
+- Export all data as encrypted JSON
+- Import data from:
+  - Notelets JSON backup
+  - Google Keep exports
+- Maintain data integrity during transfers
+- Encrypted backups for security
 
 ### 💫 Modern UI/UX
 - Clean, intuitive interface

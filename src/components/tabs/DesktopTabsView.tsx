@@ -1,15 +1,15 @@
 import React, { useState, useMemo } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { FaPlus, FaTimes, FaFolder, FaSearch, FaTrash } from 'react-icons/fa';
-import type { Board } from "./types";
-import type { Store } from "./Store";
-import { useBoards } from "./Store";
-import { BoardView } from "./BoardView";
-import { usePersist } from "./hooks/usePersist";
-import { SettingsModal } from "./components/settings/SettingsModal";
-import { BoardNameModal } from "./components/BoardNameModal";
+import type { Board } from "../../types";
+import type { Store } from "../../Store";
+import { useBoards } from "../../Store";
+import { BoardView } from "../BoardView";
+import { usePersist } from "../../hooks/usePersist";
+import { SettingsModal } from "../settings/SettingsModal";
+import { BoardNameModal } from "../BoardNameModal";
 
-export function TabsView(props: {
+export function DesktopTabsView(props: {
   store: Store
 }) {
   const { store } = props

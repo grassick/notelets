@@ -28,7 +28,6 @@ export function VoiceInput({ userSettings, className = '', iconSize = 20, onTran
 
     const [isRecording, setIsRecording] = useState(false)
     const [isProcessing, setIsProcessing] = useState(false)
-    const [lastActiveElement, setLastActiveElement] = useState<HTMLElement | null>(null)
     const mediaRecorder = useRef<MediaRecorder | null>(null)
     const chunks = useRef<Blob[]>([])
 
@@ -46,9 +45,6 @@ export function VoiceInput({ userSettings, className = '', iconSize = 20, onTran
         e.preventDefault()
         e.stopPropagation()
         
-        // Store the currently focused element
-        setLastActiveElement(document.activeElement as HTMLElement)
-
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
             mediaRecorder.current = new MediaRecorder(stream)

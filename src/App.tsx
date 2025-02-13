@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import "./index.css"
-
-import { TabsView } from './TabsView'
+import { TabsView } from './components/tabs/TabsView'
 import { Store } from './Store'
 import { useDeviceSettings } from './hooks/useSettings'
 import { AuthProvider, useAuth } from './modules/auth/AuthContext'

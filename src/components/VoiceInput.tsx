@@ -46,8 +46,21 @@ export function VoiceInput({ userSettings, className = '', iconSize = 20, onTran
         e.stopPropagation()
         
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-            mediaRecorder.current = new MediaRecorder(stream)
+            // Add iOS-compatible constraints
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                audio: {
+                    sampleRate: 44100,
+                    channelCount: 1,
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                } 
+            })
+            
+            // Specify codec for iOS compatibility
+            mediaRecorder.current = new MediaRecorder(stream, {
+                mimeType: 'audio/webm;codecs=opus'
+            })
             chunks.current = []
 
             mediaRecorder.current.ondataavailable = (e) => {
@@ -60,6 +73,36 @@ export function VoiceInput({ userSettings, className = '', iconSize = 20, onTran
             setIsRecording(true)
         } catch (error) {
             console.error('Error starting recording:', error)
+            
+            // Add fallback for unsupported codec
+            if (error instanceof DOMException && error.name === 'NotSupportedError') {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            sampleRate: 44100,
+                            channelCount: 1,
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true
+                        } 
+                    })
+                    
+                    // Try without specifying codec
+                    mediaRecorder.current = new MediaRecorder(stream)
+                    chunks.current = []
+                    
+                    mediaRecorder.current.ondataavailable = (e) => {
+                        if (e.data.size > 0) {
+                            chunks.current.push(e.data)
+                        }
+                    }
+
+                    mediaRecorder.current.start()
+                    setIsRecording(true)
+                } catch (fallbackError) {
+                    console.error('Fallback recording failed:', fallbackError)
+                }
+            }
         }
     }
 

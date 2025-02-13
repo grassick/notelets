@@ -4,6 +4,8 @@ import { RichTextCard } from '../../types'
 import MarkdownIt from 'markdown-it'
 import { FaTrash } from 'react-icons/fa'
 import { UserSettings } from '../../types/settings'
+import { useIsMobile } from '../../hooks/useIsMobile'
+import { VoiceInput } from '../VoiceInput'
 
 /** Props for the NoteCardHeader component */
 interface NoteCardHeaderProps {
@@ -23,6 +25,12 @@ interface NoteCardHeaderProps {
   alwaysShowActions: boolean
   /** Additional controls to render in the header */
   extraControls?: React.ReactNode
+  /** User settings */
+  userSettings: UserSettings
+  /** Whether to show voice input in header */
+  showVoiceInHeader?: boolean
+  /** Callback when voice input provides transcription */
+  onVoiceTranscription?: (text: string) => void
 }
 
 /** Header component for a note card with title editing and actions */
@@ -32,9 +40,12 @@ function NoteCardHeader({
   onDelete, 
   isMarkdownMode, 
   onMarkdownModeChange, 
-  alwaysShowActions, 
+  alwaysShowActions,
   className = '',
-  extraControls 
+  extraControls,
+  userSettings,
+  showVoiceInHeader,
+  onVoiceTranscription
 }: NoteCardHeaderProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
@@ -156,6 +167,14 @@ function NoteCardHeader({
       </div>
       <div className={`flex items-center gap-2 ${!alwaysShowActions ? 'opacity-0 group-hover:opacity-100 transition-opacity duration-150' : ''}`}>
         {extraControls}
+        {showVoiceInHeader && onVoiceTranscription && (
+          <VoiceInput
+            userSettings={userSettings}
+            onTranscription={onVoiceTranscription}
+            iconSize={14}
+            className="text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400"
+          />
+        )}
         <button
           onClick={() => onMarkdownModeChange(!isMarkdownMode)}
           className="text-[10px] text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400"
@@ -215,10 +234,30 @@ interface NoteCardBodyProps {
   className?: string
   /** User settings */
   userSettings: UserSettings
+  /** Whether this is single view mode */
+  isSingleView: boolean
 }
 
 /** Body component for a note card containing the rich text editor */
-function NoteCardBody({ content, onChange, isMarkdownMode, className = '', userSettings }: NoteCardBodyProps) {
+function NoteCardBody({ 
+  content, 
+  onChange, 
+  isMarkdownMode, 
+  className = '', 
+  userSettings,
+  isSingleView
+}: NoteCardBodyProps) {
+  const isMobile = useIsMobile()
+  const showVoiceInEditor = !isMobile || !isSingleView
+
+  const handleVoiceTranscription = (text: string) => {
+    // In all cases for mobile, or when not focused on desktop, append to end
+    const newContent = content.trim() 
+      ? `${content.trim()}\n\n${text}`
+      : text
+    onChange(newContent)
+  }
+
   return (
     <div className={`relative flex flex-col flex-1 min-h-0 ${className}`}>
       {isMarkdownMode ? (
@@ -233,6 +272,8 @@ function NoteCardBody({ content, onChange, isMarkdownMode, className = '', userS
           onChange={onChange}
           placeholder="Start typing..."
           userSettings={userSettings}
+          showVoiceInput={showVoiceInEditor}
+          onVoiceTranscription={handleVoiceTranscription}
         />
       )}
     </div>
@@ -273,6 +314,15 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
   const [isMarkdownMode, setIsMarkdownMode] = useState(false)
   const [showCopyMenu, setShowCopyMenu] = useState(false)
   const copyMenuRef = useRef<HTMLDivElement>(null)
+  const isMobile = useIsMobile()
+  const showVoiceInHeader = isMobile && isSingleView
+
+  const handleVoiceTranscription = (text: string) => {
+    const newContent = card.content.markdown.trim() 
+      ? `${card.content.markdown.trim()}\n\n${text}`
+      : text
+    onUpdateCard(newContent)
+  }
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -355,6 +405,9 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
               onMarkdownModeChange={setIsMarkdownMode}
               alwaysShowActions={true}
               extraControls={extraControls}
+              userSettings={userSettings}
+              showVoiceInHeader={showVoiceInHeader}
+              onVoiceTranscription={handleVoiceTranscription}
             />
           </div>
           <NoteCardBody
@@ -373,6 +426,7 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
                       dark:hover:[::-webkit-scrollbar-thumb]:bg-slate-400/25
                       [::-webkit-scrollbar-track]:bg-transparent"
             userSettings={userSettings}
+            isSingleView={isSingleView}
           />
         </div>
       </div>
@@ -394,6 +448,9 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
             onMarkdownModeChange={setIsMarkdownMode}
             alwaysShowActions={false}
             extraControls={extraControls}
+            userSettings={userSettings}
+            showVoiceInHeader={showVoiceInHeader}
+            onVoiceTranscription={handleVoiceTranscription}
           />
         </div>
         <NoteCardBody
@@ -402,6 +459,7 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
           isMarkdownMode={isMarkdownMode}
           className="px-4 py-3 flex-1"
           userSettings={userSettings}
+          isSingleView={isSingleView}
         />
       </div>
     </div>

@@ -57,6 +57,8 @@ interface RichTextEditorProps {
   placeholder?: string
   showToolbar?: boolean
   userSettings: UserSettings
+  showVoiceInput?: boolean
+  onVoiceTranscription?: (text: string) => void
 }
 
 export function RichTextEditor({ 
@@ -64,7 +66,9 @@ export function RichTextEditor({
   onChange, 
   placeholder,
   showToolbar = false,
-  userSettings
+  userSettings,
+  showVoiceInput = true,
+  onVoiceTranscription
 }: RichTextEditorProps) {
   const lastPushedContent = useRef(content)
   const [hasFocus, setHasFocus] = useState(false)
@@ -141,10 +145,13 @@ export function RichTextEditor({
   })
 
   const handleVoiceTranscription = useCallback((text: string) => {
-    if (editor && text) {
+    if (onVoiceTranscription) {
+      onVoiceTranscription(text)
+    } else if (editor && text) {
+      // Default behavior: insert at cursor
       editor.commands.insertContent(text)
     }
-  }, [editor])
+  }, [editor, onVoiceTranscription])
 
   // Update editor content when content prop changes significantly and differs from what we last pushed
   useEffect(() => {
@@ -184,17 +191,19 @@ export function RichTextEditor({
           editor={editor} 
           className="h-full [&_.ProseMirror]:h-full [&_.ProseMirror]:min-h-full" 
         />
-        <div className={`
-          absolute bottom-2 right-2 transition-all duration-200
-          ${hasFocus ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}
-        `}>
-          <VoiceInput
-            userSettings={userSettings}
-            onTranscription={handleVoiceTranscription}
-            iconSize={16}
-            className="bg-white dark:bg-gray-800 shadow-sm"
-          />
-        </div>
+        {showVoiceInput && (
+          <div className={`
+            absolute -bottom-2 -right-2 transition-all duration-200
+            ${hasFocus ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}
+          `}>
+            <VoiceInput
+              userSettings={userSettings}
+              onTranscription={handleVoiceTranscription}
+              iconSize={16}
+              className="bg-white dark:bg-gray-800 shadow-sm rounded-full p-1"
+            />
+          </div>
+        )}
       </div>
     </div>
   )

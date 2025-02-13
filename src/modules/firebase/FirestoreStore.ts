@@ -6,6 +6,8 @@ import {
     query,
     where,
     onSnapshot,
+    writeBatch,
+    getDocs
 } from 'firebase/firestore'
 import type { Store } from '../../Store'
 import type { Board, Card, Chat } from '../../types'
@@ -31,7 +33,33 @@ export class FirestoreStore implements Store {
 
     removeBoard = async (boardId: string): Promise<void> => {
         const userId = this.getUserId()
-        await deleteDoc(doc(db, `users/${userId}/boards/${boardId}`))
+        const batch = writeBatch(db)
+
+        // Delete the board
+        batch.delete(doc(db, `users/${userId}/boards/${boardId}`))
+
+        // Get and delete all cards for this board
+        const cardsQuery = query(
+            collection(db, `users/${userId}/cards`),
+            where('boardId', '==', boardId)
+        )
+        const cardDocs = await getDocs(cardsQuery)
+        cardDocs.forEach(doc => {
+            batch.delete(doc.ref)
+        })
+
+        // Get and delete all chats for this board
+        const chatsQuery = query(
+            collection(db, `users/${userId}/chats`),
+            where('boardId', '==', boardId)
+        )
+        const chatDocs = await getDocs(chatsQuery)
+        chatDocs.forEach(doc => {
+            batch.delete(doc.ref)
+        })
+
+        // Execute all deletions in a single batch
+        await batch.commit()
     }
 
     getBoards = (callback: (boards: Board[]) => void): () => void => {

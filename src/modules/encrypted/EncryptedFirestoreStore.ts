@@ -1,5 +1,5 @@
 import { getAuth } from 'firebase/auth'
-import { collection, doc, setDoc, deleteDoc, onSnapshot, query, where, getDoc } from 'firebase/firestore'
+import { collection, doc, setDoc, deleteDoc, onSnapshot, query, where, getDoc, writeBatch, getDocs } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import type { EncryptedStore, EncryptedBoard, EncryptedCard, EncryptedChat, EncryptedUserSettings, EncryptedBlob } from './EncryptedTypes'
 import { encrypt, decrypt } from './crypto'
@@ -63,7 +63,33 @@ export class EncryptedFirestoreStore implements EncryptedStore {
 
     removeBoard = async (boardId: string): Promise<void> => {
         const userId = this.getUserId()
-        await deleteDoc(doc(db, `users/${userId}/boards/${boardId}`))
+        const batch = writeBatch(db)
+
+        // Delete the board
+        batch.delete(doc(db, `users/${userId}/boards/${boardId}`))
+
+        // Get and delete all cards for this board
+        const cardsQuery = query(
+            collection(db, `users/${userId}/cards`),
+            where('boardId', '==', boardId)
+        )
+        const cardDocs = await getDocs(cardsQuery)
+        cardDocs.forEach(doc => {
+            batch.delete(doc.ref)
+        })
+
+        // Get and delete all chats for this board
+        const chatsQuery = query(
+            collection(db, `users/${userId}/chats`),
+            where('boardId', '==', boardId)
+        )
+        const chatDocs = await getDocs(chatsQuery)
+        chatDocs.forEach(doc => {
+            batch.delete(doc.ref)
+        })
+
+        // Execute all deletions in a single batch
+        await batch.commit()
     }
 
     getBoards = (callback: (boards: EncryptedBoard[]) => void): () => void => {

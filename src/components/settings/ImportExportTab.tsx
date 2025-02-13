@@ -30,6 +30,28 @@ interface ExportData {
   chats: Chat[]
 }
 
+/** Google Keep note format */
+interface GoogleKeepNote {
+  /** Note title */
+  title: string
+  /** Plain text content */
+  textContent: string
+  /** HTML formatted content */
+  textContentHtml: string
+  /** Whether the note is in trash */
+  isTrashed: boolean
+  /** Whether the note is pinned */
+  isPinned: boolean
+  /** Whether the note is archived */
+  isArchived: boolean
+  /** Note color */
+  color: string
+  /** Last edit timestamp in microseconds */
+  userEditedTimestampUsec: number
+  /** Creation timestamp in microseconds */
+  createdTimestampUsec: number
+}
+
 export function ImportExportTab({ store }: ImportExportTabProps): ReactElement {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -156,37 +178,43 @@ This will ADD to or REPLACE (if the board, card, or chat already exists) your ex
         updatedAt: new Date().toISOString()
       }
 
-      // Process each HTML file
+      // Process each JSON file
       const cards: Card[] = []
+      let importedCount = 0
+      let skippedCount = 0
       
       for (const file of files) {
-        if (!file.name.endsWith('.html')) continue
+        if (!file.name.endsWith('.json')) continue
 
         const text = await file.text()
-        const parser = new DOMParser()
-        const doc = parser.parseFromString(text, 'text/html')
-        
-        // Extract title and content
-        const title = doc.querySelector('title')?.textContent?.replace(' - Google Keep', '') || ''
-        const content = doc.querySelector('.content')?.innerHTML || ''
-        
-        // Convert HTML to markdown using turndown
-        const markdown = turndown.turndown(content)
+        const note = JSON.parse(text) as GoogleKeepNote
+
+        // Skip trashed notes
+        if (note.isTrashed) {
+          skippedCount++
+          continue
+        }
+
+        // Convert HTML to markdown
+        const markdown = note.textContentHtml ? 
+          turndown.turndown(note.textContentHtml) : 
+          note.textContent || ''
 
         // Create a card for this note
         const card: Card = {
           id: uuidv4(),
           boardId,
           type: 'richtext',
-          title,
+          title: note.title || 'Untitled Note',
           content: {
             markdown
           },
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          createdAt: new Date(note.createdTimestampUsec / 1000).toISOString(),
+          updatedAt: new Date(note.userEditedTimestampUsec / 1000).toISOString()
         }
         
         cards.push(card)
+        importedCount++
       }
 
       if (cards.length === 0) {
@@ -195,7 +223,9 @@ This will ADD to or REPLACE (if the board, card, or chat already exists) your ex
 
       // Confirm import
       if (!window.confirm(
-        `Found ${cards.length} notes to import from Google Keep.\n\nThis will create a new board called "Imported from Google Keep". Continue?`
+        `Found ${importedCount} notes to import from Google Keep` + 
+        (skippedCount > 0 ? ` (${skippedCount} trashed notes were skipped)` : '') +
+        `.\n\nThis will create a new board called "Imported from Google Keep". Continue?`
       )) {
         return
       }
@@ -254,7 +284,7 @@ This will ADD to or REPLACE (if the board, card, or chat already exists) your ex
             <span>{loading ? 'Processing...' : 'Import from Google Keep'}</span>
             <input
               type="file"
-              accept=".html"
+              accept=".json"
               onChange={handleImportFromKeep}
               disabled={loading}
               multiple
@@ -262,7 +292,7 @@ This will ADD to or REPLACE (if the board, card, or chat already exists) your ex
             />
           </label>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Import notes from Google Keep HTML files (from Google Takeout).
+            Import notes from Google Keep JSON files (from Google Takeout).
           </p>
           <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             <p>To export your Google Keep notes:</p>
@@ -270,8 +300,8 @@ This will ADD to or REPLACE (if the board, card, or chat already exists) your ex
               <li>Go to <a href="https://takeout.google.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">Google Takeout</a></li>
               <li>Click "Deselect all" then select only "Keep"</li>
               <li>Click "Next step" and choose your export options</li>
-              <li>Download the export when ready and extract the HTML files</li>
-              <li>Select all the HTML files here to import them</li>
+              <li>Download the export when ready and extract the JSON files</li>
+              <li>Select all the JSON files here to import them</li>
             </ol>
           </div>
         </div>

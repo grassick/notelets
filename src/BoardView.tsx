@@ -44,7 +44,7 @@ export function BoardView(props: {
   const { store, boardId } = props
   const { board, loading: boardLoading, error: boardError, setBoard } = useBoard(store, boardId)
   const { cards, loading: cardsLoading, error: cardsError, setCard, removeCard } = useCards(store, boardId)
-  const [viewMode, setViewMode] = useState<ViewMode>('split')
+  const [viewMode, setViewMode] = usePersist<ViewMode>("viewMode", 'split')
   const [isDragging, setIsDragging] = useState(false)
   const [showAllNotes, setShowAllNotes] = usePersist<boolean>("showAllNotes", false)
   const isMobile = useIsMobile()

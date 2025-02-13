@@ -5,6 +5,7 @@ import { useAuth } from '../../modules/auth/AuthContext'
 import { AboutTab } from './AboutTab'
 import type { Store } from '../../Store'
 import { FaTimes } from 'react-icons/fa'
+import { clearStoredPassword } from '../../modules/encrypted/passwordStorage'
 
 interface SettingsModalProps {
   /** Whether the modal is open */
@@ -286,12 +287,29 @@ export function SettingsModal({ isOpen, onClose, store }: SettingsModalProps) {
                   </button>
                 </div>
 
-                {deviceSettings.storage.type === 'local' && (
+                {deviceSettings.storage.type === 'local' ? (
                   <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
                     <p className="text-sm text-yellow-700 dark:text-yellow-300">
                       ⚠️ Local Mode Notice: Your notes are only saved on this device/browser.
                       Back them up regularly to avoid data loss.
                     </p>
+                  </div>
+                ) : user && (
+                  <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">Security Options</h4>
+                    <button
+                      onClick={() => {
+                        clearStoredPassword(user.uid)
+                        window.alert('Encryption password has been forgotten. You will need to enter it again next time.')
+                        window.location.reload()
+                      }}
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      <svg className="mr-2 -ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      Forget Saved Password
+                    </button>
                   </div>
                 )}
               </div>

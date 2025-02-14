@@ -239,6 +239,7 @@ export function BoardView(props: {
             <NotesPanel
               cards={cards.filter((c): c is RichTextCard => c.type === 'richtext')}
               selectedCard={selectedCard}
+              onCardSelect={handleCardSelect}
               onUpdateCard={handleUpdateCard}
               onUpdateCardTitle={handleUpdateCardTitle}
               onDelete={handleDeleteCard}

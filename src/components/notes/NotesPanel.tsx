@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { RichTextCard } from '../../types'
 import { NoteCard } from './NoteCard'
-import { FaLayerGroup, FaPlus } from 'react-icons/fa'
 import { useUserSettings } from '../../hooks/useSettings'
 import { Store } from '../../Store'
 import { MobileNoteMenu } from './MobileNoteMenu'
@@ -12,6 +11,8 @@ interface NotesPanelProps {
   cards: RichTextCard[]
   /** The currently selected card */
   selectedCard: RichTextCard | null
+  /** Callback when a card is selected */
+  onCardSelect: (cardId: string) => void
   /** Callback when a card's content is updated */
   onUpdateCard: (cardId: string, content: string) => void
   /** Callback when a card's title is updated */
@@ -41,7 +42,8 @@ export function NotesPanel({
   onShowAllNotesChange,
   onCreateCard,
   isMobile,
-  store
+  store,
+  onCardSelect
 }: NotesPanelProps) {
   const { settings: userSettings } = useUserSettings(store)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -99,98 +101,98 @@ export function NotesPanel({
     )
   }
 
-  if (!showAllNotes) {
-    // Single note view
-    return (
-      <div className="flex flex-col border-r border-gray-200 dark:border-gray-700 flex-1 h-full">
-        {selectedCard && (
-          <NoteCard
-            key={selectedCard.id}
-            card={selectedCard}
-            isSingleView={true}
-            onUpdateCard={(content) => onUpdateCard(selectedCard.id, content)}
-            onUpdateCardTitle={(title) => onUpdateCardTitle(selectedCard.id, title)}
-            onDelete={() => onDelete(selectedCard.id)}
-            userSettings={userSettings}
-            showAllNotes={showAllNotes}
-            onShowAllNotesChange={onShowAllNotesChange}
-            extraControls={null}
-            allCards={cards}
-            onCreateCard={onCreateCard}
-            onCardSelect={(cardId) => {
-              // Update selected card
-              const card = cards.find(c => c.id === cardId)
-              if (card) {
-                onUpdateCard(cardId, card.content.markdown)
-              }
-            }}
-          />
-        )}
-      </div>
-    )
-  }
+  const mobileMenuButton = isMobile && (
+    <button
+      onClick={() => setIsMobileMenuOpen(true)}
+      className="p-1.5 -ml-1 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+      title="Show all notes"
+    >
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+  )
 
-  // Multi-note view
   return (
     <div className="flex flex-col border-r border-gray-200 dark:border-gray-700 flex-1 h-full">
+      {/* Always render mobile menu at top level */}
       {isMobile && (
+        <MobileNoteMenu
+          isOpen={isMobileMenuOpen}
+          onClose={() => setIsMobileMenuOpen(false)}
+          cards={cards}
+          selectedCardId={selectedCard?.id ?? null}
+          onCardSelect={onCardSelect}
+          onCreateCard={onCreateCard}
+        />
+      )}
+
+      {!showAllNotes ? (
+        // Single note view
+        <div className="flex flex-col flex-1 h-full">
+          {selectedCard && (
+            <NoteCard
+              key={selectedCard.id}
+              card={selectedCard}
+              isSingleView={true}
+              onUpdateCard={(content) => onUpdateCard(selectedCard.id, content)}
+              onUpdateCardTitle={(title) => onUpdateCardTitle(selectedCard.id, title)}
+              onDelete={() => onDelete(selectedCard.id)}
+              userSettings={userSettings}
+              showAllNotes={showAllNotes}
+              onShowAllNotesChange={onShowAllNotesChange}
+              extraStartControls={mobileMenuButton}
+              allCards={cards}
+              onCreateCard={onCreateCard}
+              onCardSelect={onCardSelect}
+            />
+          )}
+        </div>
+      ) : (
+        // Multi-note view
         <>
-          <MobileNoteMenu
-            isOpen={isMobileMenuOpen}
-            onClose={() => setIsMobileMenuOpen(false)}
-            cards={cards}
-            selectedCardId={selectedCard?.id ?? null}
-            onCardSelect={handleCardSelect}
-            onCreateCard={onCreateCard}
-          />
-          <div className="flex items-center gap-2 p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-            <button
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="p-1.5 -ml-1 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-              title="Show all notes"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <div className="flex-1" />
-            <button
-              onClick={onCreateCard}
-              className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-              title="New note"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
+          {isMobile && (
+            <div className="flex items-center gap-2 p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+              {mobileMenuButton}
+              <div className="flex-1" />
+              <button
+                onClick={onCreateCard}
+                className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                title="New note"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+            </div>
+          )}
+          <div className="flex-1 overflow-auto p-4
+                       [scrollbar-width:thin] 
+                       [scrollbar-color:rgba(148,163,184,0.2)_transparent] 
+                       dark:[scrollbar-color:rgba(148,163,184,0.15)_transparent]
+                       [::-webkit-scrollbar]:w-1.5
+                       [::-webkit-scrollbar-thumb]:rounded-full
+                       [::-webkit-scrollbar-thumb]:bg-slate-300/50
+                       hover:[::-webkit-scrollbar-thumb]:bg-slate-400/50
+                       dark:[::-webkit-scrollbar-thumb]:bg-slate-500/25
+                       dark:hover:[::-webkit-scrollbar-thumb]:bg-slate-400/25
+                       [::-webkit-scrollbar-track]:bg-transparent">
+            {sortedCards.map(card => (
+              <NoteCard
+                key={card.id}
+                card={card}
+                onUpdateCard={(content) => onUpdateCard(card.id, content)}
+                onUpdateCardTitle={(title) => onUpdateCardTitle(card.id, title)}
+                onDelete={() => onDelete(card.id)}
+                ref={(el) => cardRefs.current[card.id] = el}
+                userSettings={userSettings}
+                showAllNotes={showAllNotes}
+                onShowAllNotesChange={onShowAllNotesChange}
+              />
+            ))}
           </div>
         </>
       )}
-      <div className="flex-1 overflow-auto p-4
-                     [scrollbar-width:thin] 
-                     [scrollbar-color:rgba(148,163,184,0.2)_transparent] 
-                     dark:[scrollbar-color:rgba(148,163,184,0.15)_transparent]
-                     [::-webkit-scrollbar]:w-1.5
-                     [::-webkit-scrollbar-thumb]:rounded-full
-                     [::-webkit-scrollbar-thumb]:bg-slate-300/50
-                     hover:[::-webkit-scrollbar-thumb]:bg-slate-400/50
-                     dark:[::-webkit-scrollbar-thumb]:bg-slate-500/25
-                     dark:hover:[::-webkit-scrollbar-thumb]:bg-slate-400/25
-                     [::-webkit-scrollbar-track]:bg-transparent">
-        {sortedCards.map(card => (
-          <NoteCard
-            key={card.id}
-            card={card}
-            onUpdateCard={(content) => onUpdateCard(card.id, content)}
-            onUpdateCardTitle={(title) => onUpdateCardTitle(card.id, title)}
-            onDelete={() => onDelete(card.id)}
-            ref={(el) => cardRefs.current[card.id] = el}
-            userSettings={userSettings}
-            showAllNotes={showAllNotes}
-            onShowAllNotesChange={onShowAllNotesChange}
-          />
-        ))}
-      </div>
     </div>
   )
 } 

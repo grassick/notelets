@@ -24,7 +24,9 @@ interface NoteCardHeaderProps {
   className?: string
   /** Whether to always show actions */
   alwaysShowActions: boolean
-  /** Additional controls to render in the header */
+  /** Controls to render at start of header (left side) */
+  extraStartControls?: React.ReactNode
+  /** Controls to render at end of header (right side) */
   extraControls?: React.ReactNode
   /** User settings */
   userSettings: UserSettings
@@ -47,6 +49,7 @@ function NoteCardHeader({
   onMarkdownModeChange, 
   alwaysShowActions,
   className = '',
+  extraStartControls,
   extraControls,
   userSettings,
   showVoiceInHeader,
@@ -152,6 +155,7 @@ function NoteCardHeader({
 
   return (
     <div className={`flex justify-between items-center ${className}`}>
+      {extraStartControls}
       <div className="flex-1">
         {isEditingTitle ? (
           <input
@@ -312,7 +316,9 @@ interface NoteCardProps {
   onDelete: () => void
   /** Optional class name for styling */
   className?: string
-  /** Additional controls to render in the header */
+  /** Controls to render at start of header (left side) */
+  extraStartControls?: React.ReactNode
+  /** Controls to render at end of header (right side) */
   extraControls?: React.ReactNode
   /** User settings */
   userSettings: UserSettings
@@ -336,6 +342,7 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
   onUpdateCardTitle, 
   onDelete, 
   className = '',
+  extraStartControls,
   extraControls,
   userSettings,
   showAllNotes,
@@ -346,7 +353,6 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
 }, ref) => {
   const [isMarkdownMode, setIsMarkdownMode] = useState(false)
   const [showCopyMenu, setShowCopyMenu] = useState(false)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const copyMenuRef = useRef<HTMLDivElement>(null)
   const isMobile = useIsMobile()
   const showVoiceInHeader = isMobile && isSingleView
@@ -368,36 +374,15 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-
   if (isSingleView) {
     return (
       <div className={`flex flex-col flex-1 min-h-0 ${className}`}>
-        {isMobile && allCards && onCardSelect && onCreateCard && (
-          <MobileNoteMenu
-            isOpen={isMobileMenuOpen}
-            onClose={() => setIsMobileMenuOpen(false)}
-            cards={allCards}
-            selectedCardId={card.id}
-            onCardSelect={onCardSelect}
-            onCreateCard={onCreateCard}
-          />
-        )}
         <div 
           ref={ref}
           className="flex flex-col flex-1 min-h-0"
         >
           <div className="px-3 py-1 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
             <div className="flex items-center gap-2">
-              {isMobile && (
-                <button
-                  onClick={() => setIsMobileMenuOpen(true)}
-                  className="p-1.5 -ml-1 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                </button>
-              )}
               <div className="flex-1">
                 <NoteCardHeader
                   card={card}
@@ -406,6 +391,7 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
                   isMarkdownMode={isMarkdownMode}
                   onMarkdownModeChange={setIsMarkdownMode}
                   alwaysShowActions={true}
+                  extraStartControls={extraStartControls}
                   extraControls={extraControls}
                   userSettings={userSettings}
                   showVoiceInHeader={showVoiceInHeader}
@@ -453,6 +439,7 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
             isMarkdownMode={isMarkdownMode}
             onMarkdownModeChange={setIsMarkdownMode}
             alwaysShowActions={false}
+            extraStartControls={extraStartControls}
             extraControls={extraControls}
             userSettings={userSettings}
             showVoiceInHeader={showVoiceInHeader}

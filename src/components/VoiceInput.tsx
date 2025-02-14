@@ -14,13 +14,21 @@ interface VoiceInputProps {
     iconSize?: number
     /** Callback function called with transcribed text */
     onTranscription: (text: string) => void
+    /** Optional error callback */
+    onError?: (error: string) => void
 }
 
 /**
  * A voice input button that handles recording and transcription using RecordRTC
  * for better cross-platform compatibility, especially on iOS
  */
-export function VoiceInput({ userSettings, className = '', iconSize = 20, onTranscription }: VoiceInputProps) {
+export function VoiceInput({ 
+    userSettings, 
+    className = '', 
+    iconSize = 20, 
+    onTranscription,
+    onError 
+}: VoiceInputProps) {
     const openaiClient = useMemo(() => {
         if (!userSettings.llm.openaiKey) {
             return null
@@ -50,31 +58,50 @@ export function VoiceInput({ userSettings, className = '', iconSize = 20, onTran
         e.stopPropagation()
         
         try {
+            // Request permission and get stream
             stream.current = await navigator.mediaDevices.getUserMedia({ 
                 audio: {
                     echoCancellation: true,
                     noiseSuppression: true,
-                    sampleRate: 44100
+                    sampleRate: 16000
                 }
             })
 
-            recorder.current = new RecordRTCPromisesHandler(stream.current, {
-                type: 'audio',
-                mimeType: 'audio/webm;codecs=opus' as any,
-                recorderType: RecordRTC.StereoAudioRecorder,
-                numberOfAudioChannels: 1,
-                desiredSampRate: 16000, // Optimal for speech recognition
-                timeSlice: 1000,
-                // Opus-specific settings for voice
-                bitsPerSecond: 24000, // 24kbps is good for speech
-                frameRate: 48000,
-                bufferSize: 16384
-            })
+            // Check if we actually got audio tracks
+            if (!stream.current.getAudioTracks().length) {
+                throw new Error('No audio track available')
+            }
 
+            // Configure recorder based on platform
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+            const recorderConfig = {
+                type: 'audio' as const,
+                mimeType: isIOS ? 'audio/wav' as const : 'audio/webm' as const,
+                recorderType: RecordRTC.StereoAudioRecorder,
+                numberOfAudioChannels: 1 as const,
+                desiredSampRate: 16000,
+                timeSlice: 1000,
+                // Ensure good quality while keeping file size reasonable
+                bitsPerSecond: 128000,
+                audioBitsPerSecond: 128000,
+                frameRate: 16000,
+                bufferSize: 16384 as const,
+                // Ensure we get audio data
+                checkForInactiveTracks: true,
+                disableLogs: false
+            }
+
+            recorder.current = new RecordRTCPromisesHandler(stream.current, recorderConfig)
             await recorder.current.startRecording()
             setIsRecording(true)
         } catch (error) {
             console.error('Error starting recording:', error)
+            onError?.(error instanceof Error ? error.message : 'Failed to start recording')
+            // Cleanup any partial setup
+            if (stream.current) {
+                stream.current.getTracks().forEach(track => track.stop())
+                stream.current = null
+            }
         }
     }
 
@@ -93,20 +120,30 @@ export function VoiceInput({ userSettings, className = '', iconSize = 20, onTran
                 stream.current.getTracks().forEach(track => track.stop())
             }
             
+            // Verify we have valid audio data
+            if (blob.size < 100) {
+                throw new Error('Recording appears to be empty')
+            }
+
             // Transcribe audio
             const transcription = await openaiClient!.transcribeAudio(blob)
-            console.log('Transcription:', transcription)
             
-            // Call the transcription callback
+            if (!transcription || transcription.trim().length === 0) {
+                throw new Error('No speech detected in recording')
+            }
+
+            console.log('Transcription:', transcription)
             onTranscription(transcription)
         } catch (error) {
             console.error('Error processing audio:', error)
+            onError?.(error instanceof Error ? error.message : 'Failed to process recording')
         } finally {
             setIsProcessing(false)
             if (recorder.current) {
                 await recorder.current.reset()
                 recorder.current = null
             }
+            stream.current = null
         }
     }
 

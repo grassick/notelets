@@ -41,7 +41,7 @@ export function WelcomeScreen({ onChoose }: WelcomeScreenProps) {
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
               Notelets supports multiple AI models including Claude 3.5, Gemini 2.0, and GPT-o3. This is a bring-your-own-keys application, 
-              which means you'll need to provide your own API keys in the settings to use these models.
+              which means you'll need to provide your own API keys in the settings to use them.
             </p>
           </div>
           <div className="max-w-2xl mx-auto mb-4 mt-6">
@@ -110,7 +110,7 @@ export function WelcomeScreen({ onChoose }: WelcomeScreenProps) {
         </div>
 
         <p className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
-          Don't worry, you can always change this later in Settings
+          Don't worry, you can always change this later in Settings.
         </p>
       </div>
     </div>

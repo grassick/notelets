@@ -7,6 +7,7 @@ import { useDeviceSettings } from './hooks/useSettings'
 import { AuthProvider, useAuth } from './modules/auth/AuthContext'
 import { LoginPage } from './modules/auth/LoginPage'
 import { SignupPage } from './modules/auth/SignupPage'
+import { ResetPasswordPage } from './modules/auth/ResetPasswordPage'
 import { WelcomeScreen } from './WelcomeScreen'
 import { LocalStore } from './modules/local/LocalStore'
 import { EncryptedFirestoreStore } from './modules/encrypted/EncryptedFirestoreStore'
@@ -185,6 +186,7 @@ export function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route
             path="/*"
             element={

@@ -94,7 +94,7 @@ export function ListPanel({
   return (
     <div 
       className={`flex flex-col border-r border-gray-200 dark:border-gray-700 transition-all duration-200
-        ${isExpanded ? '' : 'w-12'}`}
+        ${isExpanded ? '' : 'w-9'}`}
       style={{ width: isExpanded ? width : undefined }}
     >
       <div className="p-2 border-b border-gray-200 dark:border-gray-700">

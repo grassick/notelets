@@ -140,7 +140,10 @@ export function NotesPanel({
               onDelete={() => onDelete(selectedCard.id)}
               userSettings={userSettings}
               showAllNotes={showAllNotes}
-              onShowAllNotesChange={onShowAllNotesChange}
+              onShowAllNotesChange={(value) => {
+                onCardSelect(selectedCard.id)
+                onShowAllNotesChange(value)
+              }}
               extraStartControls={mobileMenuButton}
               allCards={cards}
               onCreateCard={onCreateCard}
@@ -187,7 +190,10 @@ export function NotesPanel({
                 ref={(el) => cardRefs.current[card.id] = el}
                 userSettings={userSettings}
                 showAllNotes={showAllNotes}
-                onShowAllNotesChange={onShowAllNotesChange}
+                onShowAllNotesChange={(value) => {
+                  onCardSelect(card.id)
+                  onShowAllNotesChange(value)
+                }}
               />
             ))}
           </div>

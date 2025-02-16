@@ -115,10 +115,12 @@ export function SearchModal({ isOpen, onClose, cards, onCardSelect }: SearchModa
                 onClick={() => handleCardClick(card.id)}
                 className="w-full text-left p-4 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700"
               >
-                <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
-                  {card.title || 'Untitled'}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                {card.title && (
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+                    {card.title}
+                  </div>
+                )}
+                <div className={`text-sm text-gray-500 dark:text-gray-400 line-clamp-2 ${!card.title ? 'text-gray-900 dark:text-gray-100' : ''}`}>
                   {card.content.markdown}
                 </div>
               </button>

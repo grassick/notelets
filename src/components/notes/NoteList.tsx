@@ -3,12 +3,17 @@ import type { RichTextCard, ViewMode } from '../../types'
 import ViewControls from '../ViewControls'
 import { SearchModal } from '../search/SearchModal'
 
-/** Get a preview of the card content */
-const getCardPreview = (card: RichTextCard): string => {
+/** Get the title of the card, using first line of content if no title exists */
+const getCardTitle = (card: RichTextCard): string => {
   if (card.title) return card.title
-  const preview = card.content.markdown.trim()
-  if (!preview) return ''
-  return preview.slice(0, 30) + (preview.length > 30 ? '...' : '')
+  
+  const firstLine = card.content.markdown
+    .split('\n')[0] // Get first line
+    .replace(/^#+\s*/, '') // Remove leading hashes
+    .trim() // Remove extra spaces
+  
+  if (!firstLine) return ''
+  return firstLine.slice(0, 30) + (firstLine.length > 30 ? '...' : '')
 }
 
 interface CardListItemProps {
@@ -33,7 +38,7 @@ function CardListItem({ card, isSelected, onClick }: CardListItemProps) {
           : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
     >
       <div className="text-xs text-gray-800 dark:text-gray-200">
-        {getCardPreview(card) || <span className="text-gray-400 dark:text-gray-500">—</span>}
+        {getCardTitle(card) || <span className="text-gray-400 dark:text-gray-500">—</span>}
       </div>
     </div>
   )

@@ -51,10 +51,10 @@ export function ModelSelector({ value, onChange, className = '', onOpenSettings,
         <select
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className={`px-1.5 py-0.5 text-[10px] rounded border border-gray-200 dark:border-gray-700 
+            className={`px-1.5 py-0.5 text-[10px] rounded
                      bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300
-                     hover:border-gray-300 dark:hover:border-gray-600
-                     focus:outline-none focus:ring-1 focus:ring-blue-500
+                     hover:bg-gray-100 dark:hover:bg-gray-700
+                     focus:outline-none
                      transition-colors duration-150
                      ${className}`}
         >

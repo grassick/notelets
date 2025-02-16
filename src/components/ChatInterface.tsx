@@ -317,7 +317,8 @@ function ChatInput({ message, onMessageChange, onSendMessage, isLoading = false,
                              bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 
                              p-4 pr-24 text-base overflow-y-hidden
                              focus:outline-none focus:ring-2 focus:ring-blue-500
-                             disabled:opacity-50 disabled:cursor-not-allowed"
+                             disabled:opacity-50 disabled:cursor-not-allowed
+                             placeholder:text-gray-400/60 dark:placeholder:text-gray-500/60"
                     rows={1}
                     disabled={isLoading}
                 />

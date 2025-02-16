@@ -263,6 +263,8 @@ export function VoiceStreamingInput({
     }
 
     function handleClick(e: React.MouseEvent) {
+        e.preventDefault()
+        e.stopPropagation()
         if (isRecording) {
             stopRecording()
         } else {
@@ -312,7 +314,7 @@ export function VoiceStreamingInput({
             {/* Recording Modal */}
             {isRecording ? (
                 <div className="fixed inset-0 flex flex-col items-center justify-center p-4 z-50"
-                     onClick={stopRecording}
+                     onClick={handleClick}
                 >
                     <div 
                         className="relative flex flex-col items-center space-y-8 p-8"

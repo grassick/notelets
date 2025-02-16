@@ -299,7 +299,7 @@ function ChatInput({ message, onMessageChange, onSendMessage, isLoading = false,
                     value={message}
                     onChange={e => onMessageChange(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Type your message... (Press Enter to send)"
+                    placeholder="Type your message"
                     className="w-full resize-none rounded-lg border border-gray-200 dark:border-gray-700 
                              bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 
                              p-4 pr-24 text-base overflow-y-hidden
@@ -315,6 +315,26 @@ function ChatInput({ message, onMessageChange, onSendMessage, isLoading = false,
                         iconSize={20}
                         className="p-1.5 opacity-60 hover:opacity-100"
                     />
+                    <button
+                        type="submit"
+                        disabled={isLoading || !message.trim()}
+                        className="p-1.5 opacity-60 hover:opacity-100 disabled:opacity-30 disabled:cursor-not-allowed
+                                 text-gray-600 dark:text-gray-300"
+                        title="Send message (Enter)"
+                    >
+                        <svg 
+                            width="20" 
+                            height="20" 
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            strokeWidth="2" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                        >
+                            <path d="M12 20V4M5 11l7-7 7 7" />
+                        </svg>
+                    </button>
                 </div>
             </div>
         </form>

@@ -54,9 +54,7 @@ export function VoiceStreamingInput({
 
     // Cleanup recording on unmount
     useEffect(() => {
-        console.log('VoiceStreamingInput mounting')
         return () => {
-            console.log('VoiceStreamingInput unmounting')
             if (mediaRecorder.current && isRecording) {
                 stopRecording()
             }
@@ -83,7 +81,7 @@ export function VoiceStreamingInput({
             const normalized = dataArray[i] - 128
             sumSquares += normalized * normalized
         }
-        const rms = Math.sqrt(sumSquares / bufferLength) * 4
+        const rms = Math.sqrt(sumSquares / bufferLength) * 6
         const normalizedLevel = Math.min(rms / 128, 1)
         setAudioLevel(normalizedLevel)
     }
@@ -156,7 +154,7 @@ export function VoiceStreamingInput({
             audioAnalyser.current = audioContext.current.createAnalyser()
             audioAnalyser.current.fftSize = 256
             source.connect(audioAnalyser.current)
-            audioLevelInterval.current = setInterval(updateAudioLevel, 100)
+            audioLevelInterval.current = setInterval(updateAudioLevel, 50)
 
             // Configure recorder
             mediaRecorder.current = new MediaRecorder(stream, {
@@ -211,10 +209,10 @@ export function VoiceStreamingInput({
     }
 
     async function stopRecording() {
-        if (!mediaRecorder.current) return
-
         setIsRecording(false)
         setIsProcessing(true)
+
+        if (!mediaRecorder.current) return
 
         try {
             // Clear the transcription interval
@@ -283,12 +281,12 @@ export function VoiceStreamingInput({
                 onClick={handleClick}
                 disabled={isProcessing}
                 className={`
-                    p-2 rounded-md transition-all duration-200
+                    rounded-full
+                    transition-all duration-200
+                    opacity-40 hover:opacity-100
                     ${isProcessing 
                         ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
-                        : isRecording
-                            ? 'bg-red-600 dark:bg-red-500 text-white hover:bg-red-700 dark:hover:bg-red-600'
-                            : 'text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        : 'text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                     }
                     disabled:opacity-50 disabled:cursor-not-allowed
                     focus:outline-none
@@ -307,86 +305,93 @@ export function VoiceStreamingInput({
             >
                 <FaMicrophone 
                     size={iconSize}
-                    className={`
-                        transition-transform
-                        ${!isProcessing && 'hover:scale-110'}
-                    `} 
+                    className="transition-transform hover:scale-110" 
                 />
             </button>
 
             {/* Recording Modal */}
-            {isRecording && (
-                <>
-                    {/* Modal Backdrop */}
+            {isRecording ? (
+                <div className="fixed inset-0 flex flex-col items-center justify-center p-4 z-50"
+                     onClick={stopRecording}
+                >
                     <div 
-                        className="fixed inset-0 bg-black/30 dark:bg-black/50 z-50"
-                        onClick={stopRecording}
-                    />
-                    
-                    {/* Modal Content */}
-                    <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
-                        <div 
-                            className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4"
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                                    Recording in Progress
-                                </h2>
-                                <button
-                                    onClick={stopRecording}
-                                    className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-
-                            {/* Audio Level Visualization */}
-                            <div className="relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        className="relative flex flex-col items-center space-y-8 p-8"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Large Microphone Button */}
+                        <div className="relative">
+                            <button
+                                onClick={stopRecording}
+                                className="
+                                    relative
+                                    w-32 h-32
+                                    rounded-full
+                                    bg-red-600 dark:bg-red-500
+                                    text-white
+                                    flex items-center justify-center
+                                    transition-all duration-150
+                                    hover:scale-105
+                                    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500
+                                    shadow-[0_0_15px_rgba(239,68,68,0.3)]
+                                    dark:shadow-[0_0_15px_rgba(239,68,68,0.4)]
+                                "
+                                style={{
+                                    boxShadow: `0 0 15px rgba(239, 68, 68, 0.3), 0 0 ${audioLevel * 40}px ${audioLevel * 20}px rgba(239, 68, 68, ${audioLevel * 0.5})`
+                                }}
+                            >
+                                {/* Permanent soft blur effect */}
+                                <div className="absolute inset-0 rounded-full bg-red-500/20 backdrop-blur-sm" />
+                                
+                                {/* Fuzzy background expansion */}
                                 <div 
-                                    className="absolute inset-y-0 left-0 bg-red-500 dark:bg-red-400 transition-all duration-150"
-                                    style={{ width: `${audioLevel * 100}%` }}
+                                    className="absolute inset-0 rounded-full bg-red-500/40 backdrop-blur-sm transition-transform duration-150"
+                                    style={{
+                                        transform: `scale(${1 + audioLevel * 0.15})`,
+                                        opacity: audioLevel * 0.6
+                                    }}
                                 />
-                            </div>
 
-                            {/* Transcription Display */}
-                            <div className="relative">
-                                <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent to-white dark:to-gray-800" />
-                                <div className="h-48 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
-                                    {currentTranscription ? (
-                                        <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
-                                            {currentTranscription}
-                                        </p>
-                                    ) : (
-                                        <p className="text-gray-500 dark:text-gray-400 italic">
-                                            Speak now... Transcription will appear here
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
+                                <FaMicrophone 
+                                    size={48} 
+                                    className="relative z-10" 
+                                />
+                            </button>
+                        </div>
 
-                            {/* Status and Controls */}
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                                        {isProcessing ? "Processing..." : "Recording"}
-                                    </span>
-                                </div>
-                                <button
-                                    onClick={stopRecording}
-                                    className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 
-                                             dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 
-                                             rounded-lg transition-colors duration-150"
-                                >
-                                    Done
-                                </button>
+                        {/* Transcription Preview */}
+                        <div className="
+                            max-w-md w-full
+                            bg-white dark:bg-gray-800 
+                            rounded-lg shadow-lg 
+                            p-4
+                            text-center
+                        ">
+                            <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                                {currentTranscription ? (
+                                    currentTranscription.split(' ').slice(-15).join(' ')
+                                ) : (
+                                    'Speak now...'
+                                )}
+                            </div>
+                            
+                            {/* Recording indicator */}
+                            <div className="flex justify-center space-x-1">
+                                <div className="w-1.5 h-1.5 rounded-full bg-red-500 dark:bg-red-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                                <div className="w-1.5 h-1.5 rounded-full bg-red-500 dark:bg-red-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                                <div className="w-1.5 h-1.5 rounded-full bg-red-500 dark:bg-red-400 animate-bounce" style={{ animationDelay: '300ms' }} />
                             </div>
                         </div>
                     </div>
-                </>
+                </div>
+            ) : null}
+
+            {/* Processing indicator */}
+            {isProcessing && !isRecording && (
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2">
+                    <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full px-3 py-1 text-sm">
+                        Processing...
+                    </div>
+                </div>
             )}
         </>
     )

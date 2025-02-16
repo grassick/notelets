@@ -5,7 +5,7 @@ import MarkdownIt from 'markdown-it'
 import { FaTrash, FaExpandAlt, FaCompressAlt } from 'react-icons/fa'
 import { UserSettings } from '../../types/settings'
 import { useIsMobile } from '../../hooks/useIsMobile'
-import { VoiceInput } from '../VoiceInput'
+import { VoiceStreamingInput } from '../VoiceStreamingInput'
 import { MobileNoteMenu } from './MobileNoteMenu'
 
 /** Props for the NoteCardHeader component */
@@ -190,7 +190,7 @@ function NoteCardHeader({
           {showAllNotes ? <FaExpandAlt size={14} /> : <FaCompressAlt size={14} />}
         </button>
         {showVoiceInHeader && onVoiceTranscription && (
-          <VoiceInput
+          <VoiceStreamingInput
             userSettings={userSettings}
             onTranscription={onVoiceTranscription}
             iconSize={14}

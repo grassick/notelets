@@ -9,7 +9,7 @@ import { gfm } from 'turndown-plugin-gfm'
 import { RichTextToolbar } from './RichTextToolbar'
 import { RichTextBubbleMenu } from './RichTextBubbleMenu'
 import { useDebouncedCallback } from 'use-debounce'
-import { VoiceInput } from './components/VoiceInput'
+import { VoiceStreamingInput } from './components/VoiceStreamingInput'
 import { UserSettings } from './types/settings'
 
 const md = MarkdownIt('commonmark', {
@@ -193,10 +193,9 @@ export function RichTextEditor({
         />
         {showVoiceInput && (
           <div className={`
-            absolute -bottom-1 right-0 transition-all duration-200
-            ${hasFocus ? 'opacity-100' : 'opacity-0 pointer-events-none'}
+            absolute -bottom-1 -right-2
           `}>
-            <VoiceInput
+            <VoiceStreamingInput
               userSettings={userSettings}
               onTranscription={handleVoiceTranscription}
               iconSize={16}

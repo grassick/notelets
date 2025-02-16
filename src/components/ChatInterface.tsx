@@ -3,9 +3,8 @@ import type { Chat, ChatMessage } from '../types'
 import type { ModelId } from '../api/llm'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { VoiceInput } from './VoiceInput'
-import { OpenAIClient } from '../api/openai'
 import { UserSettings } from '../types/settings'
+import { VoiceStreamingInput } from './VoiceStreamingInput'
 
 interface ChatInterfaceProps {
   chat: Chat | null
@@ -323,7 +322,7 @@ function ChatInput({ message, onMessageChange, onSendMessage, isLoading = false,
                     disabled={isLoading}
                 />
                 <div className="absolute right-4 bottom-4 flex gap-2">
-                    <VoiceInput 
+                    <VoiceStreamingInput 
                         userSettings={userSettings}
                         onTranscription={handleVoiceTranscription}
                         iconSize={20}

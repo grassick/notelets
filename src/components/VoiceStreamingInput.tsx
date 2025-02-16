@@ -83,12 +83,12 @@ export function VoiceStreamingInput({
             const normalized = dataArray[i] - 128
             sumSquares += normalized * normalized
         }
-        const rms = Math.sqrt(sumSquares / bufferLength)
+        const rms = Math.sqrt(sumSquares / bufferLength) * 4
         const normalizedLevel = Math.min(rms / 128, 1)
         setAudioLevel(normalizedLevel)
     }
 
-    async function transcribeCurrentAudio(): Promise<TranscriptionProgress> {
+    async function transcribeCurrentAudio(isFinal: boolean = false): Promise<TranscriptionProgress> {
         if (!currentBlob.current || !openaiClient) {
             return { text: '', isComplete: false, timestamp: Date.now() }
         }
@@ -97,15 +97,17 @@ export function VoiceStreamingInput({
             setIsProcessing(true)
             const transcription = await openaiClient.transcribeAudio(currentBlob.current)
             
-            // Update the current transcription
+            // Always update the UI
             setCurrentTranscription(transcription)
-            onTranscription(transcription)
-            // Reset the current blob so that subsequent transcriptions only use new audio
-            currentBlob.current = null
+            
+            // Only trigger the callback for the final transcription
+            if (isFinal) {
+                onTranscription(transcription)
+            }
 
             return {
                 text: transcription,
-                isComplete: false,
+                isComplete: isFinal,
                 timestamp: Date.now()
             }
         } catch (error) {
@@ -129,6 +131,10 @@ export function VoiceStreamingInput({
             onError?.('OpenAI API key not configured')
             return
         }
+
+        // Reset state when starting a new recording
+        currentBlob.current = null
+        setCurrentTranscription('')
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -175,11 +181,11 @@ export function VoiceStreamingInput({
             setIsRecording(true)
             lastTranscriptionTime.current = Date.now()
 
-            // Start the transcription loop with a 3-second interval threshold for progressive transcription
+            // Start the transcription loop with a 5-second interval for UI updates
             transcriptionInterval.current = setInterval(async () => {
                 const now = Date.now()
-                if (now - lastTranscriptionTime.current >= 3000) { // Every 3 seconds
-                    await transcribeCurrentAudio()
+                if (now - lastTranscriptionTime.current >= 5000) { // Every 5 seconds
+                    await transcribeCurrentAudio(false) // Not final
                     lastTranscriptionTime.current = now
                 }
             }, 1000)
@@ -246,8 +252,7 @@ export function VoiceStreamingInput({
 
             // Get final transcription
             if (currentBlob.current) {
-                const finalTranscription = await transcribeCurrentAudio()
-                onTranscription(finalTranscription.text)
+                const finalTranscription = await transcribeCurrentAudio(true) // Final transcription
             }
         } catch (error) {
             console.error('Error processing audio:', error)
@@ -255,7 +260,7 @@ export function VoiceStreamingInput({
         } finally {
             setIsProcessing(false)
             mediaRecorder.current = null
-            currentBlob.current = null
+            currentBlob.current = null // Only clear the blob after we're done with it
         }
     }
 

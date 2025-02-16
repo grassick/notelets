@@ -171,19 +171,32 @@ function ChatMessage({ message, index, onEdit, onSaveToNotes }: {
   
   return (
     <div className="group mb-6">
-      {isUser && (
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity mb-2">
+      <div className={`relative ${isUser ? 'bg-blue-50/80 dark:bg-blue-900/20 rounded-lg p-4' : ''}`}>
+        {isUser && (
           <button
             onClick={() => setIsEditing(true)}
-            className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="absolute -top-2 -right-2 p-1.5 rounded-full bg-white dark:bg-gray-800 
+                     shadow-sm border border-gray-200 dark:border-gray-700
+                     opacity-0 group-hover:opacity-100 transition-opacity
+                     hover:bg-gray-50 dark:hover:bg-gray-700"
             title="Edit message"
           >
-            Edit
+            <svg 
+              width="14" 
+              height="14" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+              className="text-gray-500 dark:text-gray-400"
+            >
+              <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+            </svg>
           </button>
-        </div>
-      )}
+        )}
 
-      <div className={`${isUser ? 'bg-blue-50/80 dark:bg-blue-900/20 rounded-lg p-4' : ''}`}>
         {isEditing ? (
           <div className="w-full">
             <textarea
@@ -191,9 +204,10 @@ function ChatMessage({ message, index, onEdit, onSaveToNotes }: {
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="w-full resize-none bg-white dark:bg-gray-800 text-base
+              className="w-full resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-base
                        border border-gray-200 dark:border-gray-700 rounded-md
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 p-3"
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 p-3
+                       placeholder:text-gray-400 dark:placeholder:text-gray-500"
             />
             <div className="flex justify-end gap-2 mt-2">
               <button

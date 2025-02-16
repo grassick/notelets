@@ -6,7 +6,6 @@ import { FaTrash, FaExpandAlt, FaCompressAlt } from 'react-icons/fa'
 import { UserSettings } from '../../types/settings'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { VoiceStreamingInput } from '../VoiceStreamingInput'
-import { MobileNoteMenu } from './MobileNoteMenu'
 
 /** Props for the NoteCardHeader component */
 interface NoteCardHeaderProps {

@@ -17,11 +17,11 @@ function ViewControls({
   onViewModeChange,
   isMobileBar = false
 }: ViewControlsProps) {
-  const baseButtonClass = `p-1.5 rounded-lg transition-all duration-200 ${
+  const baseButtonClass = `p-1.5 rounded transition-all duration-200 ${
     isMobileBar ? 'flex-1 flex flex-col items-center gap-1' : ''
   }`
   const activeClass = 'text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
-  const inactiveClass = 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'
+  const inactiveClass = 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
 
   const getNextMode = (current: 'notes' | 'chat' | 'split'): 'notes' | 'chat' | 'split' => {
     const modes: ('notes' | 'split' | 'chat')[] = ['notes', 'split', 'chat']
@@ -86,7 +86,7 @@ function ViewControls({
     <div className="flex items-center">
       <button
         onClick={handleCycleView}
-        className={`${baseButtonClass} text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800`}
+        className={`${baseButtonClass} ${inactiveClass}`}
         title={`Switch to ${nextMode} view`}
       >
         {getViewIcon(nextMode)}

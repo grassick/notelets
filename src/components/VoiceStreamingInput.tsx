@@ -113,10 +113,6 @@ export function VoiceStreamingInput({
                 mimeType: (isIOS ? 'audio/webm?codec=opus' : 'audio/webm') as any,
                 recorderType: RecordRTC.StereoAudioRecorder,
                 numberOfAudioChannels: 1 as 1 | 2,
-                // desiredSampRate: 16000,
-                // timeSlice: 1000, // Get data every second for streaming
-                // Ensure good quality while keeping file size reasonable
-                // bitsPerSecond: 128000,
                 audioBitsPerSecond: 64000
             }
 

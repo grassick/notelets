@@ -312,11 +312,6 @@ function ChatHeader({
   onToggleHistory,
   store 
 }: ChatHeaderProps) {
-  const { settings: userSettings } = useUserSettings(store)
-
-  // Check if any LLM keys are set
-  const hasLLMKeys = Object.values(userSettings.llm).some(key => key)
-
   return (
     <div className="h-8 px-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
       <span className="text-sm text-gray-600 dark:text-gray-400">

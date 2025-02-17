@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { FaMicrophone } from 'react-icons/fa'
+import { AiOutlineLoading3Quarters } from 'react-icons/ai'
 import { OpenAIClient } from '../api/openai'
 import { UserSettings } from '../types/settings'
 
@@ -15,12 +16,6 @@ interface VoiceStreamingInputProps {
     onTranscription: (text: string) => void
     /** Optional error callback */
     onError?: (error: string) => void
-}
-
-interface TranscriptionProgress {
-    text: string
-    isComplete: boolean
-    timestamp: number
 }
 
 /**
@@ -42,12 +37,9 @@ export function VoiceStreamingInput({
 
     const [isRecording, setIsRecording] = useState(false)
     const [isProcessing, setIsProcessing] = useState(false)
-    const [currentTranscription, setCurrentTranscription] = useState('')
     const [audioLevel, setAudioLevel] = useState(0)
     const mediaRecorder = useRef<MediaRecorder | null>(null)
-    const currentBlob = useRef<Blob | null>(null)
-    const lastTranscriptionTime = useRef<number>(0)
-    const transcriptionInterval = useRef<NodeJS.Timeout | null>(null)
+    const audioChunks = useRef<Blob[]>([])
     const audioLevelInterval = useRef<NodeJS.Timeout | null>(null)
     const audioContext = useRef<AudioContext | null>(null)
     const audioAnalyser = useRef<AnalyserNode | null>(null)
@@ -57,9 +49,6 @@ export function VoiceStreamingInput({
         return () => {
             if (mediaRecorder.current && isRecording) {
                 stopRecording()
-            }
-            if (transcriptionInterval.current) {
-                clearInterval(transcriptionInterval.current)
             }
             if (audioLevelInterval.current) {
                 clearInterval(audioLevelInterval.current)
@@ -86,41 +75,6 @@ export function VoiceStreamingInput({
         setAudioLevel(normalizedLevel)
     }
 
-    async function transcribeCurrentAudio(isFinal: boolean = false): Promise<TranscriptionProgress> {
-        if (!currentBlob.current || !openaiClient) {
-            return { text: '', isComplete: false, timestamp: Date.now() }
-        }
-
-        try {
-            setIsProcessing(true)
-            const transcription = await openaiClient.transcribeAudio(currentBlob.current)
-            
-            // Always update the UI
-            setCurrentTranscription(transcription)
-            
-            // Only trigger the callback for the final transcription
-            if (isFinal) {
-                onTranscription(transcription)
-            }
-
-            return {
-                text: transcription,
-                isComplete: isFinal,
-                timestamp: Date.now()
-            }
-        } catch (error) {
-            console.error('Transcription error:', error)
-            onError?.(error instanceof Error ? error.message : 'Failed to transcribe audio')
-            return {
-                text: '',
-                isComplete: false,
-                timestamp: Date.now()
-            }
-        } finally {
-            setIsProcessing(false)
-        }
-    }
-
     async function startRecording(e: React.MouseEvent) {
         e.preventDefault()
         e.stopPropagation()
@@ -131,8 +85,7 @@ export function VoiceStreamingInput({
         }
 
         // Reset state when starting a new recording
-        currentBlob.current = null
-        setCurrentTranscription('')
+        audioChunks.current = []
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -156,37 +109,32 @@ export function VoiceStreamingInput({
             source.connect(audioAnalyser.current)
             audioLevelInterval.current = setInterval(updateAudioLevel, 50)
 
+            // Get supported MIME type
+            const mimeType = [
+                'audio/webm',
+                'audio/mp4',
+                'audio/ogg',
+                'audio/wav'
+            ].find(type => MediaRecorder.isTypeSupported(type)) || ''
+
+            if (!mimeType) {
+                throw new Error('No supported audio MIME type found')
+            }
+
             // Configure recorder
             mediaRecorder.current = new MediaRecorder(stream, {
-                mimeType: 'audio/webm'
+                mimeType
             })
 
             mediaRecorder.current.ondataavailable = (e) => {
                 if (e.data.size > 0) {
-                    if (currentBlob.current) {
-                        currentBlob.current = new Blob(
-                            [currentBlob.current, e.data], 
-                            { type: 'audio/webm' }
-                        )
-                    } else {
-                        currentBlob.current = e.data
-                    }
+                    audioChunks.current.push(e.data)
                 }
             }
 
             // Start recording
             mediaRecorder.current.start(1000) // Collect data every second
             setIsRecording(true)
-            lastTranscriptionTime.current = Date.now()
-
-            // Start the transcription loop with a 5-second interval for UI updates
-            transcriptionInterval.current = setInterval(async () => {
-                const now = Date.now()
-                if (now - lastTranscriptionTime.current >= 5000) { // Every 5 seconds
-                    await transcribeCurrentAudio(false) // Not final
-                    lastTranscriptionTime.current = now
-                }
-            }, 1000)
 
         } catch (error) {
             console.error('Error starting recording:', error)
@@ -202,7 +150,6 @@ export function VoiceStreamingInput({
                 clearInterval(audioLevelInterval.current)
             }
             mediaRecorder.current = null
-            currentBlob.current = null
             audioContext.current = null
             audioAnalyser.current = null
         }
@@ -212,15 +159,9 @@ export function VoiceStreamingInput({
         setIsRecording(false)
         setIsProcessing(true)
 
-        if (!mediaRecorder.current) return
+        if (!mediaRecorder.current || !openaiClient) return
 
         try {
-            // Clear the transcription interval
-            if (transcriptionInterval.current) {
-                clearInterval(transcriptionInterval.current)
-                transcriptionInterval.current = null
-            }
-
             // Stop audio visualization
             if (audioLevelInterval.current) {
                 clearInterval(audioLevelInterval.current)
@@ -248,9 +189,18 @@ export function VoiceStreamingInput({
             // Stop all tracks
             mediaRecorder.current.stream.getTracks().forEach(track => track.stop())
 
-            // Get final transcription
-            if (currentBlob.current) {
-                const finalTranscription = await transcribeCurrentAudio(true) // Final transcription
+            // Combine all chunks and transcribe
+            if (audioChunks.current.length > 0) {
+                const mimeType = audioChunks.current[0].type
+                const audioBlob = new Blob(audioChunks.current, { type: mimeType })
+                
+                try {
+                    const transcription = await openaiClient.transcribeAudio(audioBlob)
+                    onTranscription(transcription)
+                } catch (error) {
+                    console.error('Transcription error:', error)
+                    onError?.(error instanceof Error ? error.message : 'Failed to transcribe audio')
+                }
             }
         } catch (error) {
             console.error('Error processing audio:', error)
@@ -259,7 +209,7 @@ export function VoiceStreamingInput({
         } finally {
             setIsProcessing(false)
             mediaRecorder.current = null
-            currentBlob.current = null // Only clear the blob after we're done with it
+            audioChunks.current = []
         }
     }
 
@@ -312,10 +262,10 @@ export function VoiceStreamingInput({
                 />
             </button>
 
-            {/* Recording Modal */}
-            {isRecording ? (
+            {/* Recording/Processing Modal */}
+            {(isRecording || isProcessing) ? (
                 <div className="fixed inset-0 flex flex-col items-center justify-center p-4 z-50"
-                     onClick={handleClick}
+                     onClick={isRecording ? handleClick : undefined}
                 >
                     <div 
                         className="relative flex flex-col items-center space-y-8 p-8"
@@ -324,78 +274,58 @@ export function VoiceStreamingInput({
                         {/* Large Microphone Button */}
                         <div className="relative">
                             <button
-                                onClick={stopRecording}
-                                className="
+                                onClick={isRecording ? stopRecording : undefined}
+                                disabled={isProcessing}
+                                className={`
                                     relative
                                     w-32 h-32
                                     rounded-full
-                                    bg-red-600 dark:bg-red-500
-                                    text-white
                                     flex items-center justify-center
                                     transition-all duration-150
-                                    hover:scale-105
-                                    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500
-                                    shadow-[0_0_15px_rgba(239,68,68,0.3)]
-                                    dark:shadow-[0_0_15px_rgba(239,68,68,0.4)]
-                                "
-                                style={{
+                                    focus:outline-none focus:ring-2 focus:ring-offset-2
+                                    shadow-lg
+                                    ${isProcessing 
+                                        ? 'bg-blue-600 dark:bg-blue-500 focus:ring-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] dark:shadow-[0_0_15px_rgba(59,130,246,0.4)]' 
+                                        : 'bg-red-600 dark:bg-red-500 hover:scale-105 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] dark:shadow-[0_0_15px_rgba(239,68,68,0.4)]'
+                                    }
+                                `}
+                                style={isRecording ? {
                                     boxShadow: `0 0 15px rgba(239, 68, 68, 0.3), 0 0 ${audioLevel * 40}px ${audioLevel * 20}px rgba(239, 68, 68, ${audioLevel * 0.5})`
-                                }}
+                                } : undefined}
                             >
                                 {/* Permanent soft blur effect */}
-                                <div className="absolute inset-0 rounded-full bg-red-500/20 backdrop-blur-sm" />
+                                <div className={`absolute inset-0 rounded-full backdrop-blur-sm ${
+                                    isProcessing ? 'bg-blue-500/20' : 'bg-red-500/20'
+                                }`} />
                                 
-                                {/* Fuzzy background expansion */}
-                                <div 
-                                    className="absolute inset-0 rounded-full bg-red-500/40 backdrop-blur-sm transition-transform duration-150"
-                                    style={{
-                                        transform: `scale(${1 + audioLevel * 0.15})`,
-                                        opacity: audioLevel * 0.6
-                                    }}
-                                />
+                                {/* Fuzzy background expansion - only show during recording */}
+                                {isRecording && (
+                                    <div 
+                                        className="absolute inset-0 rounded-full bg-red-500/40 backdrop-blur-sm transition-transform duration-150"
+                                        style={{
+                                            transform: `scale(${1 + audioLevel * 0.15})`,
+                                            opacity: audioLevel * 0.6
+                                        }}
+                                    />
+                                )}
 
                                 <FaMicrophone 
                                     size={48} 
-                                    className="relative z-10" 
+                                    className="relative z-10 text-white" 
                                 />
-                            </button>
-                        </div>
 
-                        {/* Transcription Preview */}
-                        <div className="
-                            max-w-md w-full
-                            bg-white dark:bg-gray-800 
-                            rounded-lg shadow-lg 
-                            p-4
-                            text-center
-                        ">
-                            <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                                {currentTranscription ? (
-                                    currentTranscription.split(' ').slice(-15).join(' ')
-                                ) : (
-                                    'Speak now...'
+                                {/* Spinner Overlay for Processing */}
+                                {isProcessing && (
+                                    <AiOutlineLoading3Quarters 
+                                        size={96} 
+                                        className="absolute inset-0 m-auto animate-spin text-white opacity-70 z-20" 
+                                    />
                                 )}
-                            </div>
-                            
-                            {/* Recording indicator */}
-                            <div className="flex justify-center space-x-1">
-                                <div className="w-1.5 h-1.5 rounded-full bg-red-500 dark:bg-red-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                                <div className="w-1.5 h-1.5 rounded-full bg-red-500 dark:bg-red-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                                <div className="w-1.5 h-1.5 rounded-full bg-red-500 dark:bg-red-400 animate-bounce" style={{ animationDelay: '300ms' }} />
-                            </div>
+                            </button>
                         </div>
                     </div>
                 </div>
             ) : null}
-
-            {/* Processing indicator */}
-            {isProcessing && !isRecording && (
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2">
-                    <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full px-3 py-1 text-sm">
-                        Processing...
-                    </div>
-                </div>
-            )}
         </>
     )
 } 

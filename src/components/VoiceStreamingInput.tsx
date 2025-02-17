@@ -140,6 +140,18 @@ export function VoiceStreamingInput({
             console.error('Error starting recording:', error)
             onError?.(error instanceof Error ? error.message : 'Failed to start recording')
             // Cleanup any partial setup
+            if (mediaRecorder.current?.state === 'recording') {
+                // Create a promise that resolves when the mediaRecorder stops
+                const stopPromise = new Promise<void>((resolve) => {
+                    if (mediaRecorder.current) {
+                        mediaRecorder.current.onstop = () => resolve()
+                    }
+                })
+                
+                // Stop recording
+                mediaRecorder.current.stop()
+                await stopPromise
+            }
             if (mediaRecorder.current?.stream) {
                 mediaRecorder.current.stream.getTracks().forEach(track => track.stop())
             }
@@ -149,9 +161,13 @@ export function VoiceStreamingInput({
             if (audioLevelInterval.current) {
                 clearInterval(audioLevelInterval.current)
             }
+            // Reset all state
             mediaRecorder.current = null
             audioContext.current = null
             audioAnalyser.current = null
+            audioChunks.current = []
+            setIsRecording(false)
+            setAudioLevel(0)
         }
     }
 

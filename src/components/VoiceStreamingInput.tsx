@@ -91,13 +91,7 @@ export function VoiceStreamingInput({
 
         try {
             // Request permission and get stream
-            stream.current = await navigator.mediaDevices.getUserMedia({ 
-                audio: {
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    sampleRate: 16000
-                }
-            })
+            stream.current = await navigator.mediaDevices.getUserMedia({ audio: true })
 
             // Check if we actually got audio tracks
             if (!stream.current.getAudioTracks().length) {
@@ -119,14 +113,11 @@ export function VoiceStreamingInput({
                 mimeType: (isIOS ? 'audio/webm?codec=opus' : 'audio/webm') as any,
                 recorderType: RecordRTC.StereoAudioRecorder,
                 numberOfAudioChannels: 1 as 1 | 2,
-                desiredSampRate: 16000,
-                timeSlice: 1000, // Get data every second for streaming
+                // desiredSampRate: 16000,
+                // timeSlice: 1000, // Get data every second for streaming
                 // Ensure good quality while keeping file size reasonable
-                bitsPerSecond: 128000,
-                audioBitsPerSecond: 128000,
-                // Ensure we get audio data
-                checkForInactiveTracks: true,
-                disableLogs: false
+                // bitsPerSecond: 128000,
+                audioBitsPerSecond: 64000
             }
 
             recorder.current = new RecordRTCPromisesHandler(stream.current, recorderConfig)
@@ -188,7 +179,7 @@ export function VoiceStreamingInput({
 
             // Verify we have valid audio data
             if (blob.size < 100) {
-                throw new Error('Recording appears to be empty')
+                throw new Error(`Recording appears to be empty: ${blob.size} bytes`)
             }
 
             // Transcribe audio

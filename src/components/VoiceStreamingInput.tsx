@@ -254,7 +254,8 @@ export function VoiceStreamingInput({
             }
         } catch (error) {
             console.error('Error processing audio:', error)
-            onError?.(error instanceof Error ? error.message : 'Failed to process recording')
+            const message = error instanceof Error ? error.message : 'Failed to process recording'
+            onError?.(message)
         } finally {
             setIsProcessing(false)
             mediaRecorder.current = null

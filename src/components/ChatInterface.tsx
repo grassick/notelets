@@ -304,6 +304,10 @@ function ChatInput({ message, onMessageChange, onSendMessage, isLoading = false,
         onMessageChange(newMessage)
     }
 
+    const handleVoiceError = (error: string) => {
+        alert(error)
+    }
+
     return (
         <form onSubmit={onSendMessage} className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-2">
             <div className="relative">
@@ -328,6 +332,7 @@ function ChatInput({ message, onMessageChange, onSendMessage, isLoading = false,
                         onTranscription={handleVoiceTranscription}
                         iconSize={20}
                         className="p-1.5 opacity-60 hover:opacity-100"
+                        onError={handleVoiceError}
                     />
                     <button
                         type="submit"

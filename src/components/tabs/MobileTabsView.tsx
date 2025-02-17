@@ -8,6 +8,7 @@ import { BoardView } from '../BoardView'
 import { BoardNameModal } from '../BoardNameModal'
 import { SettingsModal } from '../settings/SettingsModal'
 import { DeleteBoardModal } from '../DeleteBoardModal'
+import { usePersist } from '../../hooks/usePersist'
 
 interface BoardListViewProps {
   store: Store
@@ -213,9 +214,9 @@ interface MobileTabsViewProps {
  * Mobile-optimized view that switches between board list and single board view
  */
 export function MobileTabsView({ store }: MobileTabsViewProps) {
-  const [currentBoardId, setCurrentBoardId] = useState<string | null>(null)
+  const [currentBoardId, setCurrentBoardId] = usePersist<string | null>('currentBoardId', null)
   const [showNewBoardModal, setShowNewBoardModal] = useState(false)
-  const { setBoard } = useBoards(store)
+  const { boards, setBoard } = useBoards(store)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
 
   function handleCreateBoard(name: string) {
@@ -232,12 +233,14 @@ export function MobileTabsView({ store }: MobileTabsViewProps) {
     setShowNewBoardModal(false)
   }
 
+  const currentBoard = boards.find((b: Board) => b.id === currentBoardId)
+
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-900">
-      {currentBoardId ? (
+      {currentBoard ? (
         <SingleBoardView
           store={store}
-          boardId={currentBoardId}
+          boardId={currentBoard.id}
           onBack={() => setCurrentBoardId(null)}
         />
       ) : (

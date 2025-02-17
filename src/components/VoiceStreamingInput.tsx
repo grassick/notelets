@@ -111,19 +111,20 @@ export function VoiceStreamingInput({
 
             // Get supported MIME type
             const mimeType = [
+                'audio/webm;codecs=opus',
                 'audio/webm',
-                'audio/mp4',
-                'audio/ogg',
+                'audio/ogg;codecs=opus',
                 'audio/wav'
-            ].find(type => MediaRecorder.isTypeSupported(type)) || ''
+            ].find(type => MediaRecorder.isTypeSupported(type))
 
             if (!mimeType) {
                 throw new Error('No supported audio MIME type found')
             }
 
-            // Configure recorder
+            // Configure recorder with specific options
             mediaRecorder.current = new MediaRecorder(stream, {
-                mimeType
+                mimeType,
+                audioBitsPerSecond: 128000
             })
 
             mediaRecorder.current.ondataavailable = (e) => {
@@ -207,9 +208,9 @@ export function VoiceStreamingInput({
 
             // Combine all chunks and transcribe
             if (audioChunks.current.length > 0) {
-                const mimeType = audioChunks.current[0].type
-                const audioBlob = new Blob(audioChunks.current, { type: mimeType })
+                const audioBlob = new Blob(audioChunks.current, { type: audioChunks.current[0].type })
                 
+                // Convert to mp3 or wav if needed before sending to OpenAI
                 try {
                     const transcription = await openaiClient.transcribeAudio(audioBlob)
                     onTranscription(transcription)

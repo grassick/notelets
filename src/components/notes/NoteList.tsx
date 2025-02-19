@@ -9,7 +9,8 @@ const getCardTitle = (card: RichTextCard): string => {
   
   const firstLine = card.content.markdown
     .split('\n')[0] // Get first line
-    .replace(/^#+\s*/, '') // Remove leading hashes
+    .replace(/^[#*]+\s*/, '') // Remove leading hashes and asterisks
+    .replace(/[*]+$/, '') // Remove trailing asterisks and spaces
     .trim() // Remove extra spaces
   
   if (!firstLine) return ''

@@ -309,7 +309,7 @@ function ChatInput({ message, onMessageChange, onSendMessage, isLoading = false,
     }
 
     return (
-        <form onSubmit={onSendMessage} className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-2">
+        <form onSubmit={onSendMessage} className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pl-1 pt-1 pr-1">
             <div className="relative">
                 <textarea
                     ref={textareaRef}
@@ -317,16 +317,16 @@ function ChatInput({ message, onMessageChange, onSendMessage, isLoading = false,
                     onChange={e => onMessageChange(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Type your message"
-                    className="w-full resize-none rounded-lg border border-gray-200 dark:border-gray-700 
+                    className="w-full resize-none rounded-sm border border-gray-200 dark:border-gray-700 
                              bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 
-                             p-4 pr-24 text-base overflow-y-hidden
+                             p-2 pr-24 text-sm overflow-y-hidden
                              focus:outline-none focus:ring-2 focus:ring-blue-500
                              disabled:opacity-50 disabled:cursor-not-allowed
                              placeholder:text-gray-400/60 dark:placeholder:text-gray-500/60"
                     rows={1}
                     disabled={isLoading}
                 />
-                <div className="absolute right-4 bottom-4 flex gap-2">
+                <div className="absolute right-4 bottom-2 flex gap-2">
                     <VoiceStreamingInput 
                         userSettings={userSettings}
                         onTranscription={handleVoiceTranscription}

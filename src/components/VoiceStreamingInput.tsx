@@ -89,10 +89,10 @@ export function VoiceStreamingInput({
             return
         }
 
-        // Set up audio analysis (moved here for iOS compatibility)
-        audioContext.current = new AudioContext()
-
         try {
+            // Set up audio analysis (moved here for iOS compatibility)
+            audioContext.current = new AudioContext()
+
             // Request permission and get stream
             stream.current = await navigator.mediaDevices.getUserMedia({ audio: true })
 

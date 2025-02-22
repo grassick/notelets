@@ -42,7 +42,7 @@ export function BoardView(props: {
   boardId: string
 }) {
   const { store, boardId } = props
-  const { board, loading: boardLoading, error: boardError, setBoard } = useBoard(store, boardId)
+  const { board, loading: boardLoading, error: boardError } = useBoard(store, boardId)
   const { cards, loading: cardsLoading, error: cardsError, setCard, removeCard } = useCards(store, boardId)
   const [viewMode, setViewMode] = usePersist<ViewMode>("viewMode", 'split')
   const [isDragging, setIsDragging] = useState(false)
@@ -64,6 +64,9 @@ export function BoardView(props: {
     width: 250 
   })
 
+  // Store selected card in local storage per board
+  const [selectedCardId, setSelectedCardId] = usePersist<string | null>(`board_${boardId}_selectedCard`, null)
+
   // Update view mode when switching to mobile
   useEffect(() => {
     if (isMobile && viewMode === 'split') {
@@ -71,16 +74,9 @@ export function BoardView(props: {
     }
   }, [isMobile, viewMode])
 
-  const selectedCardId = board?.layoutConfig.selectedCardId ?? null
-
-  function setSelectedCardId(cardId: string | null) {
-    if (!board) return
-    setBoard({ ...board, layoutConfig: { ...board.layoutConfig, selectedCardId: cardId } })
-  }
-
   // Select first card if none selected
   useEffect(() => {
-    if (board && !selectedCardId && cards.length > 0) {
+    if (!selectedCardId && cards.length > 0) {
       setSelectedCardId(cards[0].id)
     }
   }, [cards, selectedCardId])

@@ -112,9 +112,6 @@ export interface Board {
         // }>
         // /** For vertical/sidebar views: store display order */
         // linear?: string[] // Array of card IDs in display order
-
-        /** Currently selected card */
-        selectedCardId?: string | null
     }
     /** Timestamp when the board was created in ISO 8601 format */
     createdAt: string

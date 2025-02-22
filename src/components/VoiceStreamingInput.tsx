@@ -144,10 +144,13 @@ export function VoiceStreamingInput({
                 // Non-iOS setup remains the same
                 recorder.current = new RecordRTCPromisesHandler(stream.current, {
                     type: 'audio',
-                    mimeType: 'audio/webm',
+                    mimeType: 'audio/webm;codecs=opus' as any,
                     recorderType: RecordRTC.StereoAudioRecorder,
                     numberOfAudioChannels: 1,
-                    audioBitsPerSecond: 64000
+                    desiredSampRate: 16000,
+                    audioBitsPerSecond: 16000,
+                    // Ensure we get data frequently for better reliability
+                    timeSlice: 1000
                 })
             }
 
@@ -258,18 +261,18 @@ export function VoiceStreamingInput({
                     <div 
                         className="absolute inset-0 rounded-full"
                         style={{
-                            background: `radial-gradient(circle, rgba(239, 68, 68, ${audioLevel * 0.8}) 0%, transparent 80%)`,
-                            transform: `scale(${1.5 + audioLevel})`,
-                            filter: 'blur(4px)'
+                            background: `radial-gradient(circle, rgba(239, 68, 68, ${audioLevel * 0.8}) 0%, transparent 70%)`,
+                            transform: `scale(${1.2 + audioLevel * 0.3})`,
+                            filter: 'blur(2px)'
                         }}
                     />
                     {/* Pulsing outer glow */}
                     <div 
                         className="absolute inset-0 rounded-full animate-ping"
                         style={{
-                            background: `radial-gradient(circle, rgba(239, 68, 68, ${audioLevel * 0.6}) 0%, transparent 90%)`,
-                            transform: `scale(${2 + audioLevel * 1.5})`,
-                            filter: 'blur(8px)'
+                            background: `radial-gradient(circle, rgba(239, 68, 68, ${audioLevel * 0.6}) 0%, transparent 75%)`,
+                            transform: `scale(${1.4 + audioLevel * 0.4})`,
+                            filter: 'blur(3px)'
                         }}
                     />
                 </>

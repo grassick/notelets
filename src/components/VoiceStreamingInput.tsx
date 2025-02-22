@@ -128,9 +128,8 @@ export function VoiceStreamingInput({
                 // iOS requires specific MIME type and codec
                 const options: any = {
                     mimeType: 'audio/webm;codecs=opus',
-                    audioBitsPerSecond: 16000,
-                    // Force mono audio
-                    channelCount: 1
+                    audioBitsPerSecond: 64000,
+                    numberOfAudioChannels: 1, // real-time requires only one channel
                 }
 
                 recorder.current = new RecordRTCPromisesHandler(stream.current, {

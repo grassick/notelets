@@ -127,7 +127,7 @@ export function VoiceStreamingInput({
             if (isIOS) {
                 // iOS requires specific MIME type and codec
                 const options: any = {
-                    mimeType: 'audio/webm;codecs=opus',
+                    mimeType: 'audio/webm;codec=opus',
                     audioBitsPerSecond: 64000,
                     numberOfAudioChannels: 1, // real-time requires only one channel
                 }
@@ -143,7 +143,7 @@ export function VoiceStreamingInput({
                 // Non-iOS setup remains the same
                 recorder.current = new RecordRTCPromisesHandler(stream.current, {
                     type: 'audio',
-                    mimeType: 'audio/webm;codecs=opus' as any,
+                    mimeType: 'audio/webm;codec=opus' as any,
                     recorderType: RecordRTC.StereoAudioRecorder,
                     numberOfAudioChannels: 1,
                     desiredSampRate: 16000,

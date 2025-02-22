@@ -3,7 +3,7 @@ import { RichTextEditor } from '../../RichTextEditor'
 import { RichTextCard } from '../../types'
 import MarkdownIt from 'markdown-it'
 import { FaTrash, FaExpandAlt, FaCompressAlt, FaEllipsisV, FaMarkdown, FaCopy, FaFileAlt } from 'react-icons/fa'
-import { Menu } from '@headlessui/react'
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { UserSettings } from '../../types/settings'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { VoiceStreamingInput } from '../VoiceStreamingInput'
@@ -193,63 +193,47 @@ function NoteCardHeader({
         </button>
         
         <Menu as="div" className="relative">
-          <Menu.Button className="p-1 rounded transition-colors text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+          <MenuButton className="p-1 rounded transition-colors text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700">
             <FaEllipsisV size={14} />
-          </Menu.Button>
-          <Menu.Items className="absolute right-0 mt-1 py-1 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-10 focus:outline-none">
-            <Menu.Item>
-              {({ active }) => (
-                <button
-                  onClick={() => onMarkdownModeChange(!isMarkdownMode)}
-                  className={`w-full px-2 py-1 flex items-center gap-2 text-sm ${
-                    active ? 'bg-gray-100 dark:bg-gray-700' : ''
-                  } text-gray-700 dark:text-gray-300 whitespace-nowrap`}
-                >
-                  {isMarkdownMode ? <FaFileAlt size={14} /> : <FaMarkdown size={14} />}
-                  {isMarkdownMode ? "Switch to rich text" : "Switch to markdown"}
-                </button>
-              )}
-            </Menu.Item>
-            <Menu.Item>
-              {({ active }) => (
-                <button
-                  onClick={() => handleCopyText('markdown')}
-                  className={`w-full px-2 py-1 flex items-center gap-2 text-sm ${
-                    active ? 'bg-gray-100 dark:bg-gray-700' : ''
-                  } text-gray-700 dark:text-gray-300 whitespace-nowrap`}
-                >
-                  <FaMarkdown size={14} />
-                  Copy as markdown
-                </button>
-              )}
-            </Menu.Item>
-            <Menu.Item>
-              {({ active }) => (
-                <button
-                  onClick={() => handleCopyText('html')}
-                  className={`w-full px-2 py-1 flex items-center gap-2 text-sm ${
-                    active ? 'bg-gray-100 dark:bg-gray-700' : ''
-                  } text-gray-700 dark:text-gray-300 whitespace-nowrap`}
-                >
-                  <FaCopy size={14} />
-                  Copy as formatted text
-                </button>
-              )}
-            </Menu.Item>
-            <Menu.Item>
-              {({ active }) => (
-                <button
-                  onClick={onDelete}
-                  className={`w-full px-2 py-1 flex items-center gap-2 text-sm ${
-                    active ? 'bg-red-50 dark:bg-red-900/30' : ''
-                  } text-red-600 dark:text-red-400 whitespace-nowrap`}
-                >
-                  <FaTrash size={14} />
-                  Delete note
-                </button>
-              )}
-            </Menu.Item>
-          </Menu.Items>
+          </MenuButton>
+          <MenuItems className="absolute right-0 mt-1 py-1 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-10 focus:outline-none">
+            <MenuItem>
+              <button
+                onClick={() => onMarkdownModeChange(!isMarkdownMode)}
+                className="w-full px-2 py-1 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
+              >
+                {isMarkdownMode ? <FaFileAlt size={14} /> : <FaMarkdown size={14} />}
+                {isMarkdownMode ? "Switch to rich text" : "Switch to markdown"}
+              </button>
+            </MenuItem>
+            <MenuItem>
+              <button
+                onClick={() => handleCopyText('markdown')}
+                className="w-full px-2 py-1 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
+              >
+                <FaCopy size={14} />
+                Copy as markdown
+              </button>
+            </MenuItem>
+            <MenuItem>
+              <button
+                onClick={() => handleCopyText('html')}
+                className="w-full px-2 py-1 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
+              >
+                <FaCopy size={14} />
+                Copy as formatted text
+              </button>
+            </MenuItem>
+            <MenuItem>
+              <button
+                onClick={onDelete}
+                className="w-full px-2 py-1 flex items-center gap-2 text-sm text-red-600 dark:text-red-400 whitespace-nowrap data-[focus]:bg-red-50 dark:data-[focus]:bg-red-900/30"
+              >
+                <FaTrash size={14} />
+                Delete note
+              </button>
+            </MenuItem>
+          </MenuItems>
         </Menu>
       </div>
     </div>

@@ -216,66 +216,78 @@ export function VoiceStreamingInput({
     }
 
     return (
-        <button
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={handleClick}
-            disabled={isProcessing}
-            className={`
-                relative
-                transition-all duration-200
-                ${isProcessing 
-                    ? 'text-blue-600 dark:text-blue-400' 
-                    : isRecording
-                        ? 'text-red-600 dark:text-red-400'
-                        : 'text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300'
-                }
-                disabled:opacity-50 disabled:cursor-not-allowed
-                focus:outline-none
-                ${className}
-            `}
-            aria-label={
-                isProcessing ? "Processing voice input..." 
-                : isRecording ? "Stop recording" 
-                : "Start voice input"
-            }
-            title={
-                isProcessing ? "Converting speech to text..." 
-                : isRecording ? "Tap to stop recording" 
-                : "Tap to start voice input"
-            }
-            style={isRecording ? {
-                boxShadow: `0 0 ${audioLevel * 20}px ${audioLevel * 10}px rgba(239, 68, 68, ${audioLevel * 0.5})`
-            } : undefined}
-        >
-            {/* Recording pulse effect */}
+        <div className="relative">
+            {/* Glow effect container */}
             {isRecording && (
-                <div 
-                    className="absolute inset-0 rounded-full bg-red-500/20 animate-ping"
-                    style={{
-                        transform: `scale(${1 + audioLevel * 0.5})`,
-                        opacity: audioLevel * 0.8
-                    }}
-                />
-            )}
-
-            {/* Icon container */}
-            <div className="relative z-10">
-                <FaMicrophone 
-                    size={iconSize}
-                    className={`
-                        transition-all duration-200
-                        ${isRecording ? 'text-red-600 dark:text-red-400' : 'hover:scale-110'}
-                    `}
-                />
-
-                {/* Processing spinner */}
-                {isProcessing && (
-                    <AiOutlineLoading3Quarters 
-                        size={iconSize * 1.5}
-                        className="absolute inset-0 -m-1 animate-spin text-blue-600 dark:text-blue-400"
+                <>
+                    {/* Intense inner glow */}
+                    <div 
+                        className="absolute inset-0 rounded-full"
+                        style={{
+                            background: `radial-gradient(circle, rgba(239, 68, 68, ${audioLevel * 0.8}) 0%, transparent 80%)`,
+                            transform: `scale(${1.5 + audioLevel})`,
+                            filter: 'blur(4px)'
+                        }}
                     />
-                )}
-            </div>
-        </button>
+                    {/* Pulsing outer glow */}
+                    <div 
+                        className="absolute inset-0 rounded-full animate-ping"
+                        style={{
+                            background: `radial-gradient(circle, rgba(239, 68, 68, ${audioLevel * 0.6}) 0%, transparent 90%)`,
+                            transform: `scale(${2 + audioLevel * 1.5})`,
+                            filter: 'blur(8px)'
+                        }}
+                    />
+                </>
+            )}
+            
+            <button
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={handleClick}
+                disabled={isProcessing}
+                className={`
+                    relative
+                    transition-all duration-200
+                    ${isProcessing 
+                        ? 'text-blue-600 dark:text-blue-400' 
+                        : isRecording
+                            ? 'text-red-600 dark:text-red-400'
+                            : 'text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300'
+                    }
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    focus:outline-none
+                    ${className}
+                `}
+                aria-label={
+                    isProcessing ? "Processing voice input..." 
+                    : isRecording ? "Stop recording" 
+                    : "Start voice input"
+                }
+                title={
+                    isProcessing ? "Converting speech to text..." 
+                    : isRecording ? "Tap to stop recording" 
+                    : "Tap to start voice input"
+                }
+            >
+                {/* Icon container */}
+                <div className="relative">
+                    <FaMicrophone 
+                        size={iconSize}
+                        className={`
+                            transition-all duration-200
+                            ${isRecording ? 'text-red-600 dark:text-red-400' : 'hover:scale-110'}
+                        `}
+                    />
+
+                    {/* Processing spinner */}
+                    {isProcessing && (
+                        <AiOutlineLoading3Quarters 
+                            size={iconSize * 1.5}
+                            className="absolute inset-0 -m-1 animate-spin text-blue-600 dark:text-blue-400"
+                        />
+                    )}
+                </div>
+            </button>
+        </div>
     )
 } 

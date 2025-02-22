@@ -92,17 +92,6 @@ export function BoardChatSystem({
         }
         await storeSetChat(activeChat)
         setChat(activeChat)
-      } else {
-        // If retrying, remove the last failed response if it exists
-        const lastMessage = activeChat.messages[activeChat.messages.length - 1]
-        if (lastMessage?.role === 'assistant') {
-          activeChat = {
-            ...activeChat,
-            messages: activeChat.messages.slice(0, -1)
-          }
-          await storeSetChat(activeChat)
-          setChat(activeChat)
-        }
       }
 
       // Now let useChat handle adding the message and getting the response

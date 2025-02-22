@@ -37,7 +37,6 @@ export function ChatInterface({
   userSettings
 }: ChatInterfaceProps) {
   const [message, setMessage] = useState('')
-  const [lastAttemptedMessage, setLastAttemptedMessage] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to bottom when messages change
@@ -45,19 +44,19 @@ export function ChatInterface({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chat?.messages])
 
-  const handleSubmit = async (e: React.FormEvent, retryMessage?: string) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e?.preventDefault()
-    const messageToSend = retryMessage || message.trim()
+    const messageToSend = message.trim()
     if (!messageToSend || isLoading) return
 
     try {
-      setLastAttemptedMessage(messageToSend)
-      await onSendMessage(messageToSend, selectedModel)
       setMessage('')
-      setLastAttemptedMessage(null)
+      await onSendMessage(messageToSend, selectedModel)
     } catch (err) {
       // Error will be handled by parent component
       console.error('Failed to send message:', err)
+      // Put the message back in the input if it failed
+      setMessage(messageToSend)
     }
   }
 
@@ -88,19 +87,6 @@ export function ChatInterface({
             <div className="bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-200 rounded-lg p-3 text-sm">
               {error.message}
             </div>
-            {lastAttemptedMessage && (
-              <button
-                onClick={(e) => handleSubmit(e, lastAttemptedMessage)}
-                className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 
-                         flex items-center gap-1"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Retry
-              </button>
-            )}
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -237,15 +223,29 @@ function ChatMessage({ message, index, onEdit, onSaveToNotes }: {
               </ReactMarkdown>
             </div>
             {!isUser && onSaveToNotes && (
-              <div className="mt-2 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={() => onSaveToNotes(message.content)}
-                  className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                  title="Save to notes"
+              <button
+                onClick={() => onSaveToNotes(message.content)}
+                className="absolute -bottom-2 -right-2 p-1.5 rounded-full bg-white dark:bg-gray-800 
+                         shadow-sm border border-gray-200 dark:border-gray-700
+                         opacity-0 group-hover:opacity-100 transition-opacity
+                         hover:bg-gray-50 dark:hover:bg-gray-700"
+                title="Save as note"
+              >
+                <svg 
+                  width="14" 
+                  height="14" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                  className="text-gray-500 dark:text-gray-400"
                 >
-                  Save as note
-                </button>
-              </div>
+                  <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  <path d="M12 4v3m0 0v3m0-3h3m-3 0H9" />
+                </svg>
+              </button>
             )}
           </div>
         )}

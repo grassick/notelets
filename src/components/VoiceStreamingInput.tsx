@@ -133,24 +133,13 @@ export function VoiceStreamingInput({
                     channelCount: 1
                 }
 
-                // Check if this specific configuration is supported
-                if (MediaRecorder.isTypeSupported(options.mimeType)) {
-                    recorder.current = new RecordRTCPromisesHandler(stream.current, {
-                        ...options,
-                        type: 'audio',
-                        recorderType: RecordRTC.MediaStreamRecorder,
-                        // Ensure we get data frequently for better reliability
-                        timeSlice: 1000
-                    })
-                } else {
-                    // Fallback to default WebM
-                    recorder.current = new RecordRTCPromisesHandler(stream.current, {
-                        type: 'audio',
-                        mimeType: 'audio/webm',
-                        recorderType: RecordRTC.MediaStreamRecorder,
-                        timeSlice: 1000
-                    })
-                }
+                recorder.current = new RecordRTCPromisesHandler(stream.current, {
+                    ...options,
+                    type: 'audio',
+                    recorderType: RecordRTC.MediaStreamRecorder,
+                    // Ensure we get data frequently for better reliability
+                    timeSlice: 1000
+                })
             } else {
                 // Non-iOS setup remains the same
                 recorder.current = new RecordRTCPromisesHandler(stream.current, {

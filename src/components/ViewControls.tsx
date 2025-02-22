@@ -18,7 +18,7 @@ function ViewControls({
   isMobileBar = false
 }: ViewControlsProps) {
   const baseButtonClass = `p-1.5 rounded transition-all duration-200 ${
-    isMobileBar ? 'flex-1 flex flex-col items-center gap-1' : ''
+    isMobileBar ? 'flex-1 flex items-center justify-center' : ''
   }`
   const activeClass = 'text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
   const inactiveClass = 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -59,22 +59,26 @@ function ViewControls({
 
   if (isMobileBar) {
     return (
-      <div className="w-full px-4 py-2 border-t border-gray-200 dark:border-gray-700 flex gap-2">
+      <div className="w-full px-4 py-1 border-t border-gray-200 dark:border-gray-700 flex gap-2">
         <button
           onClick={() => onViewModeChange('notes')}
           className={`${baseButtonClass} ${viewMode === 'notes' ? activeClass : inactiveClass}`}
           title="Switch to notes"
         >
-          {getViewIcon('notes')}
-          <span className="text-xs">Notes</span>
+          <div className="flex items-center gap-1.5">
+            {getViewIcon('notes')}
+            <span className="text-xs">Notes</span>
+          </div>
         </button>
         <button
           onClick={() => onViewModeChange('chat')}
           className={`${baseButtonClass} ${viewMode === 'chat' ? activeClass : inactiveClass}`}
           title="Switch to chat"
         >
-          {getViewIcon('chat')}
-          <span className="text-xs">Chat</span>
+          <div className="flex items-center gap-1.5">
+            {getViewIcon('chat')}
+            <span className="text-xs">Chat</span>
+          </div>
         </button>
       </div>
     )

@@ -26,7 +26,7 @@ interface VoiceStreamingInputProps {
 export function VoiceStreamingInput({ 
     userSettings, 
     className = '', 
-    iconSize = 20, 
+    iconSize = 20,
     onTranscription,
     onError 
 }: VoiceStreamingInputProps) {
@@ -216,104 +216,66 @@ export function VoiceStreamingInput({
     }
 
     return (
-        <>
-            <button
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={handleClick}
-                disabled={isProcessing}
-                className={`
-                    rounded-full
-                    transition-all duration-200
-                    opacity-40 hover:opacity-100
-                    ${isProcessing 
-                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
-                        : 'text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                    focus:outline-none
-                    ${className}
-                `}
-                aria-label={
-                    isProcessing ? "Processing voice input..." 
-                    : isRecording ? "Stop recording" 
-                    : "Start voice input"
+        <button
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={handleClick}
+            disabled={isProcessing}
+            className={`
+                relative
+                transition-all duration-200
+                ${isProcessing 
+                    ? 'text-blue-600 dark:text-blue-400' 
+                    : isRecording
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300'
                 }
-                title={
-                    isProcessing ? "Converting speech to text..." 
-                    : isRecording ? "Tap to stop recording" 
-                    : "Tap to start voice input"
-                }
-            >
+                disabled:opacity-50 disabled:cursor-not-allowed
+                focus:outline-none
+                ${className}
+            `}
+            aria-label={
+                isProcessing ? "Processing voice input..." 
+                : isRecording ? "Stop recording" 
+                : "Start voice input"
+            }
+            title={
+                isProcessing ? "Converting speech to text..." 
+                : isRecording ? "Tap to stop recording" 
+                : "Tap to start voice input"
+            }
+            style={isRecording ? {
+                boxShadow: `0 0 ${audioLevel * 20}px ${audioLevel * 10}px rgba(239, 68, 68, ${audioLevel * 0.5})`
+            } : undefined}
+        >
+            {/* Recording pulse effect */}
+            {isRecording && (
+                <div 
+                    className="absolute inset-0 rounded-full bg-red-500/20 animate-ping"
+                    style={{
+                        transform: `scale(${1 + audioLevel * 0.5})`,
+                        opacity: audioLevel * 0.8
+                    }}
+                />
+            )}
+
+            {/* Icon container */}
+            <div className="relative z-10">
                 <FaMicrophone 
                     size={iconSize}
-                    className="transition-transform hover:scale-110" 
+                    className={`
+                        transition-all duration-200
+                        ${isRecording ? 'text-red-600 dark:text-red-400' : 'hover:scale-110'}
+                    `}
                 />
-            </button>
 
-            {/* Recording/Processing Modal */}
-            {(isRecording || isProcessing) ? (
-                <div className="fixed inset-0 flex flex-col items-center justify-center p-4 z-50"
-                     onClick={isRecording ? handleClick : undefined}
-                >
-                    <div 
-                        className="relative flex flex-col items-center space-y-8 p-8"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        {/* Large Microphone Button */}
-                        <div className="relative">
-                            <button
-                                onClick={isRecording ? stopRecording : undefined}
-                                disabled={isProcessing}
-                                className={`
-                                    relative
-                                    w-32 h-32
-                                    rounded-full
-                                    flex items-center justify-center
-                                    transition-all duration-150
-                                    focus:outline-none focus:ring-2 focus:ring-offset-2
-                                    shadow-lg
-                                    ${isProcessing 
-                                        ? 'bg-blue-600 dark:bg-blue-500 focus:ring-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] dark:shadow-[0_0_15px_rgba(59,130,246,0.4)]' 
-                                        : 'bg-red-600 dark:bg-red-500 hover:scale-105 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] dark:shadow-[0_0_15px_rgba(239,68,68,0.4)]'
-                                    }
-                                `}
-                                style={isRecording ? {
-                                    boxShadow: `0 0 15px rgba(239, 68, 68, 0.3), 0 0 ${audioLevel * 40}px ${audioLevel * 20}px rgba(239, 68, 68, ${audioLevel * 0.5})`
-                                } : undefined}
-                            >
-                                {/* Permanent soft blur effect */}
-                                <div className={`absolute inset-0 rounded-full backdrop-blur-sm ${
-                                    isProcessing ? 'bg-blue-500/20' : 'bg-red-500/20'
-                                }`} />
-                                
-                                {/* Fuzzy background expansion - only show during recording */}
-                                {isRecording && (
-                                    <div 
-                                        className="absolute inset-0 rounded-full bg-red-500/40 backdrop-blur-sm transition-transform duration-150"
-                                        style={{
-                                            transform: `scale(${1 + audioLevel * 0.15})`,
-                                            opacity: audioLevel * 0.6
-                                        }}
-                                    />
-                                )}
-
-                                <FaMicrophone 
-                                    size={48} 
-                                    className="relative z-10 text-white" 
-                                />
-
-                                {/* Spinner Overlay for Processing */}
-                                {isProcessing && (
-                                    <AiOutlineLoading3Quarters 
-                                        size={96} 
-                                        className="absolute inset-0 m-auto animate-spin text-white opacity-70 z-20" 
-                                    />
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            ) : null}
-        </>
+                {/* Processing spinner */}
+                {isProcessing && (
+                    <AiOutlineLoading3Quarters 
+                        size={iconSize * 1.5}
+                        className="absolute inset-0 -m-1 animate-spin text-blue-600 dark:text-blue-400"
+                    />
+                )}
+            </div>
+        </button>
     )
 } 

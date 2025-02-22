@@ -356,7 +356,7 @@ function ChatInput({ message, onMessageChange, onSendMessage, isLoading = false,
                     <VoiceStreamingInput 
                         userSettings={userSettings}
                         onTranscription={handleVoiceTranscription}
-                        iconSize={20}
+                        iconSize={16}
                         className="p-1.5 opacity-60 hover:opacity-100"
                         onError={handleVoiceError}
                     />

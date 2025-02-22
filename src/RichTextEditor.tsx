@@ -183,23 +183,20 @@ export function RichTextEditor({
   }
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 text-gray-800 dark:text-gray-200 relative">
+    <div className="flex flex-col flex-1 min-h-0 text-gray-800 dark:text-gray-200">
       {showToolbar && <RichTextToolbar editor={editor} />}
       <RichTextBubbleMenu editor={editor} />
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 relative">
         <EditorContent 
           editor={editor} 
           className="h-full [&_.ProseMirror]:h-full [&_.ProseMirror]:min-h-full" 
         />
         {showVoiceInput && (
-          <div className={`
-            absolute -bottom-1 -right-2
-          `}>
+          <div className="absolute bottom-0 right-1 z-10">
             <VoiceStreamingInput
               userSettings={userSettings}
               onTranscription={handleVoiceTranscription}
               iconSize={16}
-              className="bg-white dark:bg-gray-800 shadow-sm rounded-full p-1"
             />
           </div>
         )}

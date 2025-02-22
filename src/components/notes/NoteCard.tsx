@@ -176,8 +176,8 @@ function NoteCardHeader({
           <VoiceStreamingInput
             userSettings={userSettings}
             onTranscription={onVoiceTranscription}
-            iconSize={14}
-            className="text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+            iconSize={16}
+            className="text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400 p-1"
           />
         )}
         <button
@@ -343,13 +343,8 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
   userSettings,
   showAllNotes,
   onShowAllNotesChange,
-  allCards = [],
-  onCreateCard,
-  onCardSelect
 }, ref) => {
   const [isMarkdownMode, setIsMarkdownMode] = useState(false)
-  const [showCopyMenu, setShowCopyMenu] = useState(false)
-  const copyMenuRef = useRef<HTMLDivElement>(null)
   const isMobile = useIsMobile()
   const showVoiceInHeader = isMobile && isSingleView
 
@@ -359,16 +354,6 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
       : text
     onUpdateCard(newContent)
   }
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (copyMenuRef.current && !copyMenuRef.current.contains(event.target as Node)) {
-        setShowCopyMenu(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   if (isSingleView) {
     return (

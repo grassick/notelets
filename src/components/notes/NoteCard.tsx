@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect, forwardRef } from 'react'
 import { RichTextEditor } from '../../RichTextEditor'
 import { RichTextCard } from '../../types'
 import MarkdownIt from 'markdown-it'
-import { FaTrash, FaExpandAlt, FaCompressAlt } from 'react-icons/fa'
+import { FaTrash, FaExpandAlt, FaCompressAlt, FaEllipsisV, FaMarkdown, FaCopy, FaFileAlt } from 'react-icons/fa'
+import { Menu } from '@headlessui/react'
 import { UserSettings } from '../../types/settings'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { VoiceStreamingInput } from '../VoiceStreamingInput'
@@ -100,13 +101,8 @@ function NoteCardHeader({
   const handleCopyText = (format: 'markdown' | 'html') => {
     if (format === 'markdown') {
       navigator.clipboard.writeText(card.content.markdown)
-        .then(() => {
-          console.log('Copied as markdown')
-          setShowCopyMenu(false)
-        })
-        .catch(err => {
-          console.error('Failed to copy text:', err)
-        })
+        .then(() => console.log('Copied as markdown'))
+        .catch(err => console.error('Failed to copy text:', err))
     } else {
       const md = new MarkdownIt({
         html: true,
@@ -147,7 +143,6 @@ function NoteCardHeader({
       } finally {
         document.removeEventListener('copy', listener)
         document.body.removeChild(textarea)
-        setShowCopyMenu(false)
       }
     }
   }
@@ -177,67 +172,85 @@ function NoteCardHeader({
       </div>
       <div className={`flex items-center gap-2 ${!alwaysShowActions ? 'opacity-0 group-hover:opacity-100 transition-opacity duration-150' : ''}`}>
         {extraControls}
+        {showVoiceInHeader && onVoiceTranscription && (
+          <VoiceStreamingInput
+            userSettings={userSettings}
+            onTranscription={onVoiceTranscription}
+            iconSize={14}
+            className="text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+          />
+        )}
         <button
           onClick={() => onShowAllNotesChange(!showAllNotes)}
-          className={`p-1 rounded transition-colors ${
+          className={`p-1 rounded transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 ${
             showAllNotes 
-              ? 'text-blue-500 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30' 
+              ? 'text-blue-500 dark:text-blue-400' 
               : 'text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400'
           }`}
           title={showAllNotes ? "Focus on this note" : "Show all notes"}
         >
           {showAllNotes ? <FaExpandAlt size={14} /> : <FaCompressAlt size={14} />}
         </button>
-        {showVoiceInHeader && onVoiceTranscription && (
-          <VoiceStreamingInput
-            userSettings={userSettings}
-            onTranscription={onVoiceTranscription}
-            iconSize={14}
-            className="text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400"
-          />
-        )}
-        <button
-          onClick={() => onMarkdownModeChange(!isMarkdownMode)}
-          className="text-[10px] text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400"
-          title={isMarkdownMode ? "Switch to rich text mode" : "Switch to markdown mode"}
-        >
-          {isMarkdownMode ? "Rich" : "MD"}
-        </button>
-        <div className="relative" ref={copyMenuRef}>
-          <button
-            onClick={() => setShowCopyMenu(!showCopyMenu)}
-            className={`p-1 text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400
-              ${showCopyMenu ? 'text-blue-500 dark:text-blue-400' : ''}`}
-            title="Copy note text"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-            </svg>
-          </button>
-          {showCopyMenu && (
-            <div className="absolute right-0 mt-1 py-1 w-32 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-10 flex flex-col">
-              <button
-                onClick={() => handleCopyText('markdown')}
-                className="px-3 py-1 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                Copy&nbsp;Markdown
-              </button>
-              <button
-                onClick={() => handleCopyText('html')}
-                className="px-3 py-1 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                Copy&nbsp;Formatted
-              </button>
-            </div>
-          )}
-        </div>
-        <button
-          onClick={onDelete}
-          className={`p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 ${alwaysShowActions ? 'hover:bg-red-50 dark:hover:bg-red-900/30 rounded' : ''}`}
-          title="Delete note"
-        >
-          <FaTrash size={14} />
-        </button>
+        
+        <Menu as="div" className="relative">
+          <Menu.Button className="p-1 rounded transition-colors text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+            <FaEllipsisV size={14} />
+          </Menu.Button>
+          <Menu.Items className="absolute right-0 mt-1 py-1 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-10 focus:outline-none">
+            <Menu.Item>
+              {({ active }) => (
+                <button
+                  onClick={() => onMarkdownModeChange(!isMarkdownMode)}
+                  className={`w-full px-2 py-1 flex items-center gap-2 text-sm ${
+                    active ? 'bg-gray-100 dark:bg-gray-700' : ''
+                  } text-gray-700 dark:text-gray-300 whitespace-nowrap`}
+                >
+                  {isMarkdownMode ? <FaFileAlt size={14} /> : <FaMarkdown size={14} />}
+                  {isMarkdownMode ? "Switch to rich text" : "Switch to markdown"}
+                </button>
+              )}
+            </Menu.Item>
+            <Menu.Item>
+              {({ active }) => (
+                <button
+                  onClick={() => handleCopyText('markdown')}
+                  className={`w-full px-2 py-1 flex items-center gap-2 text-sm ${
+                    active ? 'bg-gray-100 dark:bg-gray-700' : ''
+                  } text-gray-700 dark:text-gray-300 whitespace-nowrap`}
+                >
+                  <FaMarkdown size={14} />
+                  Copy as markdown
+                </button>
+              )}
+            </Menu.Item>
+            <Menu.Item>
+              {({ active }) => (
+                <button
+                  onClick={() => handleCopyText('html')}
+                  className={`w-full px-2 py-1 flex items-center gap-2 text-sm ${
+                    active ? 'bg-gray-100 dark:bg-gray-700' : ''
+                  } text-gray-700 dark:text-gray-300 whitespace-nowrap`}
+                >
+                  <FaCopy size={14} />
+                  Copy as formatted text
+                </button>
+              )}
+            </Menu.Item>
+            <Menu.Item>
+              {({ active }) => (
+                <button
+                  onClick={onDelete}
+                  className={`w-full px-2 py-1 flex items-center gap-2 text-sm ${
+                    active ? 'bg-red-50 dark:bg-red-900/30' : ''
+                  } text-red-600 dark:text-red-400 whitespace-nowrap`}
+                >
+                  <FaTrash size={14} />
+                  Delete note
+                </button>
+              )}
+            </Menu.Item>
+          </Menu.Items>
+        </Menu>
       </div>
     </div>
   )

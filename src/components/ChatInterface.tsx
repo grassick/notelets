@@ -161,10 +161,11 @@ function ChatMessage({ message, index, onEdit, onSaveToNotes }: {
 
   const handleEdit = async () => {
     try {
-      await onEdit(index, editContent.trim())
       setIsEditing(false)
+      await onEdit(index, editContent.trim())
     } catch (err) {
       console.error('Failed to edit message:', err)
+      setIsEditing(true)
     }
   }
 

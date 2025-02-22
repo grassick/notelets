@@ -90,11 +90,27 @@ export function VoiceStreamingInput({
         }
 
         try {
-            // Set up audio analysis (moved here for iOS compatibility)
-            audioContext.current = new AudioContext()
+            // iOS Safari requires user interaction to create AudioContext
+            audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)({
+                // Lower sample rate specifically for voice
+                sampleRate: 16000
+            })
 
-            // Request permission and get stream
-            stream.current = await navigator.mediaDevices.getUserMedia({ audio: true })
+            // iOS specific constraints that help with consistency
+            const constraints = {
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                    // Force low-latency mode where possible
+                    latency: 0,
+                    // Specifically request voice optimization
+                    channelCount: 1,
+                    sampleRate: 16000
+                }
+            }
+
+            stream.current = await navigator.mediaDevices.getUserMedia(constraints)
 
             // Check if we actually got audio tracks
             if (!stream.current.getAudioTracks().length) {
@@ -107,17 +123,45 @@ export function VoiceStreamingInput({
             source.connect(audioAnalyser.current)
             audioLevelInterval.current = setInterval(updateAudioLevel, 50)
 
-            // Configure recorder based on platform
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-            const recorderConfig = {
-                type: 'audio' as const,
-                mimeType: (isIOS ? 'audio/webm?codec=opus' : 'audio/webm') as any,
-                recorderType: RecordRTC.StereoAudioRecorder,
-                numberOfAudioChannels: 1 as 1 | 2,
-                audioBitsPerSecond: 64000
+            if (isIOS) {
+                // iOS requires specific MIME type and codec
+                const options: any = {
+                    mimeType: 'audio/webm;codecs=opus',
+                    audioBitsPerSecond: 16000,
+                    // Force mono audio
+                    channelCount: 1
+                }
+
+                // Check if this specific configuration is supported
+                if (MediaRecorder.isTypeSupported(options.mimeType)) {
+                    recorder.current = new RecordRTCPromisesHandler(stream.current, {
+                        ...options,
+                        type: 'audio',
+                        recorderType: RecordRTC.MediaStreamRecorder,
+                        // Ensure we get data frequently for better reliability
+                        timeSlice: 1000
+                    })
+                } else {
+                    // Fallback to default WebM
+                    recorder.current = new RecordRTCPromisesHandler(stream.current, {
+                        type: 'audio',
+                        mimeType: 'audio/webm',
+                        recorderType: RecordRTC.MediaStreamRecorder,
+                        timeSlice: 1000
+                    })
+                }
+            } else {
+                // Non-iOS setup remains the same
+                recorder.current = new RecordRTCPromisesHandler(stream.current, {
+                    type: 'audio',
+                    mimeType: 'audio/webm',
+                    recorderType: RecordRTC.StereoAudioRecorder,
+                    numberOfAudioChannels: 1,
+                    audioBitsPerSecond: 64000
+                })
             }
 
-            recorder.current = new RecordRTCPromisesHandler(stream.current, recorderConfig)
             await recorder.current.startRecording()
             setIsRecording(true)
 

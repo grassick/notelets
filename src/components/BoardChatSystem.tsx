@@ -11,6 +11,7 @@ import { ModelSelector } from './chat/ModelSelector'
 import { usePersist } from '../hooks/usePersist'
 import { SettingsModal } from './settings/SettingsModal'
 import { FaTimes, FaTrash } from 'react-icons/fa'
+import { getCardTitle } from '../modules/cards'
 
 type ChatContextMode = 'quick' | 'selected' | 'all'
 
@@ -358,7 +359,7 @@ function ChatHeader({
               ${contextMode === 'selected'
                 ? 'bg-blue-50 text-blue-500 dark:bg-blue-900/50 dark:text-blue-400' 
                 : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
-            title={`Use context from: ${selectedCard.title || 'Untitled'}`}
+            title={`Use context from: ${getCardTitle(selectedCard)}`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

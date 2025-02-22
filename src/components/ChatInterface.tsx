@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { UserSettings } from '../types/settings'
 import { VoiceStreamingInput } from './VoiceStreamingInput'
+import { getCardTitle } from '../modules/cards'
 
 interface ChatInterfaceProps {
   chat: Chat | null
@@ -74,10 +75,10 @@ export function ChatInterface({
         </svg>
 
         {contextMode === 'selected' && contextCards[0] && (
-          <span className="truncate">{contextCards[0].title || 'Untitled'}</span>
+          <span className="truncate">{getCardTitle(contextCards[0])}</span>
         )}
         {contextMode === 'all' && (
-          <span>{contextCards.length} note{contextCards.length === 1 ? '' : 's'}</span>
+          <span>{contextCards.length} note{contextCards.length === 1 ? '' : 's'} as context</span>
         )}
       </div>
     )

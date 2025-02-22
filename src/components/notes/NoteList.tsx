@@ -2,20 +2,7 @@ import React, { useState } from 'react'
 import type { RichTextCard, ViewMode } from '../../types'
 import ViewControls from '../ViewControls'
 import { SearchModal } from '../search/SearchModal'
-
-/** Get the title of the card, using first line of content if no title exists */
-const getCardTitle = (card: RichTextCard): string => {
-  if (card.title) return card.title
-  
-  const firstLine = card.content.markdown
-    .split('\n')[0] // Get first line
-    .replace(/^[#*]+\s*/, '') // Remove leading hashes and asterisks
-    .replace(/[*]+$/, '') // Remove trailing asterisks and spaces
-    .trim() // Remove extra spaces
-  
-  if (!firstLine) return ''
-  return firstLine.slice(0, 30) + (firstLine.length > 30 ? '...' : '')
-}
+import { getCardTitle } from '../../modules/cards'
 
 interface CardListItemProps {
   /** The card to display */

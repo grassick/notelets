@@ -66,15 +66,6 @@ export function NotesPanel({
     }
   }, [selectedCard?.id, showAllNotes])
 
-  const handleCardSelect = (cardId: string) => {
-    // Find the card
-    const card = cards.find(c => c.id === cardId)
-    if (card) {
-      // Update selected card
-      onUpdateCard(cardId, card.content.markdown)
-    }
-  }
-
   if (cards.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center flex-1 p-8 text-center">

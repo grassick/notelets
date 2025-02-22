@@ -269,6 +269,7 @@ export function BoardView(props: {
               className="flex-1 min-h-0 overflow-hidden"
               cards={cards}
               setCard={setCard}
+              selectedCard={selectedCard}
             />
           </div>
         )}

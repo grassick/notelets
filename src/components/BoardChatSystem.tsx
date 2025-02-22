@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react'
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import type { Store } from '../Store'
 import { useCards, useChats } from '../Store'
 import type { Card, Chat, RichTextCard } from '../types'
@@ -12,6 +12,8 @@ import { usePersist } from '../hooks/usePersist'
 import { SettingsModal } from './settings/SettingsModal'
 import { FaTimes, FaTrash } from 'react-icons/fa'
 
+type ChatContextMode = 'quick' | 'selected' | 'all'
+
 interface BoardChatSystemProps {
   /** The data store instance */
   store: Store
@@ -23,6 +25,8 @@ interface BoardChatSystemProps {
   cards: Card[]
   /** The function to set a card */
   setCard: (card: Card) => void
+  /** Currently selected card */
+  selectedCard: RichTextCard | null
 }
 
 /**
@@ -36,7 +40,8 @@ export function BoardChatSystem({
   boardId,
   className = '',
   cards,
-  setCard
+  setCard,
+  selectedCard
 }: BoardChatSystemProps) {
   const { settings: userSettings } = useUserSettings(store)
   const { chats, setChat: storeSetChat, removeChat } = useChats(store, boardId)
@@ -45,6 +50,21 @@ export function BoardChatSystem({
   const [selectedModel, setSelectedModel] = usePersist<ModelId>('selectedModel', getDefaultModel(userSettings.llm))
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isHistoryMode, setIsHistoryMode] = useState(false)
+  const [contextMode, setContextMode] = usePersist<ChatContextMode>(`board_${boardId}_chatContext`, 'quick')
+
+  // Filter cards based on context mode
+  const contextCards = useMemo(() => {
+    switch (contextMode) {
+      case 'quick':
+        return []
+      case 'selected':
+        return selectedCard ? [selectedCard] : []
+      case 'all':
+        return cards.filter((c): c is RichTextCard => c.type === 'richtext')
+      default:
+        return []
+    }
+  }, [contextMode, selectedCard, cards])
 
   // Validate selected model on settings change
   useEffect(() => {
@@ -60,7 +80,7 @@ export function BoardChatSystem({
   }, [])
 
   const { sendMessage, editMessage, isLoading, error: chatError } = useChat({
-    cards,
+    cards: contextCards, // Pass filtered cards based on context mode
     onChatUpdate: (updatedChat) => {
       storeSetChat(updatedChat)
       setChat(updatedChat)
@@ -237,6 +257,9 @@ export function BoardChatSystem({
           isHistoryMode={isHistoryMode}
           onToggleHistory={() => setIsHistoryMode(!isHistoryMode)}
           store={store}
+          contextMode={contextMode}
+          onContextModeChange={setContextMode}
+          selectedCard={selectedCard}
         />
         {isHistoryMode ? (
           <ChatHistoryView />
@@ -251,6 +274,8 @@ export function BoardChatSystem({
             selectedModel={selectedModel}
             error={error || chatError}
             userSettings={userSettings}
+            contextMode={contextMode}
+            contextCards={contextCards}
           />
         )}
       </div>
@@ -286,6 +311,12 @@ interface ChatHeaderProps {
   onToggleHistory: () => void
   /** The data store instance */
   store: Store
+  /** Current context mode */
+  contextMode: ChatContextMode
+  /** Context mode change callback */
+  onContextModeChange: (mode: ChatContextMode) => void
+  /** Currently selected card */
+  selectedCard: RichTextCard | null
 }
 
 function ChatHeader({ 
@@ -299,13 +330,64 @@ function ChatHeader({
   onOpenSettings,
   isHistoryMode,
   onToggleHistory,
-  store 
+  store,
+  contextMode,
+  onContextModeChange,
+  selectedCard
 }: ChatHeaderProps) {
   return (
     <div className="h-8 px-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-      <span className="text-sm text-gray-600 dark:text-gray-400">
-        {/* {isHistoryMode ? 'Chat History' : 'Chat'} */}
-      </span>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onContextModeChange('quick')}
+          className={`p-1 rounded transition-colors text-xs
+            ${contextMode === 'quick' 
+              ? 'bg-blue-50 text-blue-500 dark:bg-blue-900/50 dark:text-blue-400' 
+              : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+          title="Quick chat (no context)"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </button>
+
+        {selectedCard && (
+          <button
+            onClick={() => onContextModeChange('selected')}
+            className={`p-1 rounded transition-colors text-xs flex items-center gap-1
+              ${contextMode === 'selected'
+                ? 'bg-blue-50 text-blue-500 dark:bg-blue-900/50 dark:text-blue-400' 
+                : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+            title={`Use context from: ${selectedCard.title || 'Untitled'}`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </button>
+        )}
+
+        <button
+          onClick={() => onContextModeChange('all')}
+          className={`p-1 rounded transition-colors text-xs
+            ${contextMode === 'all'
+              ? 'bg-blue-50 text-blue-500 dark:bg-blue-900/50 dark:text-blue-400' 
+              : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+          title="Use all notes as context"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {/* Back document */}
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  transform="translate(-2, -2)"
+                  opacity="0.5" />
+            {/* Front document */}
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  transform="translate(2, 2)" />
+          </svg>
+        </button>
+      </div>
+
       <div className="flex items-center gap-2">
         <ModelSelector
           value={selectedModel}

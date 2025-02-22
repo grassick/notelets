@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import type { Chat, ChatMessage } from '../types'
+import type { Chat, ChatMessage, RichTextCard } from '../types'
 import type { ModelId } from '../api/llm'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -16,6 +16,8 @@ interface ChatInterfaceProps {
   selectedModel: ModelId
   error?: Error | null
   userSettings: UserSettings
+  contextMode: 'quick' | 'selected' | 'all'
+  contextCards: RichTextCard[]
 }
 
 /**
@@ -34,7 +36,9 @@ export function ChatInterface({
   isLoading = false,
   selectedModel,
   error,
-  userSettings
+  userSettings,
+  contextMode,
+  contextCards
 }: ChatInterfaceProps) {
   const [message, setMessage] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -60,8 +64,28 @@ export function ChatInterface({
     }
   }
 
+  function ContextIndicator() {
+    if (contextMode === 'quick') return null
+
+    return (
+      <div className="px-4 py-1.5 text-[10px] text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-gray-800 flex items-center gap-1">
+        <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+
+        {contextMode === 'selected' && contextCards[0] && (
+          <span className="truncate">{contextCards[0].title || 'Untitled'}</span>
+        )}
+        {contextMode === 'all' && (
+          <span>{contextCards.length} note{contextCards.length === 1 ? '' : 's'}</span>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className={`flex flex-col min-h-0 ${className}`}>
+      <ContextIndicator />
       {/* Messages */}
       <div className="flex-1 min-h-0 overflow-y-auto p-4 [scrollbar-width:thin] 
                     [scrollbar-color:rgba(100,116,139,0.2)_transparent] 

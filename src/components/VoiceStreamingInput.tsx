@@ -89,6 +89,9 @@ export function VoiceStreamingInput({
             return
         }
 
+        // Set up audio analysis (moved here for iOS compatibility)
+        audioContext.current = new AudioContext()
+
         try {
             // Request permission and get stream
             stream.current = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -98,8 +101,6 @@ export function VoiceStreamingInput({
                 throw new Error('No audio track available')
             }
 
-            // Set up audio analysis
-            audioContext.current = new AudioContext()
             const source = audioContext.current.createMediaStreamSource(stream.current)
             audioAnalyser.current = audioContext.current.createAnalyser()
             audioAnalyser.current.fftSize = 256

@@ -124,10 +124,10 @@ export function VoiceStreamingInput({
                 const options: any = {
                     type: 'audio',
                     mimeType: 'audio/webm;codecs=opus', // Opus compression
-                    recorderType: RecordRTC.MediaStreamRecorder, // Required for modern codecs
+                    recorderType: RecordRTC.StereoAudioRecorder,
                     audioBitsPerSecond: 24000, // Adjust for quality (24kbps-96kbps)
                     bufferSize: 4096, // Balance between latency & performance
-                    disableLogs: true
+                    numberOfAudioChannels: 1,
                 }
 
                 recorder.current = new RecordRTCPromisesHandler(stream.current, options)
@@ -135,7 +135,7 @@ export function VoiceStreamingInput({
                 // Non-iOS setup remains the same
                 recorder.current = new RecordRTCPromisesHandler(stream.current, {
                     type: 'audio',
-                    mimeType: 'audio/webm;codec=opus' as any,
+                    mimeType: 'audio/webm;codecs=opus' as any,
                     recorderType: RecordRTC.StereoAudioRecorder,
                     numberOfAudioChannels: 1,
                     desiredSampRate: 16000,

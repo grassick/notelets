@@ -42,7 +42,7 @@ module.exports = {
             'li': {
               margin: '0',
               '&:not(:first-child)': {
-                marginTop: '0.25em',
+                marginTop: '0em',
               },
             },
           },
@@ -78,7 +78,7 @@ module.exports = {
             'li': {
               margin: '0',
               '&:not(:first-child)': {
-                marginTop: '0.25em',
+                marginTop: '0em',
               },
             },
           },

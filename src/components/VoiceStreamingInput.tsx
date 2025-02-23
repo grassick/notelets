@@ -130,15 +130,15 @@ export function VoiceStreamingInput({
                     mimeType: 'audio/webm;codec=opus',
                     audioBitsPerSecond: 64000,
                     numberOfAudioChannels: 1, // real-time requires only one channel
-                }
-
-                recorder.current = new RecordRTCPromisesHandler(stream.current, {
-                    ...options,
                     type: 'audio',
                     recorderType: RecordRTC.MediaStreamRecorder,
                     // Ensure we get data frequently for better reliability
                     timeSlice: 1000
-                })
+                }
+
+                alert(JSON.stringify(options))
+
+                recorder.current = new RecordRTCPromisesHandler(stream.current, options)
             } else {
                 // Non-iOS setup remains the same
                 recorder.current = new RecordRTCPromisesHandler(stream.current, {

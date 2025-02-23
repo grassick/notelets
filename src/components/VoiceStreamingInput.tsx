@@ -91,10 +91,7 @@ export function VoiceStreamingInput({
 
         try {
             // iOS Safari requires user interaction to create AudioContext
-            audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)({
-                // Lower sample rate specifically for voice
-                sampleRate: 16000
-            })
+            audioContext.current = new AudioContext()
 
             // iOS specific constraints that help with consistency
             const constraints = {
@@ -106,7 +103,6 @@ export function VoiceStreamingInput({
                     latency: 0,
                     // Specifically request voice optimization
                     channelCount: 1,
-                    sampleRate: 16000
                 }
             }
 

@@ -357,47 +357,42 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
 
   if (isSingleView) {
     return (
-      <div className={`flex flex-col flex-1 min-h-0 ${className}`}>
-        <div 
-          ref={ref}
-          className="flex flex-col flex-1 min-h-0"
-        >
-          <div className="px-3 py-1 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-            <div className="flex items-center gap-2">
-              <div className="flex-1">
-                <NoteCardHeader
-                  card={card}
-                  onUpdateTitle={onUpdateCardTitle}
-                  onDelete={onDelete}
-                  isMarkdownMode={isMarkdownMode}
-                  onMarkdownModeChange={setIsMarkdownMode}
-                  alwaysShowActions={true}
-                  extraStartControls={extraStartControls}
-                  extraControls={extraControls}
-                  userSettings={userSettings}
-                  showVoiceInHeader={showVoiceInHeader}
-                  onVoiceTranscription={handleVoiceTranscription}
-                  showAllNotes={showAllNotes}
-                  onShowAllNotesChange={onShowAllNotesChange}
-                />
-              </div>
-            </div>
-          </div>
+      <div 
+        ref={ref}
+        className="flex flex-col h-full"
+      >
+        <div className="flex-none px-3 py-1 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+          <NoteCardHeader
+            card={card}
+            onUpdateTitle={onUpdateCardTitle}
+            onDelete={onDelete}
+            isMarkdownMode={isMarkdownMode}
+            onMarkdownModeChange={setIsMarkdownMode}
+            alwaysShowActions={true}
+            extraStartControls={extraStartControls}
+            extraControls={extraControls}
+            userSettings={userSettings}
+            showVoiceInHeader={showVoiceInHeader}
+            onVoiceTranscription={handleVoiceTranscription}
+            showAllNotes={showAllNotes}
+            onShowAllNotesChange={onShowAllNotesChange}
+          />
+        </div>
+        <div className="flex-1 min-h-0 overflow-auto px-4 py-4
+                    [scrollbar-width:thin] 
+                    [scrollbar-color:rgba(148,163,184,0.2)_transparent] 
+                    dark:[scrollbar-color:rgba(148,163,184,0.15)_transparent]
+                    [::-webkit-scrollbar]:w-1.5
+                    [::-webkit-scrollbar-thumb]:rounded-full
+                    [::-webkit-scrollbar-thumb]:bg-slate-300/50
+                    hover:[::-webkit-scrollbar-thumb]:bg-slate-400/50
+                    dark:[::-webkit-scrollbar-thumb]:bg-slate-500/25
+                    dark:hover:[::-webkit-scrollbar-thumb]:bg-slate-400/25
+                    [::-webkit-scrollbar-track]:bg-transparent">
           <NoteCardBody
             content={card.content.markdown}
             onChange={onUpdateCard}
             isMarkdownMode={isMarkdownMode}
-            className="flex-1 min-h-0 overflow-auto px-4 py-4
-                      [scrollbar-width:thin] 
-                      [scrollbar-color:rgba(148,163,184,0.2)_transparent] 
-                      dark:[scrollbar-color:rgba(148,163,184,0.15)_transparent]
-                      [::-webkit-scrollbar]:w-1.5
-                      [::-webkit-scrollbar-thumb]:rounded-full
-                      [::-webkit-scrollbar-thumb]:bg-slate-300/50
-                      hover:[::-webkit-scrollbar-thumb]:bg-slate-400/50
-                      dark:[::-webkit-scrollbar-thumb]:bg-slate-500/25
-                      dark:hover:[::-webkit-scrollbar-thumb]:bg-slate-400/25
-                      [::-webkit-scrollbar-track]:bg-transparent"
             userSettings={userSettings}
             isSingleView={isSingleView}
           />

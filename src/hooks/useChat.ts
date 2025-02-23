@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import type { Chat, ChatMessage, Card, RichTextCard } from '../types'
-import { LLMFactory, type ModelId, type LLMProvider, getProviderForModel } from '../api/llm'
+import { LLMFactory, type ModelId, type LLMProvider, getProviderForModel, getModelById } from '../api/llm'
 import { useDeviceSettings, useUserSettings } from './useSettings'
 import { UserSettings } from '../types/settings'
 
@@ -97,6 +97,7 @@ export function useChat({ cards, onChatUpdate, userSettings }: UseChatOptions): 
             onChatUpdate(streamingChat)
 
             // Get response from LLM
+            const model = getModelById(modelId)
             const provider = await getProvider(modelId)
             const context = buildContext(cards)
             
@@ -116,7 +117,7 @@ Use markdown formatting in your responses.`
                 {
                     modelId,
                     system: systemPrompt,
-                    temperature: 0.7
+                    temperature: model?.noTemperature ? undefined : 0.7
                 }
             )
 

@@ -1,6 +1,6 @@
 import React from 'react'
 import type { ModelId, LLMProviderType } from '../../api/llm'
-import { AVAILABLE_MODELS, getModelById } from '../../api/llm'
+import { AVAILABLE_MODELS } from '../../api/llm'
 import { useUserSettings } from '../../hooks/useSettings'
 import { Store } from '../../Store'
 

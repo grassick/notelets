@@ -28,6 +28,8 @@ export interface ModelInfo {
     name: string
     /** Base URL for API calls (optional) */
     baseURL?: string
+    /** Whether this model supports temperature */
+    noTemperature?: boolean
 }
 
 /** Settings interface for LLM API keys */
@@ -110,17 +112,25 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     {
         provider: 'openai',
         id: 'o1',
-        name: 'O1'
+        name: 'O1',
+        noTemperature: true
     },
     {
         provider: 'openai',
         id: 'o1-mini',
-        name: 'O1 Mini'
+        name: 'O1 Mini',
+        noTemperature: true
     },
     {
         provider: 'openai',
         id: 'o3-mini',
-        name: 'O3 Mini'
+        name: 'O3 Mini',
+        noTemperature: true
+    },
+    {
+        provider: 'openai',
+        id: 'chatgpt-4o-latest',
+        name: 'ChatGPT 4o'
     },
     // Gemini models
     {

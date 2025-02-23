@@ -23,12 +23,12 @@ interface VoiceStreamingInputProps {
  * A voice input button that handles recording and progressive transcription using OpenAI's Whisper API
  * Uses RecordRTC for better cross-platform compatibility
  */
-export function VoiceStreamingInput({ 
-    userSettings, 
-    className = '', 
+export function VoiceStreamingInput({
+    userSettings,
+    className = '',
     iconSize = 20,
     onTranscription,
-    onError 
+    onError
 }: VoiceStreamingInputProps) {
     const openaiClient = useMemo(() => {
         if (!userSettings.llm.openaiKey) {
@@ -83,7 +83,7 @@ export function VoiceStreamingInput({
     async function startRecording(e: React.MouseEvent) {
         e.preventDefault()
         e.stopPropagation()
-        
+
         if (!openaiClient) {
             onError?.('OpenAI API key not configured')
             return
@@ -121,18 +121,14 @@ export function VoiceStreamingInput({
 
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
             if (isIOS) {
-                // iOS requires specific MIME type and codec
                 const options: any = {
-                    mimeType: 'audio/webm;codec=opus',
-                    audioBitsPerSecond: 64000,
-                    numberOfAudioChannels: 1, // real-time requires only one channel
                     type: 'audio',
-                    recorderType: RecordRTC.MediaStreamRecorder,
-                    // Ensure we get data frequently for better reliability
-                    timeSlice: 1000
+                    mimeType: 'audio/webm;codecs=opus', // Opus compression
+                    recorderType: RecordRTC.MediaStreamRecorder, // Required for modern codecs
+                    audioBitsPerSecond: 24000, // Adjust for quality (24kbps-96kbps)
+                    bufferSize: 4096, // Balance between latency & performance
+                    disableLogs: true
                 }
-
-                alert(JSON.stringify(options))
 
                 recorder.current = new RecordRTCPromisesHandler(stream.current, options)
             } else {
@@ -253,7 +249,7 @@ export function VoiceStreamingInput({
             {isRecording && (
                 <>
                     {/* Intense inner glow */}
-                    <div 
+                    <div
                         className="absolute inset-0 rounded-full"
                         style={{
                             background: `radial-gradient(circle, rgba(239, 68, 68, ${audioLevel * 0.8}) 0%, transparent 70%)`,
@@ -262,7 +258,7 @@ export function VoiceStreamingInput({
                         }}
                     />
                     {/* Pulsing outer glow */}
-                    <div 
+                    <div
                         className="absolute inset-0 rounded-full animate-ping"
                         style={{
                             background: `radial-gradient(circle, rgba(239, 68, 68, ${audioLevel * 0.6}) 0%, transparent 75%)`,
@@ -272,7 +268,7 @@ export function VoiceStreamingInput({
                     />
                 </>
             )}
-            
+
             <button
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={handleClick}
@@ -280,8 +276,8 @@ export function VoiceStreamingInput({
                 className={`
                     relative
                     transition-all duration-200
-                    ${isProcessing 
-                        ? 'text-blue-600 dark:text-blue-400' 
+                    ${isProcessing
+                        ? 'text-blue-600 dark:text-blue-400'
                         : isRecording
                             ? 'text-red-600 dark:text-red-400'
                             : 'text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300'
@@ -291,19 +287,19 @@ export function VoiceStreamingInput({
                     ${className}
                 `}
                 aria-label={
-                    isProcessing ? "Processing voice input..." 
-                    : isRecording ? "Stop recording" 
-                    : "Start voice input"
+                    isProcessing ? "Processing voice input..."
+                        : isRecording ? "Stop recording"
+                            : "Start voice input"
                 }
                 title={
-                    isProcessing ? "Converting speech to text..." 
-                    : isRecording ? "Tap to stop recording" 
-                    : "Tap to start voice input"
+                    isProcessing ? "Converting speech to text..."
+                        : isRecording ? "Tap to stop recording"
+                            : "Tap to start voice input"
                 }
             >
                 {/* Icon container */}
                 <div className="relative">
-                    <FaMicrophone 
+                    <FaMicrophone
                         size={iconSize}
                         className={`
                             transition-all duration-200
@@ -313,7 +309,7 @@ export function VoiceStreamingInput({
 
                     {/* Processing spinner */}
                     {isProcessing && (
-                        <AiOutlineLoading3Quarters 
+                        <AiOutlineLoading3Quarters
                             size={iconSize * 1.5}
                             className="absolute inset-0 -m-1 animate-spin text-blue-600 dark:text-blue-400"
                         />

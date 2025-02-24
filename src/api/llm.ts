@@ -20,16 +20,20 @@ export type LLMProviderType = 'anthropic' | 'gemini' | 'openai' | 'deepseek'
 
 /** Model information */
 export interface ModelInfo {
+    /** Unique identifier for the model in our application */
+    id: string
     /** The provider of this model */
     provider: LLMProviderType
     /** The model ID used in API calls */
-    id: string
+    modelId: string
     /** Human-friendly name of the model */
     name: string
     /** Base URL for API calls (optional) */
     baseURL?: string
     /** Whether this model supports temperature */
     noTemperature?: boolean
+    /** Number of thinking tokens for models that support thinking mode (optional) */
+    thinkingTokens?: number
 }
 
 /** Settings interface for LLM API keys */
@@ -43,6 +47,8 @@ export interface LLMSettings {
 export function getDefaultModel(settings: LLMSettings): ModelId {
     // Try to find first available model in order of preference
     const modelPreference: ModelId[] = [
+        'claude-3-7-sonnet-latest',
+        'claude-3-7-sonnet-thinking-latest',
         'claude-3-5-sonnet-latest',
         'gemini-2.0-pro-exp-02-05',
         'gpt-4o'
@@ -55,12 +61,12 @@ export function getDefaultModel(settings: LLMSettings): ModelId {
     }
 
     // If no preferred models are available, return first model with available key
-    if (settings.anthropicKey) return 'claude-3-5-sonnet-latest'
+    if (settings.anthropicKey) return 'claude-3-7-sonnet-latest'
     if (settings.geminiKey) return 'gemini-2.0-pro-exp-02-05'
     if (settings.openaiKey) return 'gpt-4o'
     
     // Fallback to Claude as default (will show API key missing message)
-    return 'claude-3-5-sonnet-latest'
+    return 'claude-3-7-sonnet-latest'
 }
 
 /** Check if a model is available (has API key) */
@@ -85,12 +91,27 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     // Anthropic models
     {
         provider: 'anthropic',
+        id: 'claude-3-7-sonnet-latest',
+        modelId: 'claude-3-7-sonnet-20240307',
+        name: 'Claude 3.7 Sonnet'
+    },
+    {
+        provider: 'anthropic',
+        id: 'claude-3-7-sonnet-thinking-latest',
+        modelId: 'claude-3-7-sonnet-20240307',
+        name: 'Claude 3.7 Sonnet (Thinking)',
+        thinkingTokens: 16000
+    },
+    {
+        provider: 'anthropic',
         id: 'claude-3-5-sonnet-latest',
+        modelId: 'claude-3-5-sonnet-20240620',
         name: 'Claude 3.5 Sonnet'
     },
     {
         provider: 'anthropic',
         id: 'claude-3-5-haiku-latest',
+        modelId: 'claude-3-5-haiku-20240620',
         name: 'Claude 3.5 Haiku'
     },
     // {
@@ -102,58 +123,68 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     {
         provider: 'openai',
         id: 'gpt-4o',
+        modelId: 'gpt-4o',
         name: 'GPT-4o'
     },
     {
         provider: 'openai',
         id: 'gpt-4o-mini',
+        modelId: 'gpt-4o-mini',
         name: 'GPT-4o Mini'
     },
     {
         provider: 'openai',
         id: 'o1',
+        modelId: 'o1',
         name: 'O1',
         noTemperature: true
     },
     {
         provider: 'openai',
         id: 'o1-mini',
+        modelId: 'o1-mini',
         name: 'O1 Mini',
         noTemperature: true
     },
     {
         provider: 'openai',
         id: 'o3-mini',
+        modelId: 'o3-mini',
         name: 'O3 Mini',
         noTemperature: true
     },
     {
         provider: 'openai',
         id: 'chatgpt-4o-latest',
+        modelId: 'chatgpt-4o-latest',
         name: 'ChatGPT 4o'
     },
     // Gemini models
     {
         provider: 'gemini',
         id: 'gemini-2.0-flash',
+        modelId: 'gemini-2.0-flash',
         name: 'Gemini 2.0 Flash',
         baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
     },
     {
         provider: 'gemini',
         id: 'gemini-2.0-flash-lite-preview-02-05',
+        modelId: 'gemini-2.0-flash-lite-preview-02-05',
         name: 'Gemini 2.0 Flash Lite',
         baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
     },
     {
         provider: 'gemini',
         id: 'gemini-2.0-pro-exp-02-05',
+        modelId: 'gemini-2.0-pro-exp-02-05',
         name: 'Gemini 2.0 Pro',
         baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
     },
     {
         provider: 'gemini',
         id: 'gemini-2.0-flash-thinking-exp-01-21',
+        modelId: 'gemini-2.0-flash-thinking-exp-01-21',
         name: 'Gemini 2.0 Flash Thinking',
         baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
     },
@@ -184,6 +215,8 @@ export interface LLMOptions {
     temperature?: number
     /** System prompt */
     system?: string
+    /** Thinking tokens */
+    thinkingTokens?: number
 }
 
 /** Common response format for all LLMs */
@@ -221,7 +254,7 @@ export class LLMFactory {
             }
             case 'gemini': {
                 const { GeminiClient } = await import('./gemini')
-                return new GeminiClient(apiKey, modelId)
+                return new GeminiClient(apiKey, model.modelId)
             }
             default:
                 throw new Error(`Provider ${model.provider} not implemented`)

@@ -21,6 +21,10 @@ export interface AnthropicChatRequest {
     temperature?: number
     system?: string
     stream?: boolean
+    thinking?: {
+        type: 'enabled'
+        budget_tokens: number
+    }
 }
 
 /** Interface for Anthropic API response */
@@ -138,6 +142,13 @@ export class AnthropicClient implements LLMProvider {
             system: options.system
         }
 
+        if (options.thinkingTokens) {
+            request.thinking = {
+                type: 'enabled',
+                budget_tokens: options.thinkingTokens
+            }
+        }
+
         const response = await this.makeRequest('/messages', request)
         const anthropicResponse: AnthropicChatResponse = await response.json()
 
@@ -165,7 +176,14 @@ export class AnthropicClient implements LLMProvider {
             max_tokens: options.maxTokens ?? 1024,
             temperature: options.temperature ?? 0.7,
             system: options.system,
-            stream: true
+            stream: true,
+        }
+
+        if (options.thinkingTokens) {
+            request.thinking = {
+                type: 'enabled',
+                budget_tokens: options.thinkingTokens
+            }
         }
 
         const response = await this.makeRequest('/messages', request)

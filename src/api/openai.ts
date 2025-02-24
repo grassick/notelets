@@ -40,14 +40,15 @@ export class OpenAIClient implements LLMProvider {
 
     async createChatCompletion(
         messages: ChatMessage[],
-        options: LLMOptions
+        options: LLMOptions,
+        signal?: AbortSignal
     ): Promise<LLMResponse> {
         const response = await this.client.chat.completions.create({
             model: options.modelId,
             messages: this.convertMessages(messages, options.system),
             max_tokens: options.maxTokens,
             temperature: options.temperature,
-        })
+        }, { signal })
 
         const completion = response.choices[0]?.message?.content
         if (!completion) {
@@ -66,7 +67,8 @@ export class OpenAIClient implements LLMProvider {
 
     async *createStreamingChatCompletion(
         messages: ChatMessage[],
-        options: LLMOptions
+        options: LLMOptions,
+        signal?: AbortSignal
     ): AsyncGenerator<string, void, unknown> {
         const stream = await this.client.chat.completions.create({
             model: options.modelId,
@@ -74,9 +76,14 @@ export class OpenAIClient implements LLMProvider {
             max_tokens: options.maxTokens,
             temperature: options.temperature,
             stream: true
-        })
+        }, { signal })
 
         for await (const chunk of stream) {
+            // Check if aborted
+            if (signal?.aborted) {
+                return
+            }
+            
             const content = chunk.choices[0]?.delta?.content
             if (content) {
                 yield content

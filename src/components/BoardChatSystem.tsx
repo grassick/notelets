@@ -80,7 +80,7 @@ export function BoardChatSystem({
     setError(null)  // Clear any existing errors
   }, [])
 
-  const { sendMessage, editMessage, isLoading, error: chatError } = useChat({
+  const { sendMessage, editMessage, stopStreaming, isLoading, error: chatError } = useChat({
     cards: contextCards, // Pass filtered cards based on context mode
     onChatUpdate: (updatedChat) => {
       storeSetChat(updatedChat)
@@ -321,6 +321,7 @@ export function BoardChatSystem({
             onSendMessage={handleSendMessage}
             onEditMessage={handleEditMessage}
             onSaveToNotes={handleSaveToNotes}
+            onStopStreaming={stopStreaming}
             className="flex-1"
             isLoading={isLoading}
             selectedModel={selectedModel}

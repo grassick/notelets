@@ -5,13 +5,15 @@ export interface LLMProvider {
     /** Send a chat completion request */
     createChatCompletion(
         messages: ChatMessage[],
-        options: LLMOptions
+        options: LLMOptions,
+        signal?: AbortSignal
     ): Promise<LLMResponse>
 
     /** Create a streaming chat completion */
     createStreamingChatCompletion(
         messages: ChatMessage[],
-        options: LLMOptions
+        options: LLMOptions,
+        signal?: AbortSignal
     ): AsyncGenerator<string, void, unknown>
 }
 

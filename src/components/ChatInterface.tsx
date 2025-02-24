@@ -12,6 +12,7 @@ interface ChatInterfaceProps {
   onSendMessage: (content: string, modelConfig: ModelId) => Promise<void>
   onEditMessage: (messageIndex: number, newContent: string) => Promise<void>
   onSaveToNotes?: (content: string) => Promise<void>
+  onStopStreaming?: () => void
   className?: string
   isLoading?: boolean
   selectedModel: ModelId
@@ -33,6 +34,7 @@ export function ChatInterface({
   onSendMessage,
   onEditMessage,
   onSaveToNotes,
+  onStopStreaming,
   className = '', 
   isLoading = false,
   selectedModel,
@@ -122,6 +124,7 @@ export function ChatInterface({
         message={message}
         onMessageChange={setMessage}
         onSendMessage={handleSubmit}
+        onStopStreaming={onStopStreaming}
         isLoading={isLoading}
         userSettings={userSettings}
       />
@@ -288,6 +291,8 @@ interface ChatInputProps {
     onMessageChange: (message: string) => void
     /** Called when a message should be sent */
     onSendMessage: (e: React.FormEvent) => void
+    /** Called when streaming should be stopped */
+    onStopStreaming?: () => void
     /** Whether the chat is currently loading/processing */
     isLoading?: boolean
     /** User settings */
@@ -297,7 +302,7 @@ interface ChatInputProps {
 /**
  * Text input area for the chat interface with auto-resizing textarea
  */
-function ChatInput({ message, onMessageChange, onSendMessage, isLoading = false, userSettings }: ChatInputProps) {
+function ChatInput({ message, onMessageChange, onSendMessage, onStopStreaming, isLoading = false, userSettings }: ChatInputProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null)
 
     useEffect(() => {
@@ -360,26 +365,48 @@ function ChatInput({ message, onMessageChange, onSendMessage, isLoading = false,
                         className="p-1.5 opacity-60 hover:opacity-100"
                         onError={handleVoiceError}
                     />
-                    <button
-                        type="submit"
-                        disabled={isLoading || !message.trim()}
-                        className="p-1.5 opacity-60 hover:opacity-100 disabled:opacity-30 disabled:cursor-not-allowed
-                                 text-gray-600 dark:text-gray-300"
-                        title="Send message (Enter)"
-                    >
-                        <svg 
-                            width="20" 
-                            height="20" 
-                            viewBox="0 0 24 24" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            strokeWidth="2" 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round"
+                    {isLoading ? (
+                        <button
+                            type="button"
+                            onClick={onStopStreaming}
+                            className="p-1.5 opacity-100 text-red-500 dark:text-red-400 hover:opacity-80 
+                                    transition-colors duration-200"
+                            title="Stop generation"
                         >
-                            <path d="M12 20V4M5 11l7-7 7 7" />
-                        </svg>
-                    </button>
+                            <svg 
+                                width="16" 
+                                height="16" 
+                                viewBox="0 0 24 24" 
+                                fill="currentColor" 
+                                stroke="currentColor" 
+                                strokeWidth="0" 
+                                className="rounded-sm"
+                            >
+                                <rect x="5" y="5" width="14" height="14" />
+                            </svg>
+                        </button>
+                    ) : (
+                        <button
+                            type="submit"
+                            disabled={isLoading || !message.trim()}
+                            className="p-1.5 opacity-60 hover:opacity-100 disabled:opacity-30 disabled:cursor-not-allowed
+                                     text-gray-600 dark:text-gray-300"
+                            title="Send message (Enter)"
+                        >
+                            <svg 
+                                width="20" 
+                                height="20" 
+                                viewBox="0 0 24 24" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                strokeWidth="2" 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round"
+                            >
+                                <path d="M12 20V4M5 11l7-7 7 7" />
+                            </svg>
+                        </button>
+                    )}
                 </div>
             </div>
         </form>

@@ -98,7 +98,7 @@ export class AnthropicClient implements LLMProvider {
     /**
      * Makes a request to the Anthropic API
      */
-    private async makeRequest(endpoint: string, body: any): Promise<Response> {
+    private async makeRequest(endpoint: string, body: any, signal?: AbortSignal): Promise<Response> {
         const response = await fetch(`${ANTHROPIC_API_BASE}${endpoint}`, {
             method: 'POST',
             headers: {
@@ -107,7 +107,8 @@ export class AnthropicClient implements LLMProvider {
                 'anthropic-version': '2023-06-01',
                 'anthropic-dangerous-direct-browser-access': 'true'
             },
-            body: JSON.stringify(body)
+            body: JSON.stringify(body),
+            signal
         })
 
         if (!response.ok) {
@@ -132,7 +133,8 @@ export class AnthropicClient implements LLMProvider {
      */
     async createChatCompletion(
         messages: ChatMessage[],
-        options: LLMOptions
+        options: LLMOptions,
+        signal?: AbortSignal
     ): Promise<LLMResponse> {
         const request: AnthropicChatRequest = {
             model: options.modelId,
@@ -149,7 +151,7 @@ export class AnthropicClient implements LLMProvider {
             }
         }
 
-        const response = await this.makeRequest('/messages', request)
+        const response = await this.makeRequest('/messages', request, signal)
         const anthropicResponse: AnthropicChatResponse = await response.json()
 
         return {
@@ -168,7 +170,8 @@ export class AnthropicClient implements LLMProvider {
      */
     async *createStreamingChatCompletion(
         messages: ChatMessage[],
-        options: LLMOptions
+        options: LLMOptions,
+        signal?: AbortSignal
     ): AsyncGenerator<string, void, unknown> {
         const request: AnthropicChatRequest = {
             model: options.modelId,
@@ -186,49 +189,63 @@ export class AnthropicClient implements LLMProvider {
             }
         }
 
-        const response = await this.makeRequest('/messages', request)
+        const response = await this.makeRequest('/messages', request, signal)
         const reader = response.body?.getReader()
         if (!reader) throw new Error('No response body')
 
         const decoder = new TextDecoder()
         let buffer = ''
 
-        while (true) {
-            const { done, value } = await reader.read()
-            if (done) break
+        try {
+            while (true) {
+                // Check if request was aborted
+                if (signal?.aborted) {
+                    reader.cancel()
+                    return
+                }
+                
+                const { done, value } = await reader.read()
+                if (done) break
 
-            buffer += decoder.decode(value, { stream: true })
-            const lines = buffer.split('\n')
-            buffer = lines.pop() || '' // Keep the last partial line in the buffer
+                buffer += decoder.decode(value, { stream: true })
+                const lines = buffer.split('\n')
+                buffer = lines.pop() || '' // Keep the last partial line in the buffer
 
-            for (const line of lines) {
-                if (!line.trim()) continue
+                for (const line of lines) {
+                    if (!line.trim()) continue
 
-                // Parse SSE event
-                const event = line.startsWith('event: ') 
-                    ? line.slice(7).trim() 
-                    : undefined
-                const data = line.startsWith('data: ') 
-                    ? JSON.parse(line.slice(6)) 
-                    : undefined
+                    // Parse SSE event
+                    const event = line.startsWith('event: ') 
+                        ? line.slice(7).trim() 
+                        : undefined
+                    const data = line.startsWith('data: ') 
+                        ? JSON.parse(line.slice(6)) 
+                        : undefined
 
-                if (!data) continue
+                    if (!data) continue
 
-                switch (data.type) {
-                    case 'content_block_delta':
-                        if (data.delta?.type === 'text_delta' && data.delta.text) {
-                            yield data.delta.text
-                        }
-                        break
-                    case 'error':
-                        throw new AnthropicError(
-                            data.error.message,
-                            undefined,
-                            data.error
-                        )
-                    // Handle other event types silently
+                    switch (data.type) {
+                        case 'content_block_delta':
+                            if (data.delta?.type === 'text_delta' && data.delta.text) {
+                                yield data.delta.text
+                            }
+                            break
+                        case 'error':
+                            throw new AnthropicError(
+                                data.error.message,
+                                undefined,
+                                data.error
+                            )
+                        // Handle other event types silently
+                    }
                 }
             }
+        } catch (error) {
+            if (signal?.aborted) {
+                // If this was due to an abort, just return quietly
+                return
+            }
+            throw error // Re-throw if it wasn't an abort
         }
 
         // Handle any remaining data in the buffer

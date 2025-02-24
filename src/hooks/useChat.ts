@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import type { Chat, ChatMessage, Card, RichTextCard } from '../types'
 import { LLMFactory, type ModelId, type LLMProvider, getProviderForModel, getModelById } from '../api/llm'
 import { useDeviceSettings, useUserSettings } from './useSettings'
@@ -18,6 +18,8 @@ interface UseChatResult {
     sendMessage: (chat: Chat, content: string, modelId: ModelId) => Promise<void>
     /** Edit an existing message and regenerate responses */
     editMessage: (chat: Chat, messageIndex: number, newContent: string, modelId: ModelId) => Promise<void>
+    /** Stop the current streaming response */
+    stopStreaming: () => void
     /** Whether a message is currently being sent */
     isLoading: boolean
     /** Any error that occurred */
@@ -31,6 +33,17 @@ export function useChat({ cards, onChatUpdate, userSettings }: UseChatOptions): 
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<Error | null>(null)
     const [providerCache] = useState<Map<string, LLMProvider>>(new Map())
+    const abortControllerRef = useRef<AbortController | null>(null)
+
+    /**
+     * Stops the current streaming response
+     */
+    const stopStreaming = useCallback(() => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort()
+            abortControllerRef.current = null
+        }
+    }, [])
 
     /**
      * Builds context from cards for the LLM
@@ -76,6 +89,10 @@ export function useChat({ cards, onChatUpdate, userSettings }: UseChatOptions): 
      * Gets an assistant response for the given chat using the specified model
      */
     const getAssistantResponse = useCallback(async (currentChat: Chat, modelId: ModelId) => {
+        // Create a new AbortController for this request
+        abortControllerRef.current = new AbortController()
+        const signal = abortControllerRef.current.signal
+        
         setIsLoading(true)
         setError(null)
 
@@ -122,29 +139,53 @@ Use markdown formatting in your responses.`
                     system: systemPrompt,
                     temperature: model.noTemperature ? undefined : 0.7,
                     thinkingTokens: model.thinkingTokens,
-                }
+                },
+                signal
             )
 
             let streamedContent = ''
-            for await (const chunk of stream) {
-                streamedContent += chunk
-                const streamedMessage: ChatMessage = {
-                    ...assistantMessage,
-                    content: streamedContent
+            try {
+                for await (const chunk of stream) {
+                    streamedContent += chunk
+                    const streamedMessage: ChatMessage = {
+                        ...assistantMessage,
+                        content: streamedContent
+                    }
+                    const updatedStreamingChat: Chat = {
+                        ...streamingChat,
+                        messages: [...currentChat.messages, streamedMessage],
+                        updatedAt: new Date().toISOString()
+                    }
+                    onChatUpdate(updatedStreamingChat)
                 }
-                const updatedStreamingChat: Chat = {
-                    ...streamingChat,
-                    messages: [...currentChat.messages, streamedMessage],
-                    updatedAt: new Date().toISOString()
+            } catch (error: any) {
+                // If this is an AbortError, add a note that generation was stopped
+                if (error.name === 'AbortError' || signal.aborted) {
+                    streamedContent += "\n\n*Generation stopped.*"
+                    const streamedMessage: ChatMessage = {
+                        ...assistantMessage,
+                        content: streamedContent
+                    }
+                    const updatedStreamingChat: Chat = {
+                        ...streamingChat,
+                        messages: [...currentChat.messages, streamedMessage],
+                        updatedAt: new Date().toISOString()
+                    }
+                    onChatUpdate(updatedStreamingChat)
+                } else {
+                    throw error
                 }
-                onChatUpdate(updatedStreamingChat)
             }
 
-        } catch (err) {
-            setError(err instanceof Error ? err : new Error('Unknown error occurred'))
-            throw err
+        } catch (error: any) {
+            // Don't set error state for aborted requests
+            if (error.name !== 'AbortError' && !signal.aborted) {
+                setError(error instanceof Error ? error : new Error('Unknown error occurred'))
+                throw error
+            }
         } finally {
             setIsLoading(false)
+            abortControllerRef.current = null
         }
     }, [cards, getProvider, onChatUpdate, buildContext])
 
@@ -225,6 +266,7 @@ Use markdown formatting in your responses.`
     return {
         sendMessage,
         editMessage,
+        stopStreaming,
         isLoading,
         error
     }

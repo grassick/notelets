@@ -30,7 +30,8 @@ export class GeminiClient implements LLMProvider {
 
     async createChatCompletion(
         messages: ChatMessage[],
-        options: LLMOptions
+        options: LLMOptions,
+        signal?: AbortSignal
     ): Promise<LLMResponse> {
         const chat = this.model.startChat({
             history: this.convertMessages(messages.slice(0, -1)),
@@ -60,7 +61,8 @@ export class GeminiClient implements LLMProvider {
 
     async *createStreamingChatCompletion(
         messages: ChatMessage[],
-        options: LLMOptions
+        options: LLMOptions,
+        signal?: AbortSignal
     ): AsyncGenerator<string, void, unknown> {
         const chat = this.model.startChat({
             history: this.convertMessages(messages.slice(0, -1)),
@@ -72,13 +74,34 @@ export class GeminiClient implements LLMProvider {
         })
 
         const lastMessage = messages[messages.length - 1]
-        const result = await chat.sendMessageStream([{ text: lastMessage.content }])
-
-        for await (const chunk of result.stream) {
-            const text = chunk.text()
-            if (text) {
-                yield text
+        
+        // Create request options with abort signal
+        const requestOptions = signal ? { signal } : undefined
+        
+        try {
+            // Pass the abort signal to the Gemini API
+            const result = await chat.sendMessageStream(
+                [{ text: lastMessage.content }],
+                requestOptions
+            )
+            
+            for await (const chunk of result.stream) {
+                // Also check if aborted during streaming
+                if (signal?.aborted) {
+                    return
+                }
+                
+                const text = chunk.text()
+                if (text) {
+                    yield text
+                }
             }
+        } catch (error: any) {
+            // Handle abort errors
+            if (signal?.aborted || error.name === 'AbortError') {
+                return
+            }
+            throw error
         }
     }
 } 

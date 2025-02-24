@@ -173,7 +173,7 @@ export class AnthropicClient implements LLMProvider {
         const request: AnthropicChatRequest = {
             model: options.modelId,
             messages: AnthropicClient.toAnthropicMessages(messages),
-            max_tokens: options.maxTokens ?? 1024,
+            max_tokens: options.maxTokens ?? (options.thinkingTokens ? 1024 + options.thinkingTokens : 1024),
             temperature: options.temperature ?? 0.7,
             system: options.system,
             stream: true,

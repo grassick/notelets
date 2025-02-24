@@ -98,6 +98,9 @@ export function useChat({ cards, onChatUpdate, userSettings }: UseChatOptions): 
 
             // Get response from LLM
             const model = getModelById(modelId)
+            if (!model) {
+                throw new Error(`Unknown model: ${modelId}`)
+            }
             const provider = await getProvider(modelId)
             const context = buildContext(cards)
             
@@ -115,9 +118,10 @@ Use markdown formatting in your responses.`
             const stream = provider.createStreamingChatCompletion(
                 currentChat.messages,
                 {
-                    modelId,
+                    modelId: model.modelId,
                     system: systemPrompt,
-                    temperature: model?.noTemperature ? undefined : 0.7
+                    temperature: model.noTemperature ? undefined : 0.7,
+                    thinkingTokens: model.thinkingTokens,
                 }
             )
 

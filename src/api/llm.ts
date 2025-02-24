@@ -92,13 +92,13 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     {
         provider: 'anthropic',
         id: 'claude-3-7-sonnet-latest',
-        modelId: 'claude-3-7-sonnet-20240307',
+        modelId: 'claude-3-7-sonnet-latest',
         name: 'Claude 3.7 Sonnet'
     },
     {
         provider: 'anthropic',
         id: 'claude-3-7-sonnet-thinking-latest',
-        modelId: 'claude-3-7-sonnet-20240307',
+        modelId: 'claude-3-7-sonnet-latest',
         name: 'Claude 3.7 Sonnet (Thinking)',
         thinkingTokens: 16000
     },

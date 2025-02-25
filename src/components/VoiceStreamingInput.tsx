@@ -245,30 +245,6 @@ export function VoiceStreamingInput({
 
     return (
         <div className="relative">
-            {/* Glow effect container */}
-            {isRecording && (
-                <>
-                    {/* Intense inner glow */}
-                    <div
-                        className="absolute inset-0 rounded-full"
-                        style={{
-                            background: `radial-gradient(circle, rgba(239, 68, 68, ${audioLevel * 0.8}) 0%, transparent 70%)`,
-                            transform: `scale(${1.2 + audioLevel * 0.3})`,
-                            filter: 'blur(2px)'
-                        }}
-                    />
-                    {/* Pulsing outer glow */}
-                    <div
-                        className="absolute inset-0 rounded-full animate-ping"
-                        style={{
-                            background: `radial-gradient(circle, rgba(239, 68, 68, ${audioLevel * 0.6}) 0%, transparent 75%)`,
-                            transform: `scale(${1.4 + audioLevel * 0.4})`,
-                            filter: 'blur(3px)'
-                        }}
-                    />
-                </>
-            )}
-
             <button
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={handleClick}
@@ -276,11 +252,10 @@ export function VoiceStreamingInput({
                 className={`
                     relative
                     transition-all duration-200
-                    ${isProcessing
-                        ? 'text-blue-600 dark:text-blue-400'
-                        : isRecording
-                            ? 'text-red-600 dark:text-red-400'
-                            : 'text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300'
+                    rounded-full p-2
+                    ${isRecording 
+                        ? 'bg-red-500 dark:bg-red-600' 
+                        : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600'
                     }
                     disabled:opacity-50 disabled:cursor-not-allowed
                     focus:outline-none
@@ -303,8 +278,14 @@ export function VoiceStreamingInput({
                         size={iconSize}
                         className={`
                             transition-all duration-200
-                            ${isRecording ? 'text-red-600 dark:text-red-400' : 'hover:scale-110'}
+                            ${isRecording 
+                                ? audioLevel > 0.1 
+                                    ? 'text-white' 
+                                    : 'text-black dark:text-black'
+                                : 'text-gray-700 dark:text-gray-300'
+                            }
                         `}
+                        style={isRecording && audioLevel > 0.1 ? { opacity: Math.max(0.5, audioLevel) } : {}}
                     />
 
                     {/* Processing spinner */}

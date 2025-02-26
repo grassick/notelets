@@ -40,14 +40,35 @@ export function VoiceStreamingInput({
     const [isRecording, setIsRecording] = useState(false)
     const [isProcessing, setIsProcessing] = useState(false)
     const [audioLevel, setAudioLevel] = useState(0)
+    const [isInitializing, setIsInitializing] = useState(false)
     const recorder = useRef<RecordRTCPromisesHandler | null>(null)
     const stream = useRef<MediaStream | null>(null)
     const audioContext = useRef<AudioContext | null>(null)
     const audioAnalyser = useRef<AnalyserNode | null>(null)
     const audioLevelInterval = useRef<NodeJS.Timeout | null>(null)
+    const isIOS = useMemo(() => /iPad|iPhone|iPod/.test(navigator.userAgent), [])
 
-    // Cleanup recording on unmount
+    // Pre-initialize AudioContext on component mount for iOS
     useEffect(() => {
+        // Only pre-initialize for iOS to avoid unnecessary resource usage on other platforms
+        if (isIOS && !audioContext.current) {
+            try {
+                // Create but don't start the AudioContext yet
+                audioContext.current = new AudioContext({
+                    sampleRate: 16000,
+                    latencyHint: 'interactive'
+                })
+                
+                // Suspend it immediately to save resources
+                if (audioContext.current.state === 'running') {
+                    audioContext.current.suspend()
+                }
+            } catch (error) {
+                console.warn('Failed to pre-initialize AudioContext:', error)
+                // Not critical, we'll try again when recording starts
+            }
+        }
+        
         return () => {
             if (recorder.current && isRecording) {
                 stopRecording()
@@ -62,7 +83,7 @@ export function VoiceStreamingInput({
                 stream.current.getTracks().forEach(track => track.stop())
             }
         }
-    }, [])
+    }, [isIOS])
 
     // Update audio level visualization
     function updateAudioLevel() {
@@ -89,9 +110,19 @@ export function VoiceStreamingInput({
             return
         }
 
+        // Set initializing state to provide immediate feedback
+        setIsInitializing(true)
+
         try {
-            // iOS Safari requires user interaction to create AudioContext
-            audioContext.current = new AudioContext()
+            // If we already have an AudioContext, resume it instead of creating a new one
+            if (!audioContext.current) {
+                audioContext.current = new AudioContext({
+                    sampleRate: 16000,
+                    latencyHint: 'interactive'
+                })
+            } else if (audioContext.current.state === 'suspended') {
+                await audioContext.current.resume()
+            }
 
             // iOS specific constraints that help with consistency
             const constraints = {
@@ -99,13 +130,14 @@ export function VoiceStreamingInput({
                     echoCancellation: true,
                     noiseSuppression: true,
                     autoGainControl: true,
-                    // Force low-latency mode where possible
                     latency: 0,
-                    // Specifically request voice optimization
                     channelCount: 1,
+                    sampleRate: 16000,
+                    sampleSize: 16
                 }
             }
 
+            // Request media stream - this is the most time-consuming operation
             stream.current = await navigator.mediaDevices.getUserMedia(constraints)
 
             // Check if we actually got audio tracks
@@ -113,24 +145,55 @@ export function VoiceStreamingInput({
                 throw new Error('No audio track available')
             }
 
+            // Set up audio analysis
             const source = audioContext.current.createMediaStreamSource(stream.current)
             audioAnalyser.current = audioContext.current.createAnalyser()
             audioAnalyser.current.fftSize = 256
             source.connect(audioAnalyser.current)
             audioLevelInterval.current = setInterval(updateAudioLevel, 50)
 
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
             if (isIOS) {
                 const options: any = {
                     type: 'audio',
-                    mimeType: 'audio/webm;codecs=opus', // Opus compression
+                    mimeType: 'audio/wav',
                     recorderType: RecordRTC.StereoAudioRecorder,
-                    audioBitsPerSecond: 24000, // Adjust for quality (24kbps-96kbps)
-                    bufferSize: 4096, // Balance between latency & performance
+                    audioBitsPerSecond: 16000,
+                    bufferSize: 2048,
                     numberOfAudioChannels: 1,
+                    timeSlice: 500,
+                    disableLogs: true,
+                    checkForInactiveTracks: true,
+                    detectSilence: false
                 }
 
+                // Initialize recorder
                 recorder.current = new RecordRTCPromisesHandler(stream.current, options)
+                
+                // Reduced delay from 300ms to 100ms - just enough to let iOS prepare
+                // but not so long that it feels laggy to the user
+                setTimeout(async () => {
+                    try {
+                        if (recorder.current) {
+                            await recorder.current.startRecording()
+                            setIsRecording(true)
+                            setIsInitializing(false)
+                        }
+                    } catch (iosError) {
+                        console.error('iOS specific recording error:', iosError)
+                        onError?.(iosError instanceof Error ? iosError.message : 'iOS recording failed to start')
+                        // Cleanup
+                        if (stream.current) {
+                            stream.current.getTracks().forEach(track => track.stop())
+                            stream.current = null
+                        }
+                        if (audioContext.current) {
+                            audioContext.current.close()
+                            audioContext.current = null
+                        }
+                        setAudioLevel(0)
+                        setIsInitializing(false)
+                    }
+                }, 100)
             } else {
                 // Non-iOS setup remains the same
                 recorder.current = new RecordRTCPromisesHandler(stream.current, {
@@ -143,10 +206,11 @@ export function VoiceStreamingInput({
                     // Ensure we get data frequently for better reliability
                     timeSlice: 1000
                 })
+                
+                await recorder.current.startRecording()
+                setIsRecording(true)
+                setIsInitializing(false)
             }
-
-            await recorder.current.startRecording()
-            setIsRecording(true)
 
         } catch (error) {
             console.error('Error starting recording:', error)
@@ -168,6 +232,7 @@ export function VoiceStreamingInput({
                 audioAnalyser.current = null
             }
             setAudioLevel(0)
+            setIsInitializing(false)
         }
     }
 
@@ -191,6 +256,12 @@ export function VoiceStreamingInput({
                 audioAnalyser.current = null
             }
 
+            // iOS specific handling - add a small delay before stopping
+            if (isIOS) {
+                // Give iOS a moment to finalize the recording
+                await new Promise(resolve => setTimeout(resolve, 200))
+            }
+
             // Stop recording and get blob
             await recorder.current.stopRecording()
             const blob = await recorder.current.getBlob()
@@ -204,6 +275,11 @@ export function VoiceStreamingInput({
             // Verify we have valid audio data
             if (blob.size < 100) {
                 throw new Error(`Recording appears to be empty: ${blob.size} bytes`)
+            }
+
+            // For iOS, verify the blob type is correct
+            if (isIOS && blob.type !== 'audio/wav') {
+                console.warn(`iOS recording produced unexpected MIME type: ${blob.type}, expected audio/wav`)
             }
 
             // Transcribe audio
@@ -255,7 +331,9 @@ export function VoiceStreamingInput({
                     rounded-full p-2
                     ${isRecording 
                         ? 'bg-red-500 dark:bg-red-600' 
-                        : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600'
+                        : isInitializing
+                            ? 'bg-yellow-400 dark:bg-yellow-500'
+                            : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600'
                     }
                     disabled:opacity-50 disabled:cursor-not-allowed
                     focus:outline-none
@@ -263,11 +341,13 @@ export function VoiceStreamingInput({
                 `}
                 aria-label={
                     isProcessing ? "Processing voice input..."
+                        : isInitializing ? "Initializing microphone..."
                         : isRecording ? "Stop recording"
                             : "Start voice input"
                 }
                 title={
                     isProcessing ? "Converting speech to text..."
+                        : isInitializing ? "Preparing microphone..."
                         : isRecording ? "Tap to stop recording"
                             : "Tap to start voice input"
                 }
@@ -282,17 +362,25 @@ export function VoiceStreamingInput({
                                 ? audioLevel > 0.1 
                                     ? 'text-white' 
                                     : 'text-black dark:text-black'
-                                : 'text-gray-700 dark:text-gray-300'
+                                : isInitializing
+                                    ? 'text-black dark:text-black'
+                                    : 'text-gray-700 dark:text-gray-300'
                             }
                         `}
                         style={isRecording && audioLevel > 0.1 ? { opacity: Math.max(0.5, audioLevel) } : {}}
                     />
 
                     {/* Processing spinner */}
-                    {isProcessing && (
+                    {(isProcessing || isInitializing) && (
                         <AiOutlineLoading3Quarters
                             size={iconSize * 1.5}
-                            className="absolute inset-0 -m-1 animate-spin text-blue-600 dark:text-blue-400"
+                            className={`
+                                absolute inset-0 -m-1 animate-spin
+                                ${isProcessing 
+                                    ? 'text-blue-600 dark:text-blue-400' 
+                                    : 'text-black dark:text-white'
+                                }
+                            `}
                         />
                     )}
                 </div>

@@ -32,6 +32,7 @@
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.3.6",
+    "turndown-plugin-gfm": "link:@types/@guyplusplus/turndown-plugin-gfm",
     "typescript": "^4.7.2",
     "vite": "^5.0.10",
     "vite-plugin-mkcert": "^1.17.6",
@@ -40,9 +41,14 @@
   "dependencies": {
     "@babel/standalone": "^7.18.3",
     "@google/generative-ai": "^0.21.0",
+    "@guyplusplus/turndown-plugin-gfm": "^1.0.7",
     "@headlessui/react": "^2.2.0",
     "@tiptap/extension-link": "^2.11.5",
     "@tiptap/extension-placeholder": "^2.11.5",
+    "@tiptap/extension-table": "^2.11.5",
+    "@tiptap/extension-table-cell": "^2.11.5",
+    "@tiptap/extension-table-header": "^2.11.5",
+    "@tiptap/extension-table-row": "^2.11.5",
     "@tiptap/pm": "^2.11.5",
     "@tiptap/react": "^2.11.5",
     "@tiptap/starter-kit": "^2.11.5",
@@ -78,7 +84,6 @@
     "recordrtc": "^5.6.2",
     "remark-gfm": "^4.0.0",
     "turndown": "^7.2.0",
-    "turndown-plugin-gfm": "^1.0.2",
     "use-debounce": "^10.0.4",
     "uuid": "^8.3.2"
   }

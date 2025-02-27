@@ -5,14 +5,18 @@ import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import MarkdownIt from 'markdown-it'
 import TurndownService from 'turndown'
-import { gfm } from 'turndown-plugin-gfm'
+import { gfm } from '@guyplusplus/turndown-plugin-gfm'
 import { RichTextToolbar } from './RichTextToolbar'
 import { RichTextBubbleMenu } from './RichTextBubbleMenu'
 import { useDebouncedCallback } from 'use-debounce'
 import { VoiceStreamingInput } from './components/VoiceStreamingInput'
 import { UserSettings } from './types/settings'
+import Table from '@tiptap/extension-table'
+import TableCell from '@tiptap/extension-table-cell'
+import TableHeader from '@tiptap/extension-table-header'
+import TableRow from '@tiptap/extension-table-row'
 
-const md = MarkdownIt('commonmark', {
+const md = MarkdownIt({
   html: true,
   breaks: true,
   linkify: true,
@@ -25,7 +29,7 @@ const turndown = new TurndownService({
   codeBlockStyle: 'fenced'
 }).use(gfm)
 
-const debug = false // Set to true to enable debug logging
+const debug = true // Set to true to enable debug logging
 
 /**
  * Unwraps paragraph tags inside list items while preserving their content
@@ -125,7 +129,11 @@ export function RichTextEditor({
       }),
       Placeholder.configure({
         placeholder: placeholder || 'Start typing...'
-      })
+      }),
+      Table.configure(),
+      TableRow,
+      TableHeader,
+      TableCell,
     ],
     content: initialHtml,
     editorProps: {

@@ -352,8 +352,7 @@ export function VoiceStreamingInput({
                             : "Tap to start voice input"
                 }
             >
-                {/* Icon container */}
-                <div className="relative">
+                <div className="relative" style={{ width: `${iconSize * 1.5}px`, height: `${iconSize * 1.5}px` }}>
                     <FaMicrophone
                         size={iconSize}
                         className={`
@@ -372,16 +371,18 @@ export function VoiceStreamingInput({
 
                     {/* Processing spinner */}
                     {(isProcessing || isInitializing) && (
-                        <AiOutlineLoading3Quarters
-                            size={iconSize * 1.5}
-                            className={`
-                                absolute inset-0 -m-1 animate-spin
-                                ${isProcessing 
-                                    ? 'text-blue-600 dark:text-blue-400' 
-                                    : 'text-black dark:text-white'
-                                }
-                            `}
-                        />
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ top: -12, left: -12}}>
+                            <AiOutlineLoading3Quarters
+                                className={`
+                                    animate-spin
+                                    ${isProcessing 
+                                        ? 'text-blue-600 dark:text-blue-400' 
+                                        : 'text-black dark:text-white'
+                                    }
+                                `}
+                                style={{ width: `${iconSize * 1.5}px`, height: `${iconSize * 1.5}px` }}
+                            />
+                        </div>
                     )}
                 </div>
             </button>

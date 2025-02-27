@@ -352,8 +352,12 @@ export function VoiceStreamingInput({
                             : "Tap to start voice input"
                 }
             >
-                {/* Icon container */}
-                <div className="relative">
+                {isProcessing || isInitializing ? (
+                    <AiOutlineLoading3Quarters
+                        size={iconSize}
+                        className="animate-spin text-blue-600 dark:text-blue-400"
+                    />
+                ) : (
                     <FaMicrophone
                         size={iconSize}
                         className={`
@@ -362,29 +366,12 @@ export function VoiceStreamingInput({
                                 ? audioLevel > 0.1 
                                     ? 'text-white' 
                                     : 'text-black dark:text-black'
-                                : isInitializing
-                                    ? 'text-black dark:text-black'
-                                    : 'text-gray-700 dark:text-gray-300'
+                                : 'text-gray-700 dark:text-gray-300'
                             }
                         `}
                         style={isRecording && audioLevel > 0.1 ? { opacity: Math.max(0.5, audioLevel) } : {}}
                     />
-
-                    {/* Processing spinner */}
-                    {(isProcessing || isInitializing || true
-                    ) && (
-                        <AiOutlineLoading3Quarters
-                            size={iconSize * 1.5}
-                            className={`
-                                absolute inset-0 -m-1 animate-spin
-                                ${isProcessing 
-                                    ? 'text-blue-600 dark:text-blue-400' 
-                                    : 'text-black dark:text-white'
-                                }
-                            `}
-                        />
-                    )}
-                </div>
+                )}
             </button>
         </div>
     )

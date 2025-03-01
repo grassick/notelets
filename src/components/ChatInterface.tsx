@@ -4,7 +4,7 @@ import type { ModelId } from '../api/llm'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { UserSettings } from '../types/settings'
-import { VoiceStreamingInput } from './VoiceStreamingInput'
+import { VoiceStreamingInput } from './VoiceStreamingInput2'
 import { getCardTitle } from '../modules/cards'
 
 interface ChatInterfaceProps {

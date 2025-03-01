@@ -20,7 +20,7 @@ interface VoiceStreamingInputProps {
 
 /**
  * A voice input button that handles recording and progressive transcription using OpenAI's Whisper API
- * Uses pure AudioContext for better control and fewer dependencies
+ * Uses modern AudioWorkletNode for high-performance audio processing
  */
 export function VoiceStreamingInput({
     userSettings,
@@ -45,15 +45,59 @@ export function VoiceStreamingInput({
     const audioContext = useRef<AudioContext | null>(null)
     const mediaStreamSource = useRef<MediaStreamAudioSourceNode | null>(null)
     const audioAnalyser = useRef<AnalyserNode | null>(null)
-    const audioProcessor = useRef<ScriptProcessorNode | null>(null)
+    const audioWorkletNode = useRef<AudioWorkletNode | null>(null)
     const audioLevelInterval = useRef<NodeJS.Timeout | null>(null)
     const stream = useRef<MediaStream | null>(null)
+    const workletReady = useRef<boolean>(false)
+    const lastClickTime = useRef<number>(0)
     
     // Audio data storage
     const audioChunks = useRef<Float32Array[]>([])
     const audioSampleRate = useRef<number>(0)
     
     const isIOS = useMemo(() => /iPad|iPhone|iPod/.test(navigator.userAgent), [])
+
+    // Audio worklet processor code as a string
+    const audioRecorderWorkletCode = `
+    class AudioRecorderProcessor extends AudioWorkletProcessor {
+      constructor() {
+        super()
+        this.recording = false
+        this.port.onmessage = (e) => {
+          if (e.data.message === 'start') {
+            this.recording = true
+          } else if (e.data.message === 'stop') {
+            this.recording = false
+          }
+        }
+      }
+    
+      process(inputs, outputs) {
+        // Skip if not recording or no inputs
+        if (!this.recording || !inputs[0] || !inputs[0][0]) return true
+        
+        // Get the input data
+        const input = inputs[0][0]
+        
+        // Create a copy to send via the port
+        const buffer = new Float32Array(input.length)
+        buffer.set(input)
+        
+        // Send the buffer to the main thread
+        this.port.postMessage({ audioBuffer: buffer })
+        
+        return true
+      }
+    }
+    
+    registerProcessor('audio-recorder-processor', AudioRecorderProcessor)
+    `
+
+    // Create a Blob URL for the worklet processor
+    const audioWorkletBlobURL = useMemo(() => {
+        const blob = new Blob([audioRecorderWorkletCode], { type: 'application/javascript' })
+        return URL.createObjectURL(blob)
+    }, [])
 
     // Pre-initialize AudioContext on component mount for iOS
     useEffect(() => {
@@ -73,17 +117,21 @@ export function VoiceStreamingInput({
             }
         }
         
+        // Cleanup only on component unmount
         return () => {
-            if (isRecording) {
-                stopRecording()
-            }
             cleanupAudio()
+            
+            // Revoke the Blob URL when component unmounts
+            URL.revokeObjectURL(audioWorkletBlobURL)
         }
-    }, [isIOS, isRecording])
+    }, [isIOS, audioWorkletBlobURL]) // Remove isRecording from dependencies
 
     // Update audio level visualization
     function updateAudioLevel() {
-        if (!audioAnalyser.current) return
+        if (!audioAnalyser.current) {
+            console.log('No audio analyser available for level update')
+            return
+        }
         const bufferLength = audioAnalyser.current.fftSize
         const dataArray = new Uint8Array(bufferLength)
         audioAnalyser.current.getByteTimeDomainData(dataArray)
@@ -94,6 +142,9 @@ export function VoiceStreamingInput({
         }
         const rms = Math.sqrt(sumSquares / bufferLength) * 6
         const normalizedLevel = Math.min(rms / 128, 1)
+        if (normalizedLevel > 0.1) {
+            console.log('Audio level:', normalizedLevel.toFixed(2))
+        }
         setAudioLevel(normalizedLevel)
     }
 
@@ -101,14 +152,18 @@ export function VoiceStreamingInput({
      * Cleanup all audio resources
      */
     function cleanupAudio() {
+        console.log('Cleaning up audio resources')
+        
         if (audioLevelInterval.current) {
             clearInterval(audioLevelInterval.current)
             audioLevelInterval.current = null
         }
         
-        if (audioProcessor.current) {
-            audioProcessor.current.disconnect()
-            audioProcessor.current = null
+        if (audioWorkletNode.current) {
+            console.log('Disconnecting audio worklet node')
+            audioWorkletNode.current.disconnect()
+            audioWorkletNode.current.port.postMessage({ message: 'stop' })
+            audioWorkletNode.current = null
         }
         
         if (audioAnalyser.current) {
@@ -122,15 +177,18 @@ export function VoiceStreamingInput({
         }
         
         if (stream.current) {
+            console.log('Stopping media stream tracks')
             stream.current.getTracks().forEach(track => track.stop())
             stream.current = null
         }
         
         if (audioContext.current) {
+            console.log('Closing audio context')
             audioContext.current.close()
             audioContext.current = null
         }
         
+        workletReady.current = false
         audioChunks.current = []
     }
 
@@ -177,7 +235,7 @@ export function VoiceStreamingInput({
     }
     
     /**
-     * Downsamples audio data to a lower sample rate
+     * Downsamples audio data to a lower sample rate using a more accurate algorithm
      */
     function downsampleAudio(audioData: Float32Array, sampleRate: number, targetSampleRate: number): Float32Array {
         if (targetSampleRate === sampleRate) {
@@ -188,17 +246,29 @@ export function VoiceStreamingInput({
         const newLength = Math.round(audioData.length / ratio)
         const result = new Float32Array(newLength)
         
+        // Higher quality linear interpolation with anti-aliasing
+        const filter = Math.min(1.0, targetSampleRate / sampleRate)
+        
         for (let i = 0; i < newLength; i++) {
             const position = i * ratio
-            const index = Math.floor(position)
-            const fraction = position - index
+            const leftIndex = Math.floor(position)
+            const rightIndex = Math.ceil(position)
+            const fraction = position - leftIndex
             
-            // Linear interpolation
-            if (index + 1 < audioData.length) {
-                result[i] = audioData[index] * (1 - fraction) + audioData[index + 1] * fraction
-            } else {
-                result[i] = audioData[index]
+            // Simple anti-aliasing by averaging nearby samples
+            let sum = 0
+            let count = 0
+            const filterWidth = Math.ceil(ratio * filter)
+            
+            for (let j = Math.max(0, leftIndex - filterWidth); j <= Math.min(audioData.length - 1, rightIndex + filterWidth); j++) {
+                // Apply a simple triangular window function
+                const distance = Math.abs(position - j) / filterWidth
+                const weight = Math.max(0, 1 - distance)
+                sum += audioData[j] * weight
+                count += weight
             }
+            
+            result[i] = count > 0 ? sum / count : 0
         }
         
         return result
@@ -243,88 +313,121 @@ export function VoiceStreamingInput({
         return result
     }
 
+    /**
+     * Initialize the AudioWorklet processor
+     */
+    async function initializeAudioWorklet(context: AudioContext): Promise<boolean> {
+        console.log('Initializing audio worklet...')
+        if (workletReady.current) {
+            console.log('Audio worklet already initialized')
+            return true
+        }
+        
+        try {
+            await context.audioWorklet.addModule(audioWorkletBlobURL)
+            console.log('Audio worklet successfully initialized')
+            workletReady.current = true
+            return true
+        } catch (error) {
+            console.error('Failed to initialize Audio Worklet:', error)
+            onError?.('Failed to initialize audio processor')
+            return false
+        }
+    }
+
     async function startRecording(e: React.MouseEvent) {
+        console.log('Starting recording...')
         e.preventDefault()
         e.stopPropagation()
 
         if (!openaiClient) {
+            console.error('OpenAI client not configured')
             onError?.('OpenAI API key not configured')
             return
         }
 
-        // Set initializing state to provide immediate feedback
         setIsInitializing(true)
-        audioChunks.current = [] // Reset audio chunks
+        audioChunks.current = []
 
         try {
-            // If we already have an AudioContext, resume it instead of creating a new one
             if (!audioContext.current) {
+                console.log('Creating new AudioContext')
                 audioContext.current = new AudioContext()
             } else if (audioContext.current.state === 'suspended') {
+                console.log('Resuming suspended AudioContext')
                 await audioContext.current.resume()
             }
             
-            // Store the sample rate
-            audioSampleRate.current = audioContext.current.sampleRate
+            const workletInitialized = await initializeAudioWorklet(audioContext.current)
+            if (!workletInitialized) {
+                throw new Error('Failed to initialize audio processor')
+            }
             
-            // iOS specific constraints that help with consistency
-            const constraints = {
+            audioSampleRate.current = audioContext.current.sampleRate
+            console.log('Audio sample rate:', audioSampleRate.current)
+            
+            console.log('Requesting media stream...')
+            stream.current = await navigator.mediaDevices.getUserMedia({
                 audio: {
                     echoCancellation: true,
                     noiseSuppression: true,
                     autoGainControl: true,
                     channelCount: 1
                 }
-            }
+            })
 
-            // Request media stream
-            stream.current = await navigator.mediaDevices.getUserMedia(constraints)
-
-            // Check if we actually got audio tracks
             if (!stream.current.getAudioTracks().length) {
                 throw new Error('No audio track available')
             }
+            console.log('Media stream acquired successfully')
 
-            // Set up audio processing pipeline
             mediaStreamSource.current = audioContext.current.createMediaStreamSource(stream.current)
             
-            // Set up audio analysis for visualization
+            console.log('Setting up audio analyser')
             audioAnalyser.current = audioContext.current.createAnalyser()
             audioAnalyser.current.fftSize = 256
             mediaStreamSource.current.connect(audioAnalyser.current)
             audioLevelInterval.current = setInterval(updateAudioLevel, 50)
             
-            // Create ScriptProcessorNode for recording
-            // Note: This is deprecated but more widely supported than AudioWorkletNode
-            audioProcessor.current = audioContext.current.createScriptProcessor(4096, 1, 1)
+            console.log('Creating AudioWorkletNode')
+            audioWorkletNode.current = new AudioWorkletNode(audioContext.current, 'audio-recorder-processor', {
+                numberOfInputs: 1,
+                numberOfOutputs: 1,
+                channelCount: 1,
+                processorOptions: {}
+            })
             
-            // Handle audio processing event
-            audioProcessor.current.onaudioprocess = (e) => {
-                if (!isRecording) return
-                
-                // Get channel data and store it
-                const audioBuffer = e.inputBuffer.getChannelData(0)
-                const bufferCopy = new Float32Array(audioBuffer.length)
-                bufferCopy.set(audioBuffer)
-                audioChunks.current.push(bufferCopy)
+            audioWorkletNode.current.port.onmessage = (event) => {
+                if (event.data.audioBuffer) {
+                    audioChunks.current.push(event.data.audioBuffer)
+                    if (audioChunks.current.length % 50 === 0) {
+                        console.log('Recorded chunks:', audioChunks.current.length)
+                    }
+                }
             }
             
-            // Connect processor but not to the destination (we don't want to hear playback)
-            mediaStreamSource.current.connect(audioProcessor.current)
-            audioProcessor.current.connect(audioContext.current.destination)
+            console.log('Connecting audio nodes')
+            mediaStreamSource.current.connect(audioWorkletNode.current)
+            const silentGain = audioContext.current.createGain()
+            silentGain.gain.value = 0
+            audioWorkletNode.current.connect(silentGain)
+            silentGain.connect(audioContext.current.destination)
             
-            // Short delay for iOS to prepare
+            console.log('Starting audio recording')
+            audioWorkletNode.current.port.postMessage({ message: 'start' })
+            
             if (isIOS) {
+                console.log('iOS detected, adding delay')
                 await new Promise(resolve => setTimeout(resolve, 100))
             }
             
             setIsRecording(true)
             setIsInitializing(false)
+            console.log('Recording started successfully')
 
         } catch (error) {
             console.error('Error starting recording:', error)
             onError?.(error instanceof Error ? error.message : 'Failed to start recording')
-            // Cleanup any partial setup
             cleanupAudio()
             setAudioLevel(0)
             setIsInitializing(false)
@@ -332,31 +435,38 @@ export function VoiceStreamingInput({
     }
 
     async function stopRecording() {
-        if (!audioContext.current || !openaiClient) return
+        console.log('Stopping recording...')
+        if (!audioContext.current || !openaiClient || !audioWorkletNode.current) {
+            console.error('Missing required audio components for stopping')
+            return
+        }
 
         setIsRecording(false)
         setIsProcessing(true)
 
         try {
-            // iOS specific handling - add a small delay before stopping
+            if (audioWorkletNode.current) {
+                console.log('Sending stop message to worklet')
+                audioWorkletNode.current.port.postMessage({ message: 'stop' })
+            }
+            
             if (isIOS) {
-                // Give iOS a moment to finalize the recording
+                console.log('iOS detected, adding stop delay')
                 await new Promise(resolve => setTimeout(resolve, 200))
             }
             
-            // Merge all audio chunks
+            console.log('Merging audio chunks...')
             const audioData = mergeAudioChunks(audioChunks.current)
+            console.log('Total samples:', audioData.length)
             
-            // Stop audio visualization
             if (audioLevelInterval.current) {
                 clearInterval(audioLevelInterval.current)
                 audioLevelInterval.current = null
             }
             
-            // Cleanup audio nodes
-            if (audioProcessor.current) {
-                audioProcessor.current.disconnect()
-                audioProcessor.current = null
+            if (audioWorkletNode.current) {
+                audioWorkletNode.current.disconnect()
+                audioWorkletNode.current = null
             }
             
             if (audioAnalyser.current) {
@@ -369,26 +479,26 @@ export function VoiceStreamingInput({
                 mediaStreamSource.current = null
             }
             
-            // Stop all tracks
             if (stream.current) {
                 stream.current.getTracks().forEach(track => track.stop())
                 stream.current = null
             }
 
-            // Verify we have valid audio data
             if (audioData.length < 100) {
                 throw new Error(`Recording appears to be empty: ${audioData.length} samples`)
             }
             
-            // Create WAV file, downsampling to 16kHz
+            console.log('Creating WAV file...')
             const blob = createWavFile(audioData, audioSampleRate.current, 16000)
+            console.log('WAV file size:', blob.size, 'bytes')
 
-            // Transcribe audio
+            console.log('Starting transcription...')
             try {
                 const transcription = await openaiClient.transcribeAudio(blob)
                 if (!transcription || transcription.trim().length === 0) {
                     throw new Error('No speech detected in recording')
                 }
+                console.log('Transcription successful:', transcription)
                 onTranscription(transcription)
             } catch (error) {
                 console.error('Transcription error:', error)
@@ -400,19 +510,37 @@ export function VoiceStreamingInput({
         } finally {
             setIsProcessing(false)
             
-            // Cleanup audio context
             if (audioContext.current) {
+                console.log('Closing audio context')
                 audioContext.current.close()
                 audioContext.current = null
             }
             
             audioChunks.current = []
+            console.log('Recording cleanup complete')
         }
     }
 
     function handleClick(e: React.MouseEvent) {
         e.preventDefault()
         e.stopPropagation()
+
+        // Prevent rapid clicking
+        const now = Date.now()
+        if (now - lastClickTime.current < 1000) {
+            console.log('Click ignored - too soon after last click')
+            return
+        }
+        lastClickTime.current = now
+
+        // Don't allow starting if we're already processing or initializing
+        if (!isRecording && (isProcessing || isInitializing)) {
+            console.log('Click ignored - already processing or initializing')
+            return
+        }
+
+        console.log('Click handled, current state:', { isRecording, isProcessing, isInitializing })
+        
         if (isRecording) {
             stopRecording()
         } else {
@@ -427,7 +555,6 @@ export function VoiceStreamingInput({
     return (
         <div className="relative">
             <button
-                onMouseDown={(e) => e.preventDefault()}
                 onClick={handleClick}
                 disabled={isProcessing}
                 className={`

@@ -5,7 +5,7 @@ import { OpenAIClient } from '../api/openai'
 import { UserSettings } from '../types/settings'
 
 /** Props for the VoiceStreamingInput component */
-interface VoiceStreamingInputProps {
+interface VoiceTranscriptionInputProps {
     /** User settings */
     userSettings: UserSettings
     /** Optional class name for the button */
@@ -22,13 +22,13 @@ interface VoiceStreamingInputProps {
  * A voice input button that handles recording and progressive transcription using OpenAI's Whisper API
  * Uses modern AudioWorkletNode for high-performance audio processing
  */
-export function VoiceStreamingInput({
+export function VoiceTranscriptionInput({
     userSettings,
     className = '',
     iconSize = 20,
     onTranscription,
     onError
-}: VoiceStreamingInputProps) {
+}: VoiceTranscriptionInputProps) {
     const openaiClient = useMemo(() => {
         if (!userSettings.llm.openaiKey) {
             return null

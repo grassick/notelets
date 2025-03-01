@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { VoiceStreamingInput } from './components/VoiceStreamingInput'
+import { VoiceTranscriptionInput } from './components/VoiceTranscriptionInput'
 import { UserSettings } from './types/settings'
 
 /**
@@ -123,7 +123,7 @@ export function VoiceInputTester() {
                             Voice Input Controls
                         </h2>
                         <div className="flex space-x-2">
-                            <VoiceStreamingInput
+                            <VoiceTranscriptionInput
                                 userSettings={userSettings}
                                 onTranscription={handleTranscription}
                                 onError={handleError}

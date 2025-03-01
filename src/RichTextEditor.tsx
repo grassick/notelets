@@ -9,7 +9,7 @@ import { gfm } from '@guyplusplus/turndown-plugin-gfm'
 import { RichTextToolbar } from './RichTextToolbar'
 import { RichTextBubbleMenu } from './RichTextBubbleMenu'
 import { useDebouncedCallback } from 'use-debounce'
-import { VoiceStreamingInput } from './components/VoiceStreamingInput'
+import { VoiceTranscriptionInput } from './components/VoiceTranscriptionInput'
 import { UserSettings } from './types/settings'
 import Table from '@tiptap/extension-table'
 import TableCell from '@tiptap/extension-table-cell'
@@ -201,7 +201,7 @@ export function RichTextEditor({
         />
         {showVoiceInput && (
           <div className="absolute bottom-0 right-1 z-10">
-            <VoiceStreamingInput
+            <VoiceTranscriptionInput
               userSettings={userSettings}
               onTranscription={handleVoiceTranscription}
               iconSize={16}

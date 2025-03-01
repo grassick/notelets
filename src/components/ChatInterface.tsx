@@ -4,7 +4,7 @@ import type { ModelId } from '../api/llm'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { UserSettings } from '../types/settings'
-import { VoiceStreamingInput } from './VoiceStreamingInput2'
+import { VoiceTranscriptionInput } from './VoiceTranscriptionInput'
 import { getCardTitle } from '../modules/cards'
 
 interface ChatInterfaceProps {
@@ -358,7 +358,7 @@ function ChatInput({ message, onMessageChange, onSendMessage, onStopStreaming, i
                     disabled={isLoading}
                 />
                 <div className="absolute right-4 bottom-2 flex gap-2">
-                    <VoiceStreamingInput 
+                    <VoiceTranscriptionInput 
                         userSettings={userSettings}
                         onTranscription={handleVoiceTranscription}
                         iconSize={16}

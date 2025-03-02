@@ -3,6 +3,7 @@ import { FaMicrophone } from 'react-icons/fa'
 import { AiOutlineLoading3Quarters } from 'react-icons/ai'
 import { OpenAIClient } from '../api/openai'
 import { UserSettings } from '../types/settings'
+import { GeminiClient } from '../api/gemini'
 
 /** Props for the VoiceStreamingInput component */
 interface VoiceTranscriptionInputProps {
@@ -35,6 +36,13 @@ export function VoiceTranscriptionInput({
         }
         return new OpenAIClient(userSettings.llm.openaiKey)
     }, [userSettings.llm.openaiKey])
+
+    const geminiClient = useMemo(() => {
+        if (!userSettings.llm.geminiKey) {
+            return null
+        }
+        return new GeminiClient(userSettings.llm.geminiKey)
+    }, [userSettings.llm.geminiKey])
 
     const [isRecording, setIsRecording] = useState(false)
     const [isProcessing, setIsProcessing] = useState(false)
@@ -161,18 +169,30 @@ export function VoiceTranscriptionInput({
         
         if (audioWorkletNode.current) {
             console.log('Disconnecting audio worklet node')
-            audioWorkletNode.current.disconnect()
-            audioWorkletNode.current.port.postMessage({ message: 'stop' })
+            try {
+                audioWorkletNode.current.disconnect()
+                audioWorkletNode.current.port.postMessage({ message: 'stop' })
+            } catch (e) {
+                console.warn('Error disconnecting audio worklet node:', e)
+            }
             audioWorkletNode.current = null
         }
         
         if (audioAnalyser.current) {
-            audioAnalyser.current.disconnect()
+            try {
+                audioAnalyser.current.disconnect()
+            } catch (e) {
+                console.warn('Error disconnecting audio analyser:', e)
+            }
             audioAnalyser.current = null
         }
         
         if (mediaStreamSource.current) {
-            mediaStreamSource.current.disconnect()
+            try {
+                mediaStreamSource.current.disconnect()
+            } catch (e) {
+                console.warn('Error disconnecting media stream source:', e)
+            }
             mediaStreamSource.current = null
         }
         
@@ -184,7 +204,7 @@ export function VoiceTranscriptionInput({
         
         if (audioContext.current) {
             console.log('Closing audio context')
-            audioContext.current.close()
+            audioContext.current.close().catch(e => console.warn('Error closing audio context:', e))
             audioContext.current = null
         }
         
@@ -318,12 +338,22 @@ export function VoiceTranscriptionInput({
      */
     async function initializeAudioWorklet(context: AudioContext): Promise<boolean> {
         console.log('Initializing audio worklet...')
-        if (workletReady.current) {
-            console.log('Audio worklet already initialized')
-            return true
-        }
+        
+        // Always re-initialize worklet when starting a new recording
+        workletReady.current = false
         
         try {
+            // Ensure any previous worklet is properly cleaned up
+            if (audioWorkletNode.current) {
+                try {
+                    audioWorkletNode.current.disconnect()
+                    audioWorkletNode.current = null
+                } catch (e) {
+                    console.warn('Error cleaning up previous worklet:', e)
+                }
+            }
+
+            // Add the worklet module
             await context.audioWorklet.addModule(audioWorkletBlobURL)
             console.log('Audio worklet successfully initialized')
             workletReady.current = true
@@ -495,6 +525,7 @@ export function VoiceTranscriptionInput({
             console.log('Starting transcription...')
             try {
                 const transcription = await openaiClient.transcribeAudio(blob)
+                // const transcription = await geminiClient!.transcribeAudio(blob)
                 if (!transcription || transcription.trim().length === 0) {
                     throw new Error('No speech detected in recording')
                 }

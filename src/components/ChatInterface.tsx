@@ -4,9 +4,10 @@ import type { ModelId } from '../api/llm'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { UserSettings } from '../types/settings'
-import { VoiceTranscriptionInput } from './VoiceTranscriptionInput'
+import { VoiceTranscriptionInput } from './voice/VoiceTranscriptionInput'
 import { getCardTitle } from '../modules/cards'
-import { VoiceFireworksStreamingInput } from './VoiceFireworksStreamingInput'
+import { VoiceFireworksStreamingInput } from './voice/VoiceFireworksStreamingInput'
+import { VoiceInput } from './voice/VoiceInput'
 
 interface ChatInterfaceProps {
   chat: Chat | null
@@ -359,7 +360,7 @@ function ChatInput({ message, onMessageChange, onSendMessage, onStopStreaming, i
                     disabled={isLoading}
                 />
                 <div className="absolute right-4 bottom-2 flex gap-2">
-                    <VoiceFireworksStreamingInput
+                    <VoiceInput
                         userSettings={userSettings}
                         onTranscription={handleVoiceTranscription}
                         iconSize={16}

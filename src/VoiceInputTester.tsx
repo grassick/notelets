@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { VoiceTranscriptionInput } from './components/VoiceTranscriptionInput'
+import { VoiceTranscriptionInput } from './components/voice/VoiceTranscriptionInput'
 import { UserSettings } from './types/settings'
 
 /**

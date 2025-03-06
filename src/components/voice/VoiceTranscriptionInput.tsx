@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { FaMicrophone } from 'react-icons/fa'
 import { AiOutlineLoading3Quarters } from 'react-icons/ai'
-import { OpenAIClient } from '../api/openai'
-import { UserSettings } from '../types/settings'
-import { GeminiClient } from '../api/gemini'
+import { OpenAIClient } from '../../api/openai'
+import { UserSettings } from '../../types/settings'
+import { GeminiClient } from '../../api/gemini'
 
 /** Props for the VoiceStreamingInput component */
 interface VoiceTranscriptionInputProps {

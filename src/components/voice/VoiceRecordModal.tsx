@@ -1,7 +1,7 @@
 import React from 'react'
 import { useState, useEffect, useRef } from 'react'
 import { FaMicrophone } from 'react-icons/fa'
-import { OpenAIClient } from '../api/openai'
+import { OpenAIClient } from '../../api/openai'
 
 /** Props for the VoiceRecordModal component */
 interface VoiceRecordModalProps {

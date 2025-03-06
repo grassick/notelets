@@ -6,7 +6,8 @@ import { FaTrash, FaExpandAlt, FaCompressAlt, FaEllipsisV, FaMarkdown, FaCopy, F
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { UserSettings } from '../../types/settings'
 import { useIsMobile } from '../../hooks/useIsMobile'
-import { VoiceTranscriptionInput } from '../VoiceTranscriptionInput'
+import { VoiceTranscriptionInput } from '../voice/VoiceTranscriptionInput'
+import { VoiceInput } from '../voice/VoiceInput'
 
 /** Props for the NoteCardHeader component */
 interface NoteCardHeaderProps {
@@ -173,7 +174,7 @@ function NoteCardHeader({
       <div className={`flex items-center gap-2 ${!alwaysShowActions ? 'opacity-0 group-hover:opacity-100 transition-opacity duration-150' : ''}`}>
         {extraControls}
         {showVoiceInHeader && onVoiceTranscription && (
-          <VoiceTranscriptionInput
+          <VoiceInput
             userSettings={userSettings}
             onTranscription={onVoiceTranscription}
             iconSize={16}

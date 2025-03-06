@@ -65,6 +65,7 @@ export class FireworksClient {
         const wsUrl = `${baseWsUrl}${wsPath}?${queryParams.toString()}`
 
         let fullTranscription = ''
+        const segments: Record<number, string> = {}
         
         try {
             const ws = new WebSocket(wsUrl)
@@ -103,38 +104,49 @@ export class FireworksClient {
             
             function processMessage(message: string) {
                 try {
-                    const parsedData = JSON.parse(message)
+                    const response = JSON.parse(message)
                     
-                    if (parsedData.error) {
-                        onError?.(parsedData.error)
+                    if (response.error) {
+                        onError?.(response.error)
                         return
                     }
                     
-                    if (responseFormat === 'verbose_json') {
-                        // Handle verbose JSON format with segments
-                        if (parsedData.text) {
-                            fullTranscription = parsedData.text
-                            onTranscriptionUpdate(fullTranscription)
+                    // Update segments
+                    if (response.segments && Array.isArray(response.segments)) {
+                        let updated = false
+                        
+                        for (const segment of response.segments) {
+                            if (segment.id !== undefined && segment.text) {
+                                segments[segment.id] = segment.text
+                                
+                                if (onTranscriptionSegment) {
+                                    onTranscriptionSegment(segment)
+                                }
+                                
+                                updated = true
+                            }
                         }
                         
-                        if (parsedData.segments && onTranscriptionSegment) {
-                            const latestSegment = parsedData.segments[parsedData.segments.length - 1]
-                            onTranscriptionSegment(latestSegment)
-                        }
-                    } else {
-                        // Handle plain text format
-                        if (parsedData.text) {
-                            fullTranscription = parsedData.text
-                            onTranscriptionUpdate(fullTranscription)
-                        } else if (typeof parsedData === 'string') {
-                            fullTranscription = parsedData
+                        if (updated) {
+                            // Reconstruct full transcription from segments in order
+                            const orderedSegments = Object.entries(segments)
+                                .sort(([aId], [bId]) => parseInt(aId) - parseInt(bId))
+                                .map(([, text]) => text)
+                            
+                            fullTranscription = orderedSegments.join(' ')
                             onTranscriptionUpdate(fullTranscription)
                         }
                     }
+                    
+                    // Directly use text field if available (fallback)
+                    if (response.text && !response.segments) {
+                        fullTranscription = response.text
+                        onTranscriptionUpdate(fullTranscription)
+                    }
                 } catch (error) {
+                    console.error('Error parsing message:', error)
                     // If it's not valid JSON, treat as plain text
-                    fullTranscription = message
-                    onTranscriptionUpdate(fullTranscription)
+                    onTranscriptionUpdate(message)
                 }
             }
             
@@ -171,7 +183,8 @@ export class FireworksClient {
      */
     sendAudioChunk(ws: WebSocket, audioData: Uint8Array) {
         if (ws.readyState === WebSocket.OPEN) {
-            ws.send(audioData)
+            // Send as binary data
+            ws.send(audioData.buffer)
         }
     }
 }

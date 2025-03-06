@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { FaMicrophone } from 'react-icons/fa'
 import { AiOutlineLoading3Quarters } from 'react-icons/ai'
-import { OpenAIClient } from '../api/openai'
-import { UserSettings } from '../types/settings'
+import { OpenAIClient } from '../../api/openai'
+import { UserSettings } from '../../types/settings'
 import RecordRTC, { RecordRTCPromisesHandler } from 'recordrtc'
 
 /** Props for the VoiceStreamingInput component */

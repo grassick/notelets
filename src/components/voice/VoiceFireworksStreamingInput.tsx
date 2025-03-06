@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { FaMicrophone } from 'react-icons/fa'
 import { AiOutlineLoading3Quarters } from 'react-icons/ai'
 import { MdClose } from 'react-icons/md'
-import { UserSettings } from '../types/settings'
-import { FireworksClient, TranscriptionSegment } from '../api/fireworks'
+import { UserSettings } from '../../types/settings'
+import { FireworksClient, TranscriptionSegment } from '../../api/fireworks'
 
 /**
  * Props for the VoiceFireworksStreamingInput component
@@ -71,9 +71,16 @@ export function VoiceFireworksStreamingInput({
       constructor() {
         super()
         this.recording = false
+        this.targetSampleRate = 16000
+        this.resampleRatio = sampleRate / this.targetSampleRate
+        this.lastIndex = 0
+        this.accumulatedSamples = []
+        
         this.port.onmessage = (e) => {
           if (e.data.message === 'start') {
             this.recording = true
+            this.lastIndex = 0
+            this.accumulatedSamples = []
           } else if (e.data.message === 'stop') {
             this.recording = false
           }
@@ -84,15 +91,38 @@ export function VoiceFireworksStreamingInput({
         // Skip if not recording or no inputs
         if (!this.recording || !inputs[0] || !inputs[0][0]) return true
         
-        // Get the input data
+        // Get the input data (already mono from the AudioContext configuration)
         const input = inputs[0][0]
         
-        // Create a copy to send via the port
-        const buffer = new Float32Array(input.length)
-        buffer.set(input)
-        
-        // Send the buffer to the main thread
-        this.port.postMessage({ audioBuffer: buffer })
+        // Accumulate samples and perform downsampling
+        for (let i = 0; i < input.length; i++) {
+          this.accumulatedSamples.push(input[i])
+        }
+
+        // Process accumulated samples when we have enough for a meaningful chunk
+        if (this.accumulatedSamples.length >= 2048) {
+          // Perform downsampling
+          const downsampledLength = Math.floor(this.accumulatedSamples.length / this.resampleRatio)
+          const downsampled = new Float32Array(downsampledLength)
+          
+          for (let i = 0; i < downsampledLength; i++) {
+            const index = Math.floor(i * this.resampleRatio)
+            // Simple linear interpolation
+            const frac = i * this.resampleRatio - index
+            const sample1 = this.accumulatedSamples[index]
+            const sample2 = this.accumulatedSamples[Math.min(index + 1, this.accumulatedSamples.length - 1)]
+            downsampled[i] = sample1 + (sample2 - sample1) * frac
+          }
+          
+          // Send the downsampled buffer to the main thread
+          this.port.postMessage({ 
+            audioBuffer: downsampled,
+            sampleRate: this.targetSampleRate
+          })
+          
+          // Keep any remaining samples
+          this.accumulatedSamples = this.accumulatedSamples.slice(2048)
+        }
         
         return true
       }
@@ -141,13 +171,16 @@ export function VoiceFireworksStreamingInput({
     function processAudioChunk(audioData: Float32Array) {
         if (!webSocket.current || !fireworksClient) return
         
-        // Convert to proper format for the streaming API
+        // Convert to 16-bit PCM
         const buffer = new ArrayBuffer(audioData.length * 2)
         const view = new DataView(buffer)
         
         for (let i = 0; i < audioData.length; i++) {
-            const s = Math.max(-1, Math.min(1, audioData[i]))
-            view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true)
+            // Clamp the sample between -1 and 1
+            const sample = Math.max(-1, Math.min(1, audioData[i]))
+            // Convert to 16-bit PCM (-32768 to 32767)
+            const pcm = Math.round(sample * (sample < 0 ? 0x8000 : 0x7FFF))
+            view.setInt16(i * 2, pcm, true) // true for little-endian
         }
         
         // Send the audio chunk to the streaming API

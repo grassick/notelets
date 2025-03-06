@@ -78,7 +78,7 @@ importers:
         specifier: ^13.1.0
         version: 13.1.0
       immer:
-        specifier: ^9.0.14
+        specifier: ^9.0.21
         version: 9.0.21
       lodash:
         specifier: ^4.17.21

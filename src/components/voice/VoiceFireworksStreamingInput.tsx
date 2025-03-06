@@ -45,7 +45,7 @@ export function VoiceFireworksStreamingInput({
     const [audioLevel, setAudioLevel] = useState(0)
     const [showModal, setShowModal] = useState(false)
     const [currentTranscription, setCurrentTranscription] = useState('')
-    const [recentSegment, setRecentSegment] = useState<TranscriptionSegment | null>(null)
+    const [segments, setSegments] = useState<TranscriptionSegment[]>([])
     
     // Audio context references
     const audioContext = useRef<AudioContext | null>(null)
@@ -64,6 +64,13 @@ export function VoiceFireworksStreamingInput({
     const audioSampleRate = useRef<number>(0)
     
     const isIOS = useMemo(() => /iPad|iPhone|iPod/.test(navigator.userAgent), [])
+
+    useEffect(() => {
+        if (segments.length > 0) {
+            const fullTranscription = segments.map(segment => segment.text).join(' ')
+            setCurrentTranscription(fullTranscription)
+        }
+    }, [segments])
 
     // Audio worklet processor code as a string
     const audioRecorderWorkletCode = `
@@ -319,7 +326,7 @@ export function VoiceFireworksStreamingInput({
 
         setIsInitializing(true)
         setCurrentTranscription('')
-        setRecentSegment(null)
+        setSegments([])
         audioChunks.current = []
 
         try {
@@ -370,11 +377,8 @@ export function VoiceFireworksStreamingInput({
             
             // Initialize streaming transcription
             const streamConnection = fireworksClient.createTranscriptionStream({
-                onTranscriptionUpdate: (text: string) => {
-                    setCurrentTranscription(text)
-                },
-                onTranscriptionSegment: (segment: TranscriptionSegment) => {
-                    setRecentSegment(segment)
+                onTranscriptionSegments: (segments: TranscriptionSegment[]) => {
+                    setSegments([...segments])
                 },
                 onError: (error: string) => {
                     onError?.(error)
@@ -557,6 +561,14 @@ export function VoiceFireworksStreamingInput({
                                     ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-gray-400'}
                                 `}></div>
                                 {isRecording ? 'Recording...' : 'Recording Finished'}
+                                {isRecording && (
+                                    <div className="ml-4 w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
+                                        <div 
+                                            className="h-full bg-blue-500 dark:bg-blue-600 transition-all duration-75"
+                                            style={{ width: `${audioLevel * 100}%` }}
+                                        />
+                                    </div>
+                                )}
                             </h3>
                             <button 
                                 onClick={cancelRecording}

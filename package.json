@@ -61,7 +61,7 @@
     "file-saver": "^2.0.5",
     "firebase": "^11.3.0",
     "firebase-admin": "^13.1.0",
-    "immer": "^9.0.14",
+    "immer": "^9.0.21",
     "lodash": "^4.17.21",
     "markdown-it": "^14.1.0",
     "minimongo": "^6.19.0",

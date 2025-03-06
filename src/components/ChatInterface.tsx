@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm'
 import { UserSettings } from '../types/settings'
 import { VoiceTranscriptionInput } from './VoiceTranscriptionInput'
 import { getCardTitle } from '../modules/cards'
+import { VoiceFireworksStreamingInput } from './VoiceFireworksStreamingInput'
 
 interface ChatInterfaceProps {
   chat: Chat | null
@@ -358,7 +359,7 @@ function ChatInput({ message, onMessageChange, onSendMessage, onStopStreaming, i
                     disabled={isLoading}
                 />
                 <div className="absolute right-4 bottom-2 flex gap-2">
-                    <VoiceTranscriptionInput 
+                    <VoiceFireworksStreamingInput
                         userSettings={userSettings}
                         onTranscription={handleVoiceTranscription}
                         iconSize={16}

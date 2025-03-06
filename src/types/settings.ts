@@ -25,5 +25,7 @@ export interface UserSettings {
     geminiKey?: string
     /** DeepSeek API key */
     deepseekKey?: string
+    /** Fireworks AI API key */
+    fireworksKey?: string
   }
 } 

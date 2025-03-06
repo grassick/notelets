@@ -3,7 +3,7 @@ import type { Store } from '../../Store'
 import type { Board, Card, Chat } from '../../types'
 import { v4 as uuidv4 } from 'uuid'
 import TurndownService from 'turndown'
-import { gfm } from 'turndown-plugin-gfm'
+import { gfm } from '@guyplusplus/turndown-plugin-gfm'
 
 const turndown = new TurndownService({
   headingStyle: 'atx',

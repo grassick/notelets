@@ -32,7 +32,6 @@
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.3.6",
-    "turndown-plugin-gfm": "link:@types/@guyplusplus/turndown-plugin-gfm",
     "typescript": "^4.7.2",
     "vite": "^5.0.10",
     "vite-plugin-mkcert": "^1.17.6",

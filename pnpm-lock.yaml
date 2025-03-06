@@ -201,9 +201,6 @@ importers:
       tailwindcss:
         specifier: ^3.3.6
         version: 3.4.17
-      turndown-plugin-gfm:
-        specifier: link:@types/@guyplusplus/turndown-plugin-gfm
-        version: link:@types/@guyplusplus/turndown-plugin-gfm
       typescript:
         specifier: ^4.7.2
         version: 4.9.5

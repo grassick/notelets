@@ -4,9 +4,7 @@ import type { ModelId } from '../api/llm'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { UserSettings } from '../types/settings'
-import { VoiceTranscriptionInput } from './voice/VoiceTranscriptionInput'
 import { getCardTitle } from '../modules/cards'
-import { VoiceFireworksStreamingInput } from './voice/VoiceFireworksStreamingInput'
 import { VoiceInput } from './voice/VoiceInput'
 
 interface ChatInterfaceProps {
@@ -50,7 +48,7 @@ export function ChatInterface({
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    // messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chat?.messages])
 
   const handleSubmit = async (e: React.FormEvent) => {

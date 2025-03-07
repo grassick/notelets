@@ -552,67 +552,78 @@ export function VoiceFireworksStreamingInput({
             
             {/* Transcription Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-lg mx-4 overflow-hidden">
-                        <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-white flex items-center">
-                                <div className={`
-                                    w-3 h-3 rounded-full mr-2
-                                    ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-gray-400'}
-                                `}></div>
-                                {isRecording ? 'Recording...' : 'Recording Finished'}
-                                {isRecording && (
-                                    <div className="ml-4 w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
-                                        <div 
-                                            className="h-full bg-blue-500 dark:bg-blue-600 transition-all duration-75"
-                                            style={{ width: `${audioLevel * 100}%` }}
-                                        />
+                <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
+                    <div 
+                        className="bg-white/80 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl shadow-2xl w-full max-w-lg mx-4 
+                        overflow-hidden border border-gray-200/20 dark:border-gray-700/30 transform transition-all duration-200
+                        animate-slideUp"
+                    >
+                        <div className="p-6 flex items-center justify-between gap-4">
+                            <div className={`
+                                w-2.5 h-2.5 rounded-full flex-shrink-0
+                                ${isRecording 
+                                    ? 'bg-red-500 animate-pulse shadow-lg shadow-red-500/50' 
+                                    : 'bg-gray-400'
+                                }
+                            `}></div>
+                            
+                            {isRecording && (
+                                <div className="flex-1 h-8 bg-gray-100/50 dark:bg-gray-700/50 rounded-full overflow-hidden backdrop-blur-sm">
+                                    <div className="h-full flex items-center gap-0.5 p-2">
+                                        {[...Array(20)].map((_, i) => (
+                                            <div
+                                                key={i}
+                                                className="flex-1 h-full bg-blue-500/80 dark:bg-blue-400/80 rounded-full transform transition-all duration-150"
+                                                style={{ 
+                                                    transform: `scaleY(${Math.max(0.15, Math.min(1, audioLevel * Math.random() * 2))})`,
+                                                }}
+                                            />
+                                        ))}
                                     </div>
-                                )}
-                            </h3>
+                                </div>
+                            )}
+                            
                             <button 
                                 onClick={cancelRecording}
-                                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200
+                                        rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors flex-shrink-0"
                             >
-                                <MdClose size={24} />
+                                <MdClose size={20} />
                                 <span className="sr-only">Close</span>
                             </button>
                         </div>
                         
-                        <div className="p-4 h-64 overflow-y-auto">
+                        <div className="px-4 pb-4 h-64 overflow-y-auto">
                             {currentTranscription ? (
-                                <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                                <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed">
                                     {currentTranscription}
                                 </p>
                             ) : (
-                                <p className="text-gray-500 dark:text-gray-400 italic">
+                                <p className="text-gray-500 dark:text-gray-400 italic text-center py-8">
                                     {isRecording ? 'Waiting for speech...' : 'No transcription available'}
                                 </p>
                             )}
                         </div>
                         
-                        <div className="border-t border-gray-200 dark:border-gray-700 p-4 flex justify-between">
-                            <button
-                                onClick={cancelRecording}
-                                className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200"
-                            >
-                                Cancel
-                            </button>
+                        <div className="px-4 pb-2 pt-2 flex justify-end">
                             <button
                                 onClick={stopRecording}
                                 disabled={!isRecording || isProcessing}
                                 className={`
-                                    px-4 py-2 rounded
+                                    px-4 py-2.5 rounded-xl font-medium
+                                    transition-all duration-200
                                     ${isRecording 
-                                        ? 'bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white'
-                                        : 'bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+                                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 ' +
+                                          'dark:from-blue-600 dark:to-blue-700 dark:hover:from-blue-700 dark:hover:to-blue-800 ' +
+                                          'text-white shadow-lg shadow-blue-500/25 dark:shadow-blue-700/25'
+                                        : 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300'
                                     }
-                                    disabled:opacity-50 disabled:cursor-not-allowed
+                                    disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none
                                 `}
                             >
                                 {isProcessing ? (
-                                    <span className="flex items-center">
-                                        <AiOutlineLoading3Quarters className="animate-spin mr-2" />
+                                    <span className="flex items-center gap-2">
+                                        <AiOutlineLoading3Quarters className="animate-spin" />
                                         Processing...
                                     </span>
                                 ) : (

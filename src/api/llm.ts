@@ -123,6 +123,13 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     },
     {
         provider: 'openrouter',
+        id: 'openai/gpt-4.5-preview',
+        modelId: 'openai/gpt-4.5-preview',
+        name: 'GPT-4.5 Preview',
+        baseURL: 'https://openrouter.ai/api/v1'
+    },
+    {
+        provider: 'openrouter',
         id: 'google/gemini-2.0-flash-001',
         modelId: 'google/gemini-2.0-flash-001',
         name: 'Gemini 2.0 Flash',

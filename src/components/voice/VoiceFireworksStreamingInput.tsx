@@ -64,6 +64,7 @@ export function VoiceFireworksStreamingInput({
     const audioSampleRate = useRef<number>(0)
     
     const isIOS = useMemo(() => /iPad|iPhone|iPod/.test(navigator.userAgent), [])
+    const transcriptionContainerRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         if (segments.length > 0) {
@@ -71,6 +72,13 @@ export function VoiceFireworksStreamingInput({
             setCurrentTranscription(fullTranscription)
         }
     }, [segments])
+
+    // Auto-scroll to the bottom of the transcription container when transcription updates
+    useEffect(() => {
+        if (transcriptionContainerRef.current && currentTranscription) {
+            transcriptionContainerRef.current.scrollTop = transcriptionContainerRef.current.scrollHeight
+        }
+    }, [currentTranscription])
 
     // Audio worklet processor code as a string
     const audioRecorderWorkletCode = `
@@ -437,7 +445,7 @@ export function VoiceFireworksStreamingInput({
             }
             
             // Wait a moment for any final chunks to be processed
-            await new Promise(resolve => setTimeout(resolve, 500))
+            await new Promise(resolve => setTimeout(resolve, 250))
             
             // Use the final transcription
             if (currentTranscription) {
@@ -593,7 +601,10 @@ export function VoiceFireworksStreamingInput({
                             </button>
                         </div>
                         
-                        <div className="px-4 pb-4 h-64 overflow-y-auto">
+                        <div 
+                            ref={transcriptionContainerRef}
+                            className="px-4 pb-4 h-64 overflow-y-auto"
+                        >
                             {currentTranscription ? (
                                 <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed">
                                     {currentTranscription}

@@ -1,3 +1,5 @@
+import { produce } from 'immer'
+
 /**
  * Client for the Fireworks AI API that provides real-time speech-to-text
  * transcription capabilities using WebSockets
@@ -62,8 +64,7 @@ export class FireworksClient {
     // The final WebSocket URL
     const wsUrl = `${baseWsUrl}${wsPath}?${queryParams.toString()}`
 
-    let fullTranscription = ''
-    const segments: TranscriptionSegment[] = []
+    let segments: TranscriptionSegment[] = []
 
     try {
       const ws = new WebSocket(wsUrl)
@@ -109,14 +110,26 @@ export class FireworksClient {
             return
           }
 
+          console.log("response", response)
+
           // Update segments
           if (response.segments && Array.isArray(response.segments)) {
-            for (const segment of response.segments) {
-              if (segment.id !== undefined && segment.text) {
-                segments[segment.id] = segment
+            segments = produce(segments, (draft) => {
+              for (const segment of response.segments) {
+                if (segment.id !== undefined && segment.text) {
+                  draft[segment.id] = segment
+                }
               }
-            }
+
+              // Delete any segments past the last segment id
+              if (response.segments.length > 0) {
+                const lastSegmentId = response.segments[response.segments.length - 1].id
+                draft.splice(lastSegmentId + 1)
+              }
+            })
           }
+
+          console.log("segments", segments)
 
           if (onTranscriptionSegments) {
             onTranscriptionSegments(segments)

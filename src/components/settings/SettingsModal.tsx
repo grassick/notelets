@@ -61,7 +61,8 @@ export function SettingsModal({ isOpen, onClose, store }: SettingsModalProps) {
     anthropicKey: '',
     geminiKey: '',
     deepseekKey: '',
-    fireworksKey: ''
+    fireworksKey: '',
+    openrouterKey: ''
   }
 
   return (
@@ -229,6 +230,20 @@ export function SettingsModal({ isOpen, onClose, store }: SettingsModalProps) {
                                bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
                                focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="fw-..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      OpenRouter API Key
+                    </label>
+                    <input
+                      type="text"
+                      value={llmSettings.openrouterKey || ''}
+                      onChange={e => updateUserSettings('llm', { openrouterKey: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
+                               bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                               focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="sk-or-..."
                     />
                   </div>
                 </div>

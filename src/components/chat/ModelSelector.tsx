@@ -1,6 +1,5 @@
 import React from 'react'
-import type { ModelId, LLMProviderType } from '../../api/llm'
-import { AVAILABLE_MODELS } from '../../api/llm'
+import { type ModelId, type LLMProviderType, getAvailableModels } from '../../api/llm'
 import { useUserSettings } from '../../hooks/useSettings'
 import { Store } from '../../Store'
 
@@ -26,10 +25,7 @@ export function ModelSelector({ value, onChange, className = '', onOpenSettings,
     const { settings: userSettings } = useUserSettings(store)
 
     // Get available models based on API keys
-    const availableModels = AVAILABLE_MODELS.filter(model => {
-        const key = `${model.provider}Key` as LLMSettingsKey
-        return userSettings.llm[key]
-    })
+    const availableModels = getAvailableModels(userSettings)
 
     if (availableModels.length === 0) {
         return (

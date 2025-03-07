@@ -27,5 +27,7 @@ export interface UserSettings {
     deepseekKey?: string
     /** Fireworks AI API key */
     fireworksKey?: string
+    /** OpenRouter API key */
+    openrouterKey?: string
   }
 } 

@@ -1,4 +1,5 @@
 import type { ChatMessage } from '../types'
+import { UserSettings } from '../types/settings'
 
 /** Base interface for all LLM providers */
 export interface LLMProvider {
@@ -18,7 +19,7 @@ export interface LLMProvider {
 }
 
 /** Available LLM providers */
-export type LLMProviderType = 'anthropic' | 'gemini' | 'openai' | 'deepseek'
+export type LLMProviderType = 'anthropic' | 'gemini' | 'openai' | 'deepseek' | 'openrouter'
 
 /** Model information */
 export interface ModelInfo {
@@ -43,6 +44,9 @@ export interface LLMSettings {
     anthropicKey?: string
     geminiKey?: string
     openaiKey?: string
+    deepseekKey?: string
+    fireworksKey?: string
+    openrouterKey?: string
 }
 
 /** Get the default model based on available API keys */
@@ -66,6 +70,7 @@ export function getDefaultModel(settings: LLMSettings): ModelId {
     if (settings.anthropicKey) return 'claude-3-7-sonnet-latest'
     if (settings.geminiKey) return 'gemini-2.0-pro-exp-02-05'
     if (settings.openaiKey) return 'gpt-4o'
+    if (settings.openrouterKey) return 'anthropic/claude-3.7-sonnet'
     
     // Fallback to Claude as default (will show API key missing message)
     return 'claude-3-7-sonnet-latest'
@@ -83,6 +88,10 @@ export function isModelAvailable(modelId: ModelId, settings: LLMSettings): boole
             return !!settings.geminiKey
         case 'openai':
             return !!settings.openaiKey
+        case 'deepseek':
+            return !!settings.deepseekKey
+        case 'openrouter':
+            return !!settings.openrouterKey
         default:
             return false
     }
@@ -90,6 +99,56 @@ export function isModelAvailable(modelId: ModelId, settings: LLMSettings): boole
 
 /** Available models */
 export const AVAILABLE_MODELS: ModelInfo[] = [
+    // OpenRouter models
+    {
+        provider: 'openrouter',
+        id: 'anthropic/claude-3.7-sonnet',
+        modelId: 'anthropic/claude-3.7-sonnet',
+        name: 'Claude 3.7 Sonnet',
+        baseURL: 'https://openrouter.ai/api/v1'
+    },
+    {
+        provider: 'openrouter',
+        id: 'anthropic/claude-3.5-sonnet',
+        modelId: 'anthropic/claude-3.5-sonnet',
+        name: 'Claude 3.5 Sonnet',
+        baseURL: 'https://openrouter.ai/api/v1'
+    },
+    {
+        provider: 'openrouter',
+        id: 'google/gemini-2.0-flash-001',
+        modelId: 'google/gemini-2.0-flash-001',
+        name: 'Gemini 2.0 Flash',
+        baseURL: 'https://openrouter.ai/api/v1'
+    },
+    {
+        provider: 'openrouter',
+        id: 'google/gemini-2.0-pro-exp-02-05:free',
+        modelId: 'google/gemini-2.0-pro-exp-02-05:free',
+        name: 'Gemini 2.0 Pro',
+        baseURL: 'https://openrouter.ai/api/v1'
+    },
+    {
+        provider: 'openrouter',
+        id: 'openai/gpt-4o',
+        modelId: 'openai/gpt-4o',
+        name: 'GPT-4o',
+        baseURL: 'https://openrouter.ai/api/v1'
+    },
+    {
+        provider: 'openrouter',
+        id: 'deepseek/deepseek-r1:free',
+        modelId: 'deepseek/deepseek-r1:free',
+        name: 'DeepSeek R1',
+        baseURL: 'https://openrouter.ai/api/v1'
+    },
+    {
+        provider: 'openrouter',
+        id: 'openai/o3-mini-high',
+        modelId: 'openai/o3-mini-high',
+        name: 'O3 Mini High',
+        baseURL: 'https://openrouter.ai/api/v1'
+    },
     // Anthropic models
     {
         provider: 'anthropic',
@@ -258,6 +317,10 @@ export class LLMFactory {
                 const { GeminiClient } = await import('./gemini')
                 return new GeminiClient(apiKey, model.modelId)
             }
+            case 'openrouter': {
+                const { OpenAIClient } = await import('./openai')
+                return new OpenAIClient(apiKey, model.baseURL)
+            }
             default:
                 throw new Error(`Provider ${model.provider} not implemented`)
         }
@@ -278,3 +341,21 @@ export function getModelById(modelId: ModelId): ModelInfo | undefined {
 export function getProviderForModel(modelId: ModelId): LLMProviderType | undefined {
     return getModelById(modelId)?.provider
 } 
+
+type LLMSettingsKey = `${LLMProviderType}Key`
+
+/** Get available models based on API keys */
+export function getAvailableModels(userSettings: UserSettings): ModelInfo[] {
+    // If OpenRouter is enabled, add only models from OpenRouter
+    if (userSettings.llm.openrouterKey) {
+        return AVAILABLE_MODELS.filter(model => model.provider === 'openrouter')
+    }
+
+    // Get available models based on API keys
+    const availableModels = AVAILABLE_MODELS.filter(model => {
+        const key = `${model.provider}Key` as LLMSettingsKey
+        return userSettings.llm[key]
+    })
+
+    return availableModels
+}

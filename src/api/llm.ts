@@ -109,6 +109,13 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     },
     {
         provider: 'openrouter',
+        id: 'anthropic/claude-3.7-sonnet:thinking',
+        modelId: 'anthropic/claude-3.7-sonnet:thinking',
+        name: 'Claude 3.7 Sonnet (Thinking)',
+        baseURL: 'https://openrouter.ai/api/v1'
+    },
+    {
+        provider: 'openrouter',
         id: 'anthropic/claude-3.5-sonnet',
         modelId: 'anthropic/claude-3.5-sonnet',
         name: 'Claude 3.5 Sonnet',
@@ -126,6 +133,13 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         id: 'google/gemini-2.0-pro-exp-02-05:free',
         modelId: 'google/gemini-2.0-pro-exp-02-05:free',
         name: 'Gemini 2.0 Pro',
+        baseURL: 'https://openrouter.ai/api/v1'
+    },
+    {
+        provider: 'openrouter',
+        id: 'google/gemini-2.0-flash-thinking-exp:free',
+        modelId: 'google/gemini-2.0-flash-thinking-exp:free',
+        name: 'Gemini 2.0 Flash Thinking',
         baseURL: 'https://openrouter.ai/api/v1'
     },
     {

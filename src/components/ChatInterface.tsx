@@ -45,11 +45,32 @@ export function ChatInterface({
 }: ChatInterfaceProps) {
   const [message, setMessage] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const [showScrollButton, setShowScrollButton] = useState(false)
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    // messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chat?.messages])
+
+  // Track scroll position to show/hide scroll button
+  useEffect(() => {
+    const container = messagesContainerRef.current
+    if (!container) return
+    
+    const handleScroll = () => {
+      // Show button if scrolled up more than 100px from bottom
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100
+      setShowScrollButton(!isNearBottom)
+    }
+    
+    container.addEventListener('scroll', handleScroll)
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e?.preventDefault()
@@ -89,8 +110,10 @@ export function ChatInterface({
   return (
     <div className={`flex flex-col min-h-0 ${className}`}>
       <ContextIndicator />
-      {/* Messages */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 [scrollbar-width:thin] 
+      {/* Messages and inline chat input */}
+      <div 
+        ref={messagesContainerRef}
+        className="flex-1 min-h-0 overflow-y-auto p-4 [scrollbar-width:thin] 
                     [scrollbar-color:rgba(100,116,139,0.2)_transparent] 
                     dark:[scrollbar-color:rgba(100,116,139,0.2)_transparent]
                     [::-webkit-scrollbar]:w-2
@@ -116,18 +139,47 @@ export function ChatInterface({
             </div>
           </div>
         )}
+        
+        {/* Inline chat input */}
+        <div className="mt-2">
+          <ChatInput
+            message={message}
+            onMessageChange={setMessage}
+            onSendMessage={handleSubmit}
+            onStopStreaming={onStopStreaming}
+            isLoading={isLoading}
+            userSettings={userSettings}
+          />
+        </div>
+        
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <ChatInput
-        message={message}
-        onMessageChange={setMessage}
-        onSendMessage={handleSubmit}
-        onStopStreaming={onStopStreaming}
-        isLoading={isLoading}
-        userSettings={userSettings}
-      />
+      {/* Floating scroll to bottom button */}
+      {showScrollButton && (
+        <button
+          onClick={scrollToBottom}
+          className="fixed right-8 bottom-8 p-3 rounded-full bg-white dark:bg-gray-800 
+                   border border-gray-200 dark:border-gray-700 shadow-sm
+                   hover:bg-gray-50 dark:hover:bg-gray-700 transition-all z-10
+                   text-gray-600 dark:text-gray-300
+                   flex items-center justify-center"
+          title="Scroll to bottom"
+        >
+          <svg 
+            width="16" 
+            height="16" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          >
+            <path d="M12 5v14M5 12l7 7 7-7" />
+          </svg>
+        </button>
+      )}
     </div>
   )
 } 
@@ -340,7 +392,7 @@ function ChatInput({ message, onMessageChange, onSendMessage, onStopStreaming, i
     }
 
     return (
-        <form onSubmit={onSendMessage} className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pl-1 pt-1 pr-1">
+        <form onSubmit={onSendMessage}>
             <div className="relative">
                 <textarea
                     ref={textareaRef}
@@ -348,16 +400,16 @@ function ChatInput({ message, onMessageChange, onSendMessage, onStopStreaming, i
                     onChange={e => onMessageChange(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Type your message"
-                    className="w-full resize-none rounded-sm border border-gray-200 dark:border-gray-700 
-                             bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 
-                             p-2 pr-24 text-sm overflow-y-hidden
+                    className="w-full resize-none rounded-lg border-0
+                             bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 
+                             p-3 pr-24 text-sm overflow-y-hidden
                              focus:outline-none focus:ring-2 focus:ring-blue-500
                              disabled:opacity-50 disabled:cursor-not-allowed
                              placeholder:text-gray-400/60 dark:placeholder:text-gray-500/60"
                     rows={1}
                     disabled={isLoading}
                 />
-                <div className="absolute right-4 bottom-2 flex gap-2">
+                <div className="absolute right-4 bottom-3 flex gap-2">
                     <VoiceInput
                         userSettings={userSettings}
                         onTranscription={handleVoiceTranscription}

@@ -49,9 +49,9 @@ export function ChatInterface({
   const [showScrollButton, setShowScrollButton] = useState(false)
 
   // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [chat?.messages])
+  // useEffect(() => {
+  //   messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  // }, [chat?.messages])
 
   // Track scroll position to show/hide scroll button
   useEffect(() => {

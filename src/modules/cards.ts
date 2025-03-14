@@ -6,7 +6,7 @@ import type { Card, RichTextCard, FileCard, ImageCard } from '../types'
  * @param maxLength Maximum length of the generated title (default: 30)
  * @returns A string to use as the card's display title
  */
-export function getCardTitle(card: Card, maxLength: number = 30): string {
+export function getCardTitle(card: Card, maxLength: number = 100): string {
   // Use explicit title if available
   if (card.title) return card.title
 

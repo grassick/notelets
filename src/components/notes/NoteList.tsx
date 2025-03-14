@@ -4,34 +4,6 @@ import ViewControls from '../ViewControls'
 import { SearchModal } from '../search/SearchModal'
 import { getCardTitle } from '../../modules/cards'
 
-interface CardListItemProps {
-  /** The card to display */
-  card: RichTextCard
-  /** Whether this card is selected */
-  isSelected: boolean
-  /** Callback when the card is clicked */
-  onClick: () => void
-}
-
-/** A list item component for displaying a card preview */
-function CardListItem({ card, isSelected, onClick }: CardListItemProps) {
-  if (card.type !== 'richtext') return null
-
-  return (
-    <div
-      onClick={onClick}
-      className={`py-2 px-3 cursor-pointer border-b border-gray-200 dark:border-gray-700 
-        ${isSelected 
-          ? 'bg-blue-50 dark:bg-blue-900' 
-          : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
-    >
-      <div className="text-sm text-gray-800 dark:text-gray-200 line-clamp-2 overflow-hidden">
-        {getCardTitle(card) || <span className="text-gray-400 dark:text-gray-500">—</span>}
-      </div>
-    </div>
-  )
-}
-
 /** Props for the ListPanel component */
 interface ListPanelProps {
   /** The list of cards to display */
@@ -212,3 +184,32 @@ export function ListPanel({
     </div>
   )
 } 
+
+interface CardListItemProps {
+  /** The card to display */
+  card: RichTextCard
+  /** Whether this card is selected */
+  isSelected: boolean
+  /** Callback when the card is clicked */
+  onClick: () => void
+}
+
+/** A list item component for displaying a card preview */
+function CardListItem({ card, isSelected, onClick }: CardListItemProps) {
+  if (card.type !== 'richtext') return null
+
+  return (
+    <div
+      onClick={onClick}
+      className={`py-2 px-3 cursor-pointer border-b border-gray-200 dark:border-gray-700 
+        ${isSelected 
+          ? 'bg-blue-50 dark:bg-blue-900' 
+          : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+    >
+      <div className="text-sm text-gray-800 dark:text-gray-200 line-clamp-2 overflow-hidden">
+        {getCardTitle(card) || <span className="text-gray-400 dark:text-gray-500">—</span>}
+      </div>
+    </div>
+  )
+}
+

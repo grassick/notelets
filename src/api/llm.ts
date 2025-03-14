@@ -158,8 +158,8 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     },
     {
         provider: 'openrouter',
-        id: 'deepseek/deepseek-r1:free',
-        modelId: 'deepseek/deepseek-r1:free',
+        id: 'deepseek/deepseek-r1',
+        modelId: 'deepseek/deepseek-r1',
         name: 'DeepSeek R1',
         baseURL: 'https://openrouter.ai/api/v1'
     },
@@ -168,6 +168,13 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         id: 'openai/o3-mini-high',
         modelId: 'openai/o3-mini-high',
         name: 'O3 Mini High',
+        baseURL: 'https://openrouter.ai/api/v1'
+    },
+    {
+        provider: 'openrouter',
+        id: 'openai/o1',
+        modelId: 'openai/o1',
+        name: 'O1',
         baseURL: 'https://openrouter.ai/api/v1'
     },
     // Anthropic models

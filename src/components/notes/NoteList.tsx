@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback, KeyboardEvent } from 'react'
 import type { RichTextCard, ViewMode } from '../../types'
 import ViewControls from '../ViewControls'
 import { SearchModal } from '../search/SearchModal'
@@ -78,6 +78,21 @@ export function ListPanel({
   const sortedCards = [...cards].sort((a, b) => 
     new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   )
+
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (!isExpanded) return
+    
+    const currentIndex = sortedCards.findIndex(card => card.id === selectedCardId)
+    if (currentIndex === -1) return
+
+    if (e.key === 'ArrowUp' && currentIndex > 0) {
+      e.preventDefault()
+      onCardSelect(sortedCards[currentIndex - 1].id)
+    } else if (e.key === 'ArrowDown' && currentIndex < sortedCards.length - 1) {
+      e.preventDefault()
+      onCardSelect(sortedCards[currentIndex + 1].id)
+    }
+  }, [isExpanded, selectedCardId, sortedCards, onCardSelect])
 
   return (
     <div 
@@ -160,17 +175,23 @@ export function ListPanel({
         )}
       </div>
       {isExpanded && (
-        <div className="flex-1 overflow-auto
-                       [scrollbar-width:thin] 
-                       [scrollbar-color:rgba(148,163,184,0.2)_transparent] 
-                       dark:[scrollbar-color:rgba(148,163,184,0.15)_transparent]
-                       [::-webkit-scrollbar]:w-1.5
-                       [::-webkit-scrollbar-thumb]:rounded-full
-                       [::-webkit-scrollbar-thumb]:bg-slate-300/50
-                       hover:[::-webkit-scrollbar-thumb]:bg-slate-400/50
-                       dark:[::-webkit-scrollbar-thumb]:bg-slate-500/25
-                       dark:hover:[::-webkit-scrollbar-thumb]:bg-slate-400/25
-                       [::-webkit-scrollbar-track]:bg-transparent">
+        <div 
+          className="flex-1 overflow-auto outline-none
+                     [scrollbar-width:thin] 
+                     [scrollbar-color:rgba(148,163,184,0.2)_transparent] 
+                     dark:[scrollbar-color:rgba(148,163,184,0.15)_transparent]
+                     [::-webkit-scrollbar]:w-1.5
+                     [::-webkit-scrollbar-thumb]:rounded-full
+                     [::-webkit-scrollbar-thumb]:bg-slate-300/50
+                     hover:[::-webkit-scrollbar-thumb]:bg-slate-400/50
+                     dark:[::-webkit-scrollbar-thumb]:bg-slate-500/25
+                     dark:hover:[::-webkit-scrollbar-thumb]:bg-slate-400/25
+                     [::-webkit-scrollbar-track]:bg-transparent"
+          tabIndex={0}
+          onKeyDown={handleKeyDown}
+          role="listbox"
+          aria-label="Note list"
+        >
           {sortedCards.map(card => (
             <CardListItem
               key={card.id}

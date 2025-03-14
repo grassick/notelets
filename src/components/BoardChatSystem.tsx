@@ -27,7 +27,7 @@ interface BoardChatSystemProps {
   /** The function to set a card */
   setCard: (card: Card) => void
   /** Currently selected card */
-  selectedCard: RichTextCard | null
+  selectedCard: Card | null
 }
 
 /**
@@ -369,7 +369,7 @@ interface ChatHeaderProps {
   /** Context mode change callback */
   onContextModeChange: (mode: ChatContextMode) => void
   /** Currently selected card */
-  selectedCard: RichTextCard | null
+  selectedCard: Card | null
 }
 
 function ChatHeader({ 

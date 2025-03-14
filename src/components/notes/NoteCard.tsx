@@ -1,12 +1,11 @@
 import React, { useState, useRef, useEffect, forwardRef } from 'react'
 import { RichTextEditor } from '../../RichTextEditor'
-import { RichTextCard } from '../../types'
+import { Card, RichTextCard } from '../../types'
 import MarkdownIt from 'markdown-it'
 import { FaTrash, FaExpandAlt, FaCompressAlt, FaEllipsisV, FaMarkdown, FaCopy, FaFileAlt } from 'react-icons/fa'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { UserSettings } from '../../types/settings'
 import { useIsMobile } from '../../hooks/useIsMobile'
-import { VoiceTranscriptionInput } from '../voice/VoiceTranscriptionInput'
 import { VoiceInput } from '../voice/VoiceInput'
 
 /** Props for the NoteCardHeader component */
@@ -324,7 +323,7 @@ interface NoteCardProps {
   /** Callback when show all notes changes */
   onShowAllNotesChange: (show: boolean) => void
   /** List of all cards (needed for mobile menu) */
-  allCards?: RichTextCard[]
+  allCards?: Card[]
   /** Callback to create a new card */
   onCreateCard?: () => void
   /** Callback when a different card is selected */

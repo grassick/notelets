@@ -1,5 +1,5 @@
 import type { Store } from '../../Store'
-import type { RichTextCard, ViewMode } from '../../types'
+import type { Card, RichTextCard, ViewMode } from '../../types'
 
 /** State for panel expansion and width */
 export interface PanelState {
@@ -14,9 +14,9 @@ export interface BoardViewProps {
   /** The ID of the board being viewed */
   boardId: string
   /** The list of cards in the board */
-  cards: RichTextCard[]
+  cards: Card[]
   /** The currently selected card */
-  selectedCard: RichTextCard | null
+  selectedCard: Card | null
   /** The current view mode */
   viewMode: ViewMode
   /** Callback to change the view mode */
@@ -36,5 +36,5 @@ export interface BoardViewProps {
   /** Callback to delete a card */
   onDeleteCard: (cardId: string) => void
   /** Function to set a card's data */
-  setCard: (card: RichTextCard) => void
+  setCard: (card: Card) => void
 } 

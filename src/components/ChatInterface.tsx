@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import type { Chat, ChatMessage, RichTextCard } from '../types'
+import type { Card, Chat, ChatMessage, RichTextCard } from '../types'
 import type { ModelId } from '../api/llm'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -19,7 +19,7 @@ interface ChatInterfaceProps {
   error?: Error | null
   userSettings: UserSettings
   contextMode: 'quick' | 'selected' | 'all'
-  contextCards: RichTextCard[]
+  contextCards: Card[]
 }
 
 /**

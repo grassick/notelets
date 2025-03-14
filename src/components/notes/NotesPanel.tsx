@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { RichTextCard } from '../../types'
+import { Card, RichTextCard } from '../../types'
 import { NoteCard } from './NoteCard'
 import { useUserSettings } from '../../hooks/useSettings'
 import { Store } from '../../Store'
@@ -8,9 +8,9 @@ import { MobileNoteMenu } from './MobileNoteMenu'
 /** Props for the NotesPanel component */
 interface NotesPanelProps {
   /** The list of cards to display */
-  cards: RichTextCard[]
+  cards: Card[]
   /** The currently selected card */
-  selectedCard: RichTextCard | null
+  selectedCard: Card | null
   /** Callback when a card is selected */
   onCardSelect: (cardId: string) => void
   /** Callback when a card's content is updated */
@@ -104,6 +104,32 @@ export function NotesPanel({
     </button>
   )
 
+  const renderCard = (card: Card, singleView: boolean) => {
+    if (card.type === 'richtext') {
+      return (
+        <NoteCard
+          key={card.id}
+          card={card}
+          isSingleView={singleView}
+          onUpdateCard={(content) => onUpdateCard(card.id, content)}
+          onUpdateCardTitle={(title) => onUpdateCardTitle(card.id, title)}
+          onDelete={() => onDelete(card.id)}
+          ref={(el) => cardRefs.current[card.id] = el}
+          userSettings={userSettings}
+          showAllNotes={showAllNotes}
+          onShowAllNotesChange={(value) => {
+            onCardSelect(card.id)
+            onShowAllNotesChange(value)
+          }}
+          extraStartControls={mobileMenuButton}
+          allCards={cards}
+          onCreateCard={onCreateCard}
+          onCardSelect={onCardSelect}
+        />
+      )
+    }
+  }
+
   return (
     <div className="flex flex-col border-r border-gray-200 dark:border-gray-700 flex-1 h-full">
       {/* Always render mobile menu at top level */}
@@ -122,24 +148,7 @@ export function NotesPanel({
         // Single note view
         <div className="flex flex-col flex-1 h-full">
           {selectedCard && (
-            <NoteCard
-              key={selectedCard.id}
-              card={selectedCard}
-              isSingleView={true}
-              onUpdateCard={(content) => onUpdateCard(selectedCard.id, content)}
-              onUpdateCardTitle={(title) => onUpdateCardTitle(selectedCard.id, title)}
-              onDelete={() => onDelete(selectedCard.id)}
-              userSettings={userSettings}
-              showAllNotes={showAllNotes}
-              onShowAllNotesChange={(value) => {
-                onCardSelect(selectedCard.id)
-                onShowAllNotesChange(value)
-              }}
-              extraStartControls={mobileMenuButton}
-              allCards={cards}
-              onCreateCard={onCreateCard}
-              onCardSelect={onCardSelect}
-            />
+            renderCard(selectedCard, true)
           )}
         </div>
       ) : (
@@ -171,22 +180,7 @@ export function NotesPanel({
                        dark:[::-webkit-scrollbar-thumb]:bg-slate-500/25
                        dark:hover:[::-webkit-scrollbar-thumb]:bg-slate-400/25
                        [::-webkit-scrollbar-track]:bg-transparent">
-            {sortedCards.map(card => (
-              <NoteCard
-                key={card.id}
-                card={card}
-                onUpdateCard={(content) => onUpdateCard(card.id, content)}
-                onUpdateCardTitle={(title) => onUpdateCardTitle(card.id, title)}
-                onDelete={() => onDelete(card.id)}
-                ref={(el) => cardRefs.current[card.id] = el}
-                userSettings={userSettings}
-                showAllNotes={showAllNotes}
-                onShowAllNotesChange={(value) => {
-                  onCardSelect(card.id)
-                  onShowAllNotesChange(value)
-                }}
-              />
-            ))}
+            {sortedCards.map(card => renderCard(card, false))}
           </div>
         </>
       )}

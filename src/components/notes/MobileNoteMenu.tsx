@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
-import { RichTextCard } from '../../types'
+import { Card, RichTextCard } from '../../types'
 import { SearchModal } from '../search/SearchModal'
+import { getCardTitle } from '../../modules/cards'
 
 /** Props for the MobileNoteMenu component */
 interface MobileNoteMenuProps {
@@ -9,7 +10,7 @@ interface MobileNoteMenuProps {
   /** Callback when menu should close */
   onClose: () => void
   /** List of cards to show */
-  cards: RichTextCard[]
+  cards: Card[]
   /** Currently selected card ID */
   selectedCardId: string | null
   /** Callback when a card is selected */
@@ -95,7 +96,7 @@ export function MobileNoteMenu({ isOpen, onClose, cards, selectedCardId, onCardS
                   : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
             >
               <div className="text-sm text-gray-800 dark:text-gray-200">
-                {card.title || card.content.markdown.slice(0, 30) || <span className="text-gray-400 dark:text-gray-500">Untitled</span>}
+                {card.title || getCardTitle(card).slice(0, 30) || <span className="text-gray-400 dark:text-gray-500">Untitled</span>}
               </div>
             </div>
           ))}

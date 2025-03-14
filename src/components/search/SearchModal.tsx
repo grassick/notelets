@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { FaTimes } from 'react-icons/fa'
-import type { RichTextCard } from '../../types'
+import type { Card } from '../../types'
+import { getCardSearchableContent } from '../../modules/cards'
 
 /** Props for the SearchModal component */
 interface SearchModalProps {
@@ -9,7 +10,7 @@ interface SearchModalProps {
   /** Callback when the modal is closed */
   onClose: () => void
   /** The list of cards to search through */
-  cards: RichTextCard[]
+  cards: Card[]
   /** Callback when a card is selected */
   onCardSelect: (cardId: string) => void
 }
@@ -18,7 +19,7 @@ interface SearchModalProps {
 export function SearchModal({ isOpen, onClose, cards, onCardSelect }: SearchModalProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
-  const [results, setResults] = useState<RichTextCard[]>([])
+  const [results, setResults] = useState<Card[]>([])
 
   // Focus input when modal opens
   useEffect(() => {
@@ -37,7 +38,7 @@ export function SearchModal({ isOpen, onClose, cards, onCardSelect }: SearchModa
     const query = searchQuery.toLowerCase()
     const matchingCards = cards.filter(card => {
       const title = card.title?.toLowerCase() || ''
-      const content = card.content.markdown.toLowerCase()
+      const content = getCardSearchableContent(card).toLowerCase()
       return title.includes(query) || content.includes(query)
     })
 
@@ -121,7 +122,7 @@ export function SearchModal({ isOpen, onClose, cards, onCardSelect }: SearchModa
                   </div>
                 )}
                 <div className={`text-sm text-gray-500 dark:text-gray-400 line-clamp-2 ${!card.title ? 'text-gray-900 dark:text-gray-100' : ''}`}>
-                  {card.content.markdown}
+                  {getCardSearchableContent(card)}
                 </div>
               </button>
             ))

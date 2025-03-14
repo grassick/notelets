@@ -33,3 +33,19 @@ export function getCardTitle(card: Card, maxLength: number = 30): string {
       return 'Untitled Card'
   }
 } 
+
+/**
+ * Gets the searchable content of a card
+ * @param card The card to get the content for
+ * @returns The searchable content of the card
+ */
+export function getCardSearchableContent(card: Card): string {
+  switch (card.type) {
+    case 'richtext':
+      return card.content.markdown
+    case 'file':
+      return card.content.filename
+  }
+
+  return ""
+}

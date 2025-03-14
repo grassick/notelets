@@ -150,7 +150,7 @@ export function DesktopBoardView(props: BoardViewProps) {
           <div 
             style={viewMode === 'split' ? { width: `${chatPanelState.width}%` } : undefined}
             className={`
-              flex flex-col min-h-0 overflow-hidden min-w-[250px] max-w-[85%]
+              flex flex-col min-h-0 overflow-hidden min-w-[250px]
               ${viewMode === 'split' ? '' : 'flex-1'}
             `}
           >

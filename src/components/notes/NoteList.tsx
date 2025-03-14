@@ -122,6 +122,7 @@ export function ListPanel({
             <DesktopViewControls
               viewMode={viewMode}
               onViewModeChange={onViewModeChange}
+              vertical
             />
             <button
               onClick={() => setIsSearchOpen(true)}

@@ -6,26 +6,18 @@ interface DesktopViewControlsProps {
   viewMode: ViewMode
   /** Callback when view mode changes */
   onViewModeChange: (mode: ViewMode) => void
+  /** Whether to display controls vertically */
+  vertical?: boolean
 }
 
 /**
- * Desktop view mode controls with cycling behavior
+ * Desktop view mode controls that display all view options in a grouped layout
  */
 export function DesktopViewControls({
   viewMode,
-  onViewModeChange
+  onViewModeChange,
+  vertical = false
 }: DesktopViewControlsProps) {
-  const getNextMode = (current: ViewMode): ViewMode => {
-    const modes: ViewMode[] = ['notes', 'split', 'chat']
-    const currentIndex = modes.indexOf(current)
-    const nextIndex = (currentIndex + 1) % modes.length
-    return modes[nextIndex]
-  }
-
-  const handleCycleView = () => {
-    onViewModeChange(getNextMode(viewMode))
-  }
-
   const getViewIcon = (mode: ViewMode) => {
     switch (mode) {
       case 'notes':
@@ -49,17 +41,24 @@ export function DesktopViewControls({
     }
   }
 
-  const nextMode = getNextMode(viewMode)
+  const modes: ViewMode[] = ['notes', 'split', 'chat']
 
   return (
-    <div className="flex items-center">
-      <button
-        onClick={handleCycleView}
-        className="p-1.5 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-        title={`Switch to ${nextMode} view`}
-      >
-        {getViewIcon(nextMode)}
-      </button>
+    <div className={`inline-flex ${vertical ? 'flex-col' : 'flex-row'} p-1 gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg items-center justify-center`}>
+      {modes.map((mode) => (
+        <button
+          key={mode}
+          onClick={() => onViewModeChange(mode)}
+          className={`w-8 h-8 flex items-center justify-center rounded-md transition-colors ${
+            viewMode === mode
+              ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+          }`}
+          title={`${mode.charAt(0).toUpperCase() + mode.slice(1)} view`}
+        >
+          {getViewIcon(mode)}
+        </button>
+      ))}
     </div>
   )
 } 

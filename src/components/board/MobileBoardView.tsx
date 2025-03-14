@@ -3,7 +3,7 @@ import type { BoardViewProps } from './BoardViewTypes'
 import type { RichTextCard } from '../../types'
 import { NotesPanel } from '../notes/NotesPanel'
 import { BoardChatSystem } from '../BoardChatSystem'
-import ViewControls from '../ViewControls'
+import { MobileViewControls } from '../view-controls/MobileViewControls'
 
 /**
  * Mobile-specific board view component with bottom navigation
@@ -64,10 +64,9 @@ export function MobileBoardView(props: BoardViewProps) {
       </div>
 
       {/* Mobile bottom navigation */}
-      <ViewControls
+      <MobileViewControls
         viewMode={viewMode}
         onViewModeChange={onViewModeChange}
-        isMobileBar={true}
       />
     </div>
   )

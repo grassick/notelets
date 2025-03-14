@@ -1,6 +1,6 @@
 import React, { useState, useCallback, KeyboardEvent } from 'react'
 import type { RichTextCard, ViewMode } from '../../types'
-import ViewControls from '../ViewControls'
+import { DesktopViewControls } from '../view-controls/DesktopViewControls'
 import { SearchModal } from '../search/SearchModal'
 import { getCardTitle } from '../../modules/cards'
 
@@ -84,10 +84,9 @@ export function ListPanel({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
               </svg>
             </button>
-            <ViewControls
+            <DesktopViewControls
               viewMode={viewMode}
               onViewModeChange={onViewModeChange}
-              isMobileBar={false}
             />
             <div className="flex-1" />
             <button
@@ -120,10 +119,9 @@ export function ListPanel({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <ViewControls
+            <DesktopViewControls
               viewMode={viewMode}
               onViewModeChange={onViewModeChange}
-              isMobileBar={false}
             />
             <button
               onClick={() => setIsSearchOpen(true)}

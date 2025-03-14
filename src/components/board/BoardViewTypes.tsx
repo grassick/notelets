@@ -3,8 +3,12 @@ import type { Card, RichTextCard, ViewMode } from '../../types'
 
 /** State for panel expansion and width */
 export interface PanelState {
+  /** Whether the panel is expanded */
   isExpanded: boolean
+  /** Width in pixels (for list panel) or percentage (for chat panel) */
   width: number
+  /** Whether the width represents a percentage */
+  isPercentage?: boolean
 }
 
 /** Props shared between desktop and mobile board views */

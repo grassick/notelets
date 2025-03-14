@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { usePersist } from '../../hooks/usePersist'
 import { ListPanel } from '../notes/NoteList'
 import { NotesPanel } from '../notes/NotesPanel'
@@ -29,17 +29,39 @@ export function DesktopBoardView(props: BoardViewProps) {
   } = props
 
   const [isDragging, setIsDragging] = useState(false)
+  const dragStartRef = useRef({ x: 0, initialPercentage: 0 })
 
   // Panel state management with persistence
   const [listPanelState, setListPanelState] = usePersist<PanelState>("listPanelWidth", { 
     isExpanded: true, 
-    width: 250 
+    width: 250,
+    isPercentage: false
   })
 
   const [chatPanelState, setChatPanelState] = usePersist<PanelState>("chatPanelWidth", { 
     isExpanded: true, 
-    width: 250 
+    width: 40, // 40% of remaining space by default
+    isPercentage: true
   })
+
+  // Handle drag start
+  const handleDragStart = () => {
+    if (viewMode !== 'split') return
+
+    const container = document.getElementById('board-container')
+    if (!container) return
+
+    // Get current mouse position
+    const mouseX = window.event ? (window.event as MouseEvent).clientX : 0
+
+    // Record initial drag position and percentage
+    dragStartRef.current = {
+      x: mouseX,
+      initialPercentage: chatPanelState.width as number
+    }
+    
+    setIsDragging(true)
+  }
 
   // Handle panel resizing
   useEffect(() => {
@@ -53,17 +75,17 @@ export function DesktopBoardView(props: BoardViewProps) {
       const containerRect = container.getBoundingClientRect()
       const listWidth = listPanelState.isExpanded ? listPanelState.width : 48
       
-      // Calculate relative position from the end of list panel
-      const relativeX = Math.max(0, e.clientX - containerRect.left - listWidth)
-      
-      // Calculate available width and constraints
+      // Calculate available space
       const availableWidth = containerRect.width - listWidth
-      const minWidth = 250
       
-      // Calculate new chat width based on mouse position from the right edge
-      const newChatWidth = Math.max(minWidth, availableWidth - relativeX)
+      // Calculate the mouse movement as a percentage of available space
+      const deltaX = e.clientX - dragStartRef.current.x
+      const deltaPercentage = (deltaX / availableWidth) * 100
       
-      setChatPanelState((prev: PanelState) => ({ ...prev, width: newChatWidth }))
+      // Update percentage (moving right decreases chat percentage, moving left increases it)
+      const newPercentage = Math.min(85, Math.max(15, dragStartRef.current.initialPercentage - deltaPercentage))
+      
+      setChatPanelState((prev: PanelState) => ({ ...prev, width: newPercentage }))
     }
 
     const handleMouseUp = () => {
@@ -120,15 +142,15 @@ export function DesktopBoardView(props: BoardViewProps) {
 
         {/* Resize handle for chat panel */}
         {viewMode === 'split' && (
-          <ResizeHandle onDragStart={() => setIsDragging(true)} />
+          <ResizeHandle onDragStart={handleDragStart} />
         )}
 
         {/* Chat Panel - Show in split mode or when chat mode is active */}
         {(viewMode === 'split' || viewMode === 'chat') && (
           <div 
-            style={viewMode === 'split' ? { width: `${chatPanelState.width}px` } : undefined}
+            style={viewMode === 'split' ? { width: `${chatPanelState.width}%` } : undefined}
             className={`
-              flex flex-col min-h-0 overflow-hidden min-w-[250px]
+              flex flex-col min-h-0 overflow-hidden min-w-[250px] max-w-[85%]
               ${viewMode === 'split' ? '' : 'flex-1'}
             `}
           >

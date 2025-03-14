@@ -20,12 +20,12 @@ function CardListItem({ card, isSelected, onClick }: CardListItemProps) {
   return (
     <div
       onClick={onClick}
-      className={`py-1.5 px-3 cursor-pointer border-b border-gray-200 dark:border-gray-700 
+      className={`py-2 px-3 cursor-pointer border-b border-gray-200 dark:border-gray-700 
         ${isSelected 
           ? 'bg-blue-50 dark:bg-blue-900' 
           : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
     >
-      <div className="text-xs text-gray-800 dark:text-gray-200">
+      <div className="text-sm text-gray-800 dark:text-gray-200 line-clamp-2 overflow-hidden">
         {getCardTitle(card) || <span className="text-gray-400 dark:text-gray-500">—</span>}
       </div>
     </div>
@@ -76,7 +76,7 @@ export function ListPanel({
   
   // Sort cards by creation date, newest first
   const sortedCards = [...cards].sort((a, b) => 
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   )
 
   return (

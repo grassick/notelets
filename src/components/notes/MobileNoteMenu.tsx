@@ -23,9 +23,9 @@ interface MobileNoteMenuProps {
 export function MobileNoteMenu({ isOpen, onClose, cards, selectedCardId, onCardSelect, onCreateCard }: MobileNoteMenuProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   
-  // Sort cards by creation date, newest first
+  // Sort cards by updated date, newest first
   const sortedCards = [...cards].sort((a, b) => 
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   )
 
   const handleCardSelect = (cardId: string) => {
@@ -95,7 +95,7 @@ export function MobileNoteMenu({ isOpen, onClose, cards, selectedCardId, onCardS
                   ? 'bg-blue-50 dark:bg-blue-900/50' 
                   : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
             >
-              <div className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <div className="text-sm text-gray-800 dark:text-gray-200">
                 {card.title || getCardTitle(card).slice(0, 100) || <span className="text-gray-400 dark:text-gray-500">Untitled</span>}
               </div>
             </div>

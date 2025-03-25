@@ -151,6 +151,13 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     },
     {
         provider: 'openrouter',
+        id: 'google/gemini-2.5-pro-exp-03-25:free',
+        modelId: 'google/gemini-2.5-pro-exp-03-25:free',
+        name: 'Gemini 2.5 Pro',
+        baseURL: 'https://openrouter.ai/api/v1'
+    },
+    {
+        provider: 'openrouter',
         id: 'openai/gpt-4o',
         modelId: 'openai/gpt-4o',
         name: 'GPT-4o',

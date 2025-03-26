@@ -265,6 +265,13 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     },
     {
         provider: 'gemini',
+        id: 'gemini-2.5-pro-exp-03-25',
+        modelId: 'gemini-2.5-pro-exp-03-25',
+        name: 'Gemini 2.5 Pro',
+        baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
+    },
+    {
+        provider: 'gemini',
         id: 'gemini-2.0-flash-lite-preview-02-05',
         modelId: 'gemini-2.0-flash-lite-preview-02-05',
         name: 'Gemini 2.0 Flash Lite',

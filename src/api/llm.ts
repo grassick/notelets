@@ -104,35 +104,35 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         provider: 'openrouter',
         id: 'anthropic/claude-3.7-sonnet',
         modelId: 'anthropic/claude-3.7-sonnet',
-        name: 'Claude 3.7 Sonnet',
+        name: 'OR: Claude 3.7 Sonnet',
         baseURL: 'https://openrouter.ai/api/v1'
     },
     {
         provider: 'openrouter',
         id: 'anthropic/claude-3.7-sonnet:thinking',
         modelId: 'anthropic/claude-3.7-sonnet:thinking',
-        name: 'Claude 3.7 Sonnet (Thinking)',
+        name: 'OR: Claude 3.7 Sonnet (Thinking)',
         baseURL: 'https://openrouter.ai/api/v1'
     },
     {
         provider: 'openrouter',
         id: 'anthropic/claude-3.5-sonnet',
         modelId: 'anthropic/claude-3.5-sonnet',
-        name: 'Claude 3.5 Sonnet',
+        name: 'OR: Claude 3.5 Sonnet',
         baseURL: 'https://openrouter.ai/api/v1'
     },
     {
         provider: 'openrouter',
         id: 'openai/gpt-4.5-preview',
         modelId: 'openai/gpt-4.5-preview',
-        name: 'GPT-4.5 Preview',
+        name: 'OR: GPT-4.5 Preview',
         baseURL: 'https://openrouter.ai/api/v1'
     },
     {
         provider: 'openrouter',
         id: 'google/gemini-2.0-flash-001',
         modelId: 'google/gemini-2.0-flash-001',
-        name: 'Gemini 2.0 Flash',
+        name: 'OR: Gemini 2.0 Flash',
         baseURL: 'https://openrouter.ai/api/v1'
     },
     // {
@@ -388,10 +388,10 @@ type LLMSettingsKey = `${LLMProviderType}Key`
 
 /** Get available models based on API keys */
 export function getAvailableModels(userSettings: UserSettings): ModelInfo[] {
-    // If OpenRouter is enabled, add only models from OpenRouter
-    if (userSettings.llm.openrouterKey) {
-        return AVAILABLE_MODELS.filter(model => model.provider === 'openrouter')
-    }
+    // // If OpenRouter is enabled, add only models from OpenRouter
+    // if (userSettings.llm.openrouterKey) {
+    //     return AVAILABLE_MODELS.filter(model => model.provider === 'openrouter')
+    // }
 
     // Get available models based on API keys
     const availableModels = AVAILABLE_MODELS.filter(model => {

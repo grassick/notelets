@@ -67,10 +67,10 @@ export function getDefaultModel(settings: LLMSettings): ModelId {
     }
 
     // If no preferred models are available, return first model with available key
+    if (settings.openrouterKey) return 'anthropic/claude-3.7-sonnet'
     if (settings.anthropicKey) return 'claude-3-7-sonnet-latest'
     if (settings.geminiKey) return 'gemini-2.0-pro-exp-02-05'
     if (settings.openaiKey) return 'gpt-4o'
-    if (settings.openrouterKey) return 'anthropic/claude-3.7-sonnet'
     
     // Fallback to Claude as default (will show API key missing message)
     return 'claude-3-7-sonnet-latest'
@@ -135,27 +135,27 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         name: 'Gemini 2.0 Flash',
         baseURL: 'https://openrouter.ai/api/v1'
     },
-    {
-        provider: 'openrouter',
-        id: 'google/gemini-2.0-pro-exp-02-05:free',
-        modelId: 'google/gemini-2.0-pro-exp-02-05:free',
-        name: 'Gemini 2.0 Pro',
-        baseURL: 'https://openrouter.ai/api/v1'
-    },
-    {
-        provider: 'openrouter',
-        id: 'google/gemini-2.0-flash-thinking-exp:free',
-        modelId: 'google/gemini-2.0-flash-thinking-exp:free',
-        name: 'Gemini 2.0 Flash Thinking',
-        baseURL: 'https://openrouter.ai/api/v1'
-    },
-    {
-        provider: 'openrouter',
-        id: 'google/gemini-2.5-pro-exp-03-25:free',
-        modelId: 'google/gemini-2.5-pro-exp-03-25:free',
-        name: 'Gemini 2.5 Pro',
-        baseURL: 'https://openrouter.ai/api/v1'
-    },
+    // {
+    //     provider: 'openrouter',
+    //     id: 'google/gemini-2.0-pro-exp-02-05:free',
+    //     modelId: 'google/gemini-2.0-pro-exp-02-05:free',
+    //     name: 'Gemini 2.0 Pro',
+    //     baseURL: 'https://openrouter.ai/api/v1'
+    // },
+    // {
+    //     provider: 'openrouter',
+    //     id: 'google/gemini-2.0-flash-thinking-exp:free',
+    //     modelId: 'google/gemini-2.0-flash-thinking-exp:free',
+    //     name: 'Gemini 2.0 Flash Thinking',
+    //     baseURL: 'https://openrouter.ai/api/v1'
+    // },
+    // {
+    //     provider: 'openrouter',
+    //     id: 'google/gemini-2.5-pro-exp-03-25:free',
+    //     modelId: 'google/gemini-2.5-pro-exp-03-25:free',
+    //     name: 'Gemini 2.5 Pro',
+    //     baseURL: 'https://openrouter.ai/api/v1'
+    // },
     {
         provider: 'openrouter',
         id: 'openai/gpt-4o',
@@ -183,6 +183,42 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         modelId: 'openai/o1',
         name: 'O1',
         baseURL: 'https://openrouter.ai/api/v1'
+    },
+    // Gemini models
+    {
+        provider: 'gemini',
+        id: 'gemini-2.5-pro-exp-03-25',
+        modelId: 'gemini-2.5-pro-exp-03-25',
+        name: 'Gemini 2.5 Pro',
+        baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
+    },
+    {
+        provider: 'gemini',
+        id: 'gemini-2.0-flash',
+        modelId: 'gemini-2.0-flash',
+        name: 'Gemini 2.0 Flash',
+        baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
+    },
+    {
+        provider: 'gemini',
+        id: 'gemini-2.0-flash-lite-preview-02-05',
+        modelId: 'gemini-2.0-flash-lite-preview-02-05',
+        name: 'Gemini 2.0 Flash Lite',
+        baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
+    },
+    {
+        provider: 'gemini',
+        id: 'gemini-2.0-pro-exp-02-05',
+        modelId: 'gemini-2.0-pro-exp-02-05',
+        name: 'Gemini 2.0 Pro',
+        baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
+    },
+    {
+        provider: 'gemini',
+        id: 'gemini-2.0-flash-thinking-exp-01-21',
+        modelId: 'gemini-2.0-flash-thinking-exp-01-21',
+        name: 'Gemini 2.0 Flash Thinking',
+        baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
     },
     // Anthropic models
     {
@@ -254,42 +290,6 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         id: 'chatgpt-4o-latest',
         modelId: 'chatgpt-4o-latest',
         name: 'ChatGPT 4o'
-    },
-    // Gemini models
-    {
-        provider: 'gemini',
-        id: 'gemini-2.0-flash',
-        modelId: 'gemini-2.0-flash',
-        name: 'Gemini 2.0 Flash',
-        baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
-    },
-    {
-        provider: 'gemini',
-        id: 'gemini-2.5-pro-exp-03-25',
-        modelId: 'gemini-2.5-pro-exp-03-25',
-        name: 'Gemini 2.5 Pro',
-        baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
-    },
-    {
-        provider: 'gemini',
-        id: 'gemini-2.0-flash-lite-preview-02-05',
-        modelId: 'gemini-2.0-flash-lite-preview-02-05',
-        name: 'Gemini 2.0 Flash Lite',
-        baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
-    },
-    {
-        provider: 'gemini',
-        id: 'gemini-2.0-pro-exp-02-05',
-        modelId: 'gemini-2.0-pro-exp-02-05',
-        name: 'Gemini 2.0 Pro',
-        baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
-    },
-    {
-        provider: 'gemini',
-        id: 'gemini-2.0-flash-thinking-exp-01-21',
-        modelId: 'gemini-2.0-flash-thinking-exp-01-21',
-        name: 'Gemini 2.0 Flash Thinking',
-        baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
     },
     // // Google models
     // {

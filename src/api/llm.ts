@@ -53,6 +53,8 @@ export interface LLMSettings {
 export function getDefaultModel(settings: LLMSettings): ModelId {
     // Try to find first available model in order of preference
     const modelPreference: ModelId[] = [
+        'gemini-2.5-pro-exp-03-25',
+        'anthropic/claude-3.7-sonnet',
         'claude-3-7-sonnet-latest',
         'claude-3-7-sonnet-thinking-latest',
         'claude-3-5-sonnet-latest',

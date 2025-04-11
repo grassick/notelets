@@ -44,7 +44,7 @@ export function BoardChatSystem({
   setCard,
   selectedCard
 }: BoardChatSystemProps) {
-  const { settings: userSettings } = useUserSettings(store)
+  const { settings: userSettings, loading: userSettingsLoading } = useUserSettings(store)
   const { chats, setChat: storeSetChat, removeChat } = useChats(store, boardId)
   const [chat, setChat] = useState<Chat | null>(null)
   const [error, setError] = useState<Error | null>(null)
@@ -69,10 +69,10 @@ export function BoardChatSystem({
 
   // Validate selected model on settings change
   useEffect(() => {
-    if (!isModelAvailable(selectedModel, userSettings.llm)) {
+    if (!userSettingsLoading && !isModelAvailable(selectedModel, userSettings.llm)) {
       setSelectedModel(getDefaultModel(userSettings.llm))
     }
-  }, [userSettings.llm, selectedModel, setSelectedModel])
+  }, [userSettings.llm, selectedModel, setSelectedModel, userSettingsLoading])
 
   // Update the handleNewChat function
   const handleNewChat = useCallback(async () => {

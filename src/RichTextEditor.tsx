@@ -198,7 +198,7 @@ export function RichTextEditor({
       <div className="flex-1 min-h-0 relative">
         <EditorContent 
           editor={editor} 
-          className="h-full [&_.ProseMirror]:h-full [&_.ProseMirror]:min-h-full" 
+          className="h-full [&_.ProseMirror]:h-full [&_.ProseMirror]:min-h-full [&_.ProseMirror]:pb-4" 
         />
         {showVoiceInput && (
           <div className="absolute bottom-0 right-1 z-10">

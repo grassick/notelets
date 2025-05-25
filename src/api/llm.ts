@@ -104,37 +104,16 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     // OpenRouter models
     {
         provider: 'openrouter',
-        id: 'anthropic/claude-3.7-sonnet',
-        modelId: 'anthropic/claude-3.7-sonnet',
-        name: 'OR: Claude 3.7 Sonnet',
+        id: 'google/gemini-2.5-pro-preview',
+        modelId: 'google/gemini-2.5-pro-preview',
+        name: 'OR: Gemini 2.5 Pro',
         baseURL: 'https://openrouter.ai/api/v1'
     },
     {
         provider: 'openrouter',
-        id: 'anthropic/claude-3.7-sonnet:thinking',
-        modelId: 'anthropic/claude-3.7-sonnet:thinking',
-        name: 'OR: Claude 3.7 Sonnet (Thinking)',
-        baseURL: 'https://openrouter.ai/api/v1'
-    },
-    {
-        provider: 'openrouter',
-        id: 'anthropic/claude-3.5-sonnet',
-        modelId: 'anthropic/claude-3.5-sonnet',
-        name: 'OR: Claude 3.5 Sonnet',
-        baseURL: 'https://openrouter.ai/api/v1'
-    },
-    {
-        provider: 'openrouter',
-        id: 'openai/gpt-4.5-preview',
-        modelId: 'openai/gpt-4.5-preview',
-        name: 'OR: GPT-4.5 Preview',
-        baseURL: 'https://openrouter.ai/api/v1'
-    },
-    {
-        provider: 'openrouter',
-        id: 'google/gemini-2.0-flash-001',
-        modelId: 'google/gemini-2.0-flash-001',
-        name: 'OR: Gemini 2.0 Flash',
+        id: 'anthropic/claude-sonnet-4',
+        modelId: 'anthropic/claude-sonnet-4',
+        name: 'OR: Claude Sonnet 4',
         baseURL: 'https://openrouter.ai/api/v1'
     },
     // {
@@ -179,47 +158,12 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         name: 'O3 Mini High',
         baseURL: 'https://openrouter.ai/api/v1'
     },
-    {
-        provider: 'openrouter',
-        id: 'openai/o1',
-        modelId: 'openai/o1',
-        name: 'O1',
-        baseURL: 'https://openrouter.ai/api/v1'
-    },
     // Gemini models
     {
         provider: 'gemini',
         id: 'gemini-2.5-pro-exp-03-25',
         modelId: 'gemini-2.5-pro-exp-03-25',
         name: 'Gemini 2.5 Pro',
-        baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
-    },
-    {
-        provider: 'gemini',
-        id: 'gemini-2.0-flash',
-        modelId: 'gemini-2.0-flash',
-        name: 'Gemini 2.0 Flash',
-        baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
-    },
-    {
-        provider: 'gemini',
-        id: 'gemini-2.0-flash-lite-preview-02-05',
-        modelId: 'gemini-2.0-flash-lite-preview-02-05',
-        name: 'Gemini 2.0 Flash Lite',
-        baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
-    },
-    {
-        provider: 'gemini',
-        id: 'gemini-2.0-pro-exp-02-05',
-        modelId: 'gemini-2.0-pro-exp-02-05',
-        name: 'Gemini 2.0 Pro',
-        baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
-    },
-    {
-        provider: 'gemini',
-        id: 'gemini-2.0-flash-thinking-exp-01-21',
-        modelId: 'gemini-2.0-flash-thinking-exp-01-21',
-        name: 'Gemini 2.0 Flash Thinking',
         baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
     },
     // Anthropic models

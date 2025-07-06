@@ -237,6 +237,12 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         modelId: 'chatgpt-4o-latest',
         name: 'ChatGPT 4o'
     },
+    {
+        provider: 'openai',
+        id: 'o3',
+        modelId: 'o3',
+        name: 'O3'
+    },
     // // Google models
     // {
     //     provider: 'gemini',

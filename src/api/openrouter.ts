@@ -50,6 +50,9 @@ export class OpenRouterClient implements LLMProvider {
                 messages: this.convertMessages(messages, options.system),
                 max_tokens: options.maxTokens,
                 temperature: options.temperature,
+                reasoning: options.reasoningEffort ? {
+                    effort: options.reasoningEffort
+                } : undefined
             }),
             signal
         })
@@ -98,7 +101,10 @@ export class OpenRouterClient implements LLMProvider {
                 messages: this.convertMessages(messages, options.system),
                 max_tokens: options.maxTokens,
                 temperature: options.temperature,
-                stream: true
+                stream: true,
+                reasoning: options.reasoningEffort ? {
+                    effort: options.reasoningEffort
+                } : undefined
             }),
             signal
         })

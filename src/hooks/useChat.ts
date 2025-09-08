@@ -139,6 +139,7 @@ Use markdown formatting in your responses.`
                     system: systemPrompt,
                     temperature: model.noTemperature ? undefined : 0.7,
                     thinkingTokens: model.thinkingTokens,
+                    reasoningEffort: model.reasoningEffort
                 },
                 signal
             )

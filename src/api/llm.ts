@@ -37,6 +37,8 @@ export interface ModelInfo {
     noTemperature?: boolean
     /** Number of thinking tokens for models that support thinking mode (optional) */
     thinkingTokens?: number
+    /** Reasoning effort for models that support reasoning effort (optional) */
+    reasoningEffort?: "high" | "medium" | "low"
 }
 
 /** Settings interface for LLM API keys */
@@ -53,6 +55,7 @@ export interface LLMSettings {
 export function getDefaultModel(settings: LLMSettings): ModelId {
     // Try to find first available model in order of preference
     const modelPreference: ModelId[] = [
+        'openai/gpt-5-high',
         'gemini-2.5-pro-exp-03-25',
         'anthropic/claude-3.7-sonnet',
         'claude-3-7-sonnet-latest',
@@ -102,6 +105,30 @@ export function isModelAvailable(modelId: ModelId, settings: LLMSettings): boole
 /** Available models */
 export const AVAILABLE_MODELS: ModelInfo[] = [
     // OpenRouter models
+    {
+        provider: 'openrouter',
+        id: 'openai/gpt-5-high',
+        modelId: 'openai/gpt-5',
+        name: 'OR: GPT-5 High',
+        baseURL: 'https://openrouter.ai/api/v1',
+        reasoningEffort: "high"
+    },
+    {
+        provider: 'openrouter',
+        id: 'openai/gpt-5-medium',
+        modelId: 'openai/gpt-5',
+        name: 'OR: GPT-5 Medium',
+        baseURL: 'https://openrouter.ai/api/v1',
+        reasoningEffort: "medium"
+    },
+    {
+        provider: 'openrouter',
+        id: 'openai/gpt-5-low',
+        modelId: 'openai/gpt-5',
+        name: 'OR: GPT-5 Low',
+        baseURL: 'https://openrouter.ai/api/v1',
+        reasoningEffort: "low"
+    },
     {
         provider: 'openrouter',
         id: 'google/gemini-2.5-pro-preview',
@@ -272,6 +299,8 @@ export interface LLMOptions {
     system?: string
     /** Thinking tokens */
     thinkingTokens?: number
+    /** Reasoning effort */
+    reasoningEffort?: "high" | "medium" | "low"
 }
 
 /** Common response format for all LLMs */

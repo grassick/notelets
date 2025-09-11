@@ -143,6 +143,13 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         name: 'OR: Claude Sonnet 4',
         baseURL: 'https://openrouter.ai/api/v1'
     },
+    {
+        provider: 'openrouter',
+        id: 'anthropic/claude-opus-4.1',
+        modelId: 'anthropic/claude-opus-4.1',
+        name: 'OR: Claude Opus 4.1',
+        baseURL: 'https://openrouter.ai/api/v1'
+    },
     // {
     //     provider: 'openrouter',
     //     id: 'google/gemini-2.0-pro-exp-02-05:free',

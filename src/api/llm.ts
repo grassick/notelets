@@ -145,10 +145,19 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     },
     {
         provider: 'openrouter',
-        id: 'anthropic/claude-opus-4.1',
+        id: 'anthropic/claude-opus-4.1-high',
         modelId: 'anthropic/claude-opus-4.1',
-        name: 'OR: Claude Opus 4.1',
-        baseURL: 'https://openrouter.ai/api/v1'
+        name: 'OR: Claude Opus 4.1 High',
+        baseURL: 'https://openrouter.ai/api/v1',
+        reasoningEffort: "high"
+    },
+    {
+        provider: 'openrouter',
+        id: 'anthropic/claude-opus-4.1-medium',
+        modelId: 'anthropic/claude-opus-4.1',
+        name: 'OR: Claude Opus 4.1 Medium',
+        baseURL: 'https://openrouter.ai/api/v1',
+        reasoningEffort: "medium"
     },
     // {
     //     provider: 'openrouter',

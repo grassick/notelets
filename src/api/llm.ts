@@ -138,9 +138,9 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     },
     {
         provider: 'openrouter',
-        id: 'anthropic/claude-sonnet-4',
-        modelId: 'anthropic/claude-sonnet-4',
-        name: 'OR: Claude Sonnet 4',
+        id: 'anthropic/claude-sonnet-4.5',
+        modelId: 'anthropic/claude-sonnet-4.5',
+        name: 'OR: Claude Sonnet 4.5',
         baseURL: 'https://openrouter.ai/api/v1'
     },
     {

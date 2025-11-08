@@ -39,8 +39,7 @@ export class FireworksClient {
       temperature
     } = options
 
-    const baseWsUrl = 'wss://audio-streaming.us-virginia-1.direct.fireworks.ai'
-    const wsPath = '/v1/audio/transcriptions/streaming'
+    const baseWsUrl = 'wss://audio-streaming.api.fireworks.ai/v1/audio/transcriptions/streaming'
 
     const queryParams = new URLSearchParams()
     queryParams.append('Authorization', `Bearer ${this.apiKey}`)
@@ -62,7 +61,7 @@ export class FireworksClient {
     }
 
     // The final WebSocket URL
-    const wsUrl = `${baseWsUrl}${wsPath}?${queryParams.toString()}`
+    const wsUrl = `${baseWsUrl}?${queryParams.toString()}`
 
     let segments: TranscriptionSegment[] = []
 

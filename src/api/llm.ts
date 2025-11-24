@@ -106,6 +106,13 @@ export function isModelAvailable(modelId: ModelId, settings: LLMSettings): boole
 export const AVAILABLE_MODELS: ModelInfo[] = [
     // OpenRouter models
     {
+         provider: 'openrouter',
+         id: 'google/gemini-3-pro-preview',
+         modelId: 'google/gemini-3-pro-preview',
+         name: 'OR: Gemini 3 Pro',
+         baseURL: 'https://openrouter.ai/api/v1'
+    },
+    {
         provider: 'openrouter',
         id: 'openai/gpt-5-high',
         modelId: 'openai/gpt-5',
@@ -129,13 +136,13 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         baseURL: 'https://openrouter.ai/api/v1',
         reasoningEffort: "low"
     },
-    {
-        provider: 'openrouter',
-        id: 'google/gemini-2.5-pro-preview',
-        modelId: 'google/gemini-2.5-pro-preview',
-        name: 'OR: Gemini 2.5 Pro',
-        baseURL: 'https://openrouter.ai/api/v1'
-    },
+    // {
+    //     provider: 'openrouter',
+    //     id: 'google/gemini-2.5-pro-preview',
+    //     modelId: 'google/gemini-2.5-pro-preview',
+    //     name: 'OR: Gemini 2.5 Pro',
+    //     baseURL: 'https://openrouter.ai/api/v1'
+    // },
     {
         provider: 'openrouter',
         id: 'anthropic/claude-sonnet-4.5',
@@ -151,14 +158,14 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         baseURL: 'https://openrouter.ai/api/v1',
         reasoningEffort: "high"
     },
-    {
-        provider: 'openrouter',
-        id: 'anthropic/claude-opus-4.1-medium',
-        modelId: 'anthropic/claude-opus-4.1',
-        name: 'OR: Claude Opus 4.1 Medium',
-        baseURL: 'https://openrouter.ai/api/v1',
-        reasoningEffort: "medium"
-    },
+    // {
+    //     provider: 'openrouter',
+    //     id: 'anthropic/claude-opus-4.1-medium',
+    //     modelId: 'anthropic/claude-opus-4.1',
+    //     name: 'OR: Claude Opus 4.1 Medium',
+    //     baseURL: 'https://openrouter.ai/api/v1',
+    //     reasoningEffort: "medium"
+    // },
     // {
     //     provider: 'openrouter',
     //     id: 'google/gemini-2.0-pro-exp-02-05:free',
@@ -180,27 +187,27 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     //     name: 'Gemini 2.5 Pro',
     //     baseURL: 'https://openrouter.ai/api/v1'
     // },
-    {
-        provider: 'openrouter',
-        id: 'openai/gpt-4o',
-        modelId: 'openai/gpt-4o',
-        name: 'GPT-4o',
-        baseURL: 'https://openrouter.ai/api/v1'
-    },
-    {
-        provider: 'openrouter',
-        id: 'deepseek/deepseek-r1',
-        modelId: 'deepseek/deepseek-r1',
-        name: 'DeepSeek R1',
-        baseURL: 'https://openrouter.ai/api/v1'
-    },
-    {
-        provider: 'openrouter',
-        id: 'openai/o3-mini-high',
-        modelId: 'openai/o3-mini-high',
-        name: 'O3 Mini High',
-        baseURL: 'https://openrouter.ai/api/v1'
-    },
+    // {
+    //     provider: 'openrouter',
+    //     id: 'openai/gpt-4o',
+    //     modelId: 'openai/gpt-4o',
+    //     name: 'GPT-4o',
+    //     baseURL: 'https://openrouter.ai/api/v1'
+    // },
+    // {
+    //     provider: 'openrouter',
+    //     id: 'deepseek/deepseek-r1',
+    //     modelId: 'deepseek/deepseek-r1',
+    //     name: 'DeepSeek R1',
+    //     baseURL: 'https://openrouter.ai/api/v1'
+    // },
+    // {
+    //     provider: 'openrouter',
+    //     id: 'openai/o3-mini-high',
+    //     modelId: 'openai/o3-mini-high',
+    //     name: 'O3 Mini High',
+    //     baseURL: 'https://openrouter.ai/api/v1'
+    // },
     // Gemini models
     {
         provider: 'gemini',

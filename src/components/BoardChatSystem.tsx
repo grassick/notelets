@@ -52,6 +52,7 @@ export function BoardChatSystem({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isHistoryMode, setIsHistoryMode] = useState(false)
   const [contextMode, setContextMode] = usePersist<ChatContextMode>(`board_${boardId}_chatContext`, 'quick')
+  const [isEphemeral, setIsEphemeral] = useState(true)
 
   // Filter cards based on context mode
   const contextCards = useMemo(() => {
@@ -77,13 +78,17 @@ export function BoardChatSystem({
   // Update the handleNewChat function
   const handleNewChat = useCallback(async () => {
     setChat(null)
+    setIsEphemeral(true)  // New chats are always ephemeral
     setError(null)  // Clear any existing errors
   }, [])
 
   const { sendMessage, editMessage, stopStreaming, isLoading, error: chatError } = useChat({
     cards: contextCards, // Pass filtered cards based on context mode
     onChatUpdate: (updatedChat) => {
-      storeSetChat(updatedChat)
+      // Only persist if not ephemeral
+      if (!isEphemeral) {
+        storeSetChat(updatedChat)
+      }
       setChat(updatedChat)
     },
     userSettings
@@ -92,6 +97,7 @@ export function BoardChatSystem({
   // Add chat selection handler
   const handleChatSelect = useCallback((selectedChat: Chat) => {
     setChat(selectedChat)
+    setIsEphemeral(false)  // Chat from history is already saved
     setError(null)
     setIsHistoryMode(false) // Exit history mode when a chat is selected
   }, [])
@@ -111,7 +117,10 @@ export function BoardChatSystem({
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }
-        await storeSetChat(activeChat)
+        // Only persist if not ephemeral
+        if (!isEphemeral) {
+          await storeSetChat(activeChat)
+        }
         setChat(activeChat)
       }
 
@@ -120,7 +129,7 @@ export function BoardChatSystem({
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to send message'))
     }
-  }, [chat, sendMessage, boardId, storeSetChat])
+  }, [chat, sendMessage, boardId, storeSetChat, isEphemeral])
 
   const handleDeleteChat = useCallback(async (chatId: string) => {
     try {
@@ -172,6 +181,14 @@ export function BoardChatSystem({
       setError(err instanceof Error ? err : new Error('Failed to save note'))
     }
   }, [boardId, setCard])
+
+  /** Save an ephemeral chat to history */
+  const handleSaveChat = useCallback(async () => {
+    if (chat && isEphemeral) {
+      await storeSetChat(chat)
+      setIsEphemeral(false)
+    }
+  }, [chat, isEphemeral, storeSetChat])
 
   /** Get a preview title from chat messages */
   const getChatPreview = (chat: Chat): string => {
@@ -312,6 +329,8 @@ export function BoardChatSystem({
           contextMode={contextMode}
           onContextModeChange={setContextMode}
           selectedCard={selectedCard}
+          isEphemeral={isEphemeral}
+          onSaveChat={handleSaveChat}
         />
         {isHistoryMode ? (
           <ChatHistoryView />
@@ -370,6 +389,10 @@ interface ChatHeaderProps {
   onContextModeChange: (mode: ChatContextMode) => void
   /** Currently selected card */
   selectedCard: Card | null
+  /** Whether the current chat is ephemeral (not saved to history) */
+  isEphemeral: boolean
+  /** Callback to save an ephemeral chat to history */
+  onSaveChat: () => void
 }
 
 function ChatHeader({ 
@@ -386,7 +409,9 @@ function ChatHeader({
   store,
   contextMode,
   onContextModeChange,
-  selectedCard
+  selectedCard,
+  isEphemeral,
+  onSaveChat
 }: ChatHeaderProps) {
   return (
     <div className="h-8 px-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
@@ -442,6 +467,20 @@ function ChatHeader({
       </div>
 
       <div className="flex items-center gap-2">
+        {isEphemeral && chat && (
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 italic">Ephemeral</span>
+            <button
+              onClick={onSaveChat}
+              className="p-1 rounded text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-blue-500 dark:hover:text-blue-400"
+              title="Save chat to history"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+            </button>
+          </div>
+        )}
         <ModelSelector
           value={selectedModel}
           onChange={onModelChange}

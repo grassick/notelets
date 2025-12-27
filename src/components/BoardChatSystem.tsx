@@ -467,13 +467,18 @@ function ChatHeader({
       </div>
 
       <div className="flex items-center gap-2">
-        {isEphemeral && chat && (
+        {isEphemeral && (
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 italic">Ephemeral</span>
+            <span className="text-[10px] text-gray-400 dark:text-gray-500">Ephemeral</span>
             <button
               onClick={onSaveChat}
-              className="p-1 rounded text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-blue-500 dark:hover:text-blue-400"
-              title="Save chat to history"
+              disabled={!chat || chat.messages.length === 0}
+              className={`p-1 rounded transition-colors ${
+                chat && chat.messages.length > 0
+                  ? 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-blue-500 dark:hover:text-blue-400'
+                  : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+              }`}
+              title={chat && chat.messages.length > 0 ? "Save chat to history" : "Send a message first to save"}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />

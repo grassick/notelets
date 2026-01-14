@@ -46,6 +46,13 @@ export function useChat({ cards, onChatUpdate, userSettings }: UseChatOptions): 
     }, [])
 
     /**
+     * Formats an ISO date string to just the date portion (YYYY-MM-DD)
+     */
+    const formatDate = (isoString: string): string => {
+        return isoString.split('T')[0]
+    }
+
+    /**
      * Builds context from cards for the LLM
      */
     const buildContext = useCallback((cards: Card[]): string => {
@@ -54,7 +61,9 @@ export function useChat({ cards, onChatUpdate, userSettings }: UseChatOptions): 
         cards.forEach(card => {
             if (card.type === 'richtext') {
                 const richTextCard = card as RichTextCard
-                contextParts.push(`<note title="${card.title}">\n${richTextCard.content.markdown}\n</note>`)
+                const createdDate = formatDate(card.createdAt)
+                const updatedDate = formatDate(card.updatedAt)
+                contextParts.push(`<note title="${card.title}" created="${createdDate}" updated="${updatedDate}">\n${richTextCard.content.markdown}\n</note>`)
             }
         })
 
@@ -121,7 +130,8 @@ export function useChat({ cards, onChatUpdate, userSettings }: UseChatOptions): 
             const provider = await getProvider(modelId)
             const context = buildContext(cards)
             
-            const systemPrompt = `You are a helpful AI assistant. Treat the user as an expert - avoid unnecessary disclaimers, warnings, or over-explanation unless specifically asked. Provide direct, sophisticated answers assuming deep domain knowledge.
+            const currentDate = formatDate(new Date().toISOString())
+            const systemPrompt = `You are a helpful AI assistant. Today's date is ${currentDate}. Treat the user as an expert - avoid unnecessary disclaimers, warnings, or over-explanation unless specifically asked. Provide direct, sophisticated answers assuming deep domain knowledge.
 ${context ? `You have access to the following notes that may provide helpful context:
 
 ${context}

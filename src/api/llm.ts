@@ -114,28 +114,36 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     },
     {
         provider: 'openrouter',
-        id: 'openai/gpt-5-high',
-        modelId: 'openai/gpt-5',
-        name: 'OR: GPT-5 High',
+        id: 'openai/gpt-5.2-high',
+        modelId: 'openai/gpt-5.2',
+        name: 'OR: GPT-5.2 High',
         baseURL: 'https://openrouter.ai/api/v1',
         reasoningEffort: "high"
     },
-    {
-        provider: 'openrouter',
-        id: 'openai/gpt-5-medium',
-        modelId: 'openai/gpt-5',
-        name: 'OR: GPT-5 Medium',
-        baseURL: 'https://openrouter.ai/api/v1',
-        reasoningEffort: "medium"
-    },
-    {
-        provider: 'openrouter',
-        id: 'openai/gpt-5-low',
-        modelId: 'openai/gpt-5',
-        name: 'OR: GPT-5 Low',
-        baseURL: 'https://openrouter.ai/api/v1',
-        reasoningEffort: "low"
-    },
+    // {
+    //     provider: 'openrouter',
+    //     id: 'openai/gpt-5-high',
+    //     modelId: 'openai/gpt-5',
+    //     name: 'OR: GPT-5 High',
+    //     baseURL: 'https://openrouter.ai/api/v1',
+    //     reasoningEffort: "high"
+    // },
+    // {
+    //     provider: 'openrouter',
+    //     id: 'openai/gpt-5-medium',
+    //     modelId: 'openai/gpt-5',
+    //     name: 'OR: GPT-5 Medium',
+    //     baseURL: 'https://openrouter.ai/api/v1',
+    //     reasoningEffort: "medium"
+    // },
+    // {
+    //     provider: 'openrouter',
+    //     id: 'openai/gpt-5-low',
+    //     modelId: 'openai/gpt-5',
+    //     name: 'OR: GPT-5 Low',
+    //     baseURL: 'https://openrouter.ai/api/v1',
+    //     reasoningEffort: "low"
+    // },
     // {
     //     provider: 'openrouter',
     //     id: 'google/gemini-2.5-pro-preview',

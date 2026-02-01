@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
-import { FaPlus, FaMicrophone, FaCamera, FaSpinner } from 'react-icons/fa'
+import { FaPlus, FaMicrophone, FaCamera, FaImage, FaSpinner } from 'react-icons/fa'
 import { VoiceInput } from '../voice/VoiceInput'
 import { imageToMarkdown, isImageToMarkdownAvailable } from '../../api/imageToMarkdown'
 import { UserSettings } from '../../types/settings'
@@ -41,6 +41,7 @@ export function AddContentButton({
     className = '',
     iconSize = 16
 }: AddContentButtonProps) {
+    const cameraInputRef = useRef<HTMLInputElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [isProcessingImage, setIsProcessingImage] = useState(false)
     const [showVoiceInput, setShowVoiceInput] = useState(false)
@@ -97,9 +98,16 @@ export function AddContentButton({
     }
 
     /**
-     * Handle clicking the scan page option
+     * Handle clicking the camera option (mobile only)
      */
-    const handleScanClick = () => {
+    const handleCameraClick = () => {
+        cameraInputRef.current?.click()
+    }
+
+    /**
+     * Handle clicking the upload/scan option
+     */
+    const handleUploadClick = () => {
         fileInputRef.current?.click()
     }
 
@@ -162,10 +170,32 @@ export function AddContentButton({
                             </button>
                         </MenuItem>
                     )}
-                    {imageAvailable && (
+                    {imageAvailable && isMobile && (
+                        <>
+                            <MenuItem>
+                                <button
+                                    onClick={handleCameraClick}
+                                    className="w-full px-3 py-2 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
+                                >
+                                    <FaCamera size={14} />
+                                    Take photo
+                                </button>
+                            </MenuItem>
+                            <MenuItem>
+                                <button
+                                    onClick={handleUploadClick}
+                                    className="w-full px-3 py-2 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
+                                >
+                                    <FaImage size={14} />
+                                    Upload image
+                                </button>
+                            </MenuItem>
+                        </>
+                    )}
+                    {imageAvailable && !isMobile && (
                         <MenuItem>
                             <button
-                                onClick={handleScanClick}
+                                onClick={handleUploadClick}
                                 className="w-full px-3 py-2 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
                             >
                                 <FaCamera size={14} />
@@ -175,11 +205,20 @@ export function AddContentButton({
                     )}
                 </MenuItems>
             </Menu>
+            {/* Camera input for mobile - opens camera directly */}
+            <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileChange}
+                className="hidden"
+            />
+            {/* File input for upload/scan - opens file picker */}
             <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                capture={isMobile ? 'environment' : undefined}
                 onChange={handleFileChange}
                 className="hidden"
             />

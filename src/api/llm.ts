@@ -109,14 +109,21 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
          provider: 'openrouter',
          id: 'google/gemini-3-pro-preview',
          modelId: 'google/gemini-3-pro-preview',
-         name: 'OR: Gemini 3 Pro',
+         name: 'Gemini 3 Pro',
          baseURL: 'https://openrouter.ai/api/v1'
+    },
+    {
+        provider: 'openrouter',
+        id: 'google/gemini-3-flash-preview',
+        modelId: 'google/gemini-3-flash-preview',
+        name: 'Gemini 3 Flash',
+        baseURL: 'https://openrouter.ai/api/v1'
     },
     {
         provider: 'openrouter',
         id: 'openai/gpt-5.2-high',
         modelId: 'openai/gpt-5.2',
-        name: 'OR: GPT-5.2 High',
+        name: 'GPT-5.2 High',
         baseURL: 'https://openrouter.ai/api/v1',
         reasoningEffort: "high"
     },
@@ -155,14 +162,14 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         provider: 'openrouter',
         id: 'anthropic/claude-sonnet-4.5',
         modelId: 'anthropic/claude-sonnet-4.5',
-        name: 'OR: Claude Sonnet 4.5',
+        name: 'Claude Sonnet 4.5',
         baseURL: 'https://openrouter.ai/api/v1'
     },
     {
         provider: 'openrouter',
         id: 'anthropic/claude-opus-4.5-high',
         modelId: 'anthropic/claude-opus-4.5',
-        name: 'OR: Claude Opus 4.5 High',
+        name: 'Claude Opus 4.5 High',
         baseURL: 'https://openrouter.ai/api/v1',
         reasoningEffort: "high"
     },
@@ -216,91 +223,91 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     //     name: 'O3 Mini High',
     //     baseURL: 'https://openrouter.ai/api/v1'
     // },
-    // Gemini models
-    {
-        provider: 'gemini',
-        id: 'gemini-2.5-pro-exp-03-25',
-        modelId: 'gemini-2.5-pro-exp-03-25',
-        name: 'Gemini 2.5 Pro',
-        baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
-    },
-    // Anthropic models
-    {
-        provider: 'anthropic',
-        id: 'claude-3-7-sonnet-latest',
-        modelId: 'claude-3-7-sonnet-latest',
-        name: 'Claude 3.7 Sonnet'
-    },
-    {
-        provider: 'anthropic',
-        id: 'claude-3-7-sonnet-thinking-latest',
-        modelId: 'claude-3-7-sonnet-latest',
-        name: 'Claude 3.7 Sonnet (Thinking)',
-        thinkingTokens: 16000
-    },
-    {
-        provider: 'anthropic',
-        id: 'claude-3-5-sonnet-latest',
-        modelId: 'claude-3-5-sonnet-20240620',
-        name: 'Claude 3.5 Sonnet'
-    },
-    {
-        provider: 'anthropic',
-        id: 'claude-3-5-haiku-latest',
-        modelId: 'claude-3-5-haiku-20240620',
-        name: 'Claude 3.5 Haiku'
-    },
+    // // Gemini models
+    // {
+    //     provider: 'gemini',
+    //     id: 'gemini-2.5-pro-exp-03-25',
+    //     modelId: 'gemini-2.5-pro-exp-03-25',
+    //     name: 'Gemini 2.5 Pro',
+    //     baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
+    // },
+    // // Anthropic models
+    // {
+    //     provider: 'anthropic',
+    //     id: 'claude-3-7-sonnet-latest',
+    //     modelId: 'claude-3-7-sonnet-latest',
+    //     name: 'Claude 3.7 Sonnet'
+    // },
+    // {
+    //     provider: 'anthropic',
+    //     id: 'claude-3-7-sonnet-thinking-latest',
+    //     modelId: 'claude-3-7-sonnet-latest',
+    //     name: 'Claude 3.7 Sonnet (Thinking)',
+    //     thinkingTokens: 16000
+    // },
+    // {
+    //     provider: 'anthropic',
+    //     id: 'claude-3-5-sonnet-latest',
+    //     modelId: 'claude-3-5-sonnet-20240620',
+    //     name: 'Claude 3.5 Sonnet'
+    // },
+    // {
+    //     provider: 'anthropic',
+    //     id: 'claude-3-5-haiku-latest',
+    //     modelId: 'claude-3-5-haiku-20240620',
+    //     name: 'Claude 3.5 Haiku'
+    // },
     // {
     //     provider: 'anthropic',
     //     id: 'claude-3-haiku-20240307',
     //     name: 'Claude 3 Haiku'
     // },
     // OpenAI models
-    {
-        provider: 'openai',
-        id: 'gpt-4o',
-        modelId: 'gpt-4o',
-        name: 'GPT-4o'
-    },
-    {
-        provider: 'openai',
-        id: 'gpt-4o-mini',
-        modelId: 'gpt-4o-mini',
-        name: 'GPT-4o Mini'
-    },
-    {
-        provider: 'openai',
-        id: 'o1',
-        modelId: 'o1',
-        name: 'O1',
-        noTemperature: true
-    },
-    {
-        provider: 'openai',
-        id: 'o1-mini',
-        modelId: 'o1-mini',
-        name: 'O1 Mini',
-        noTemperature: true
-    },
-    {
-        provider: 'openai',
-        id: 'o3-mini',
-        modelId: 'o3-mini',
-        name: 'O3 Mini',
-        noTemperature: true
-    },
-    {
-        provider: 'openai',
-        id: 'chatgpt-4o-latest',
-        modelId: 'chatgpt-4o-latest',
-        name: 'ChatGPT 4o'
-    },
-    {
-        provider: 'openai',
-        id: 'o3',
-        modelId: 'o3',
-        name: 'O3'
-    },
+    // {
+    //     provider: 'openai',
+    //     id: 'gpt-4o',
+    //     modelId: 'gpt-4o',
+    //     name: 'GPT-4o'
+    // },
+    // {
+    //     provider: 'openai',
+    //     id: 'gpt-4o-mini',
+    //     modelId: 'gpt-4o-mini',
+    //     name: 'GPT-4o Mini'
+    // },
+    // {
+    //     provider: 'openai',
+    //     id: 'o1',
+    //     modelId: 'o1',
+    //     name: 'O1',
+    //     noTemperature: true
+    // },
+    // {
+    //     provider: 'openai',
+    //     id: 'o1-mini',
+    //     modelId: 'o1-mini',
+    //     name: 'O1 Mini',
+    //     noTemperature: true
+    // },
+    // {
+    //     provider: 'openai',
+    //     id: 'o3-mini',
+    //     modelId: 'o3-mini',
+    //     name: 'O3 Mini',
+    //     noTemperature: true
+    // },
+    // {
+    //     provider: 'openai',
+    //     id: 'chatgpt-4o-latest',
+    //     modelId: 'chatgpt-4o-latest',
+    //     name: 'ChatGPT 4o'
+    // },
+    // {
+    //     provider: 'openai',
+    //     id: 'o3',
+    //     modelId: 'o3',
+    //     name: 'O3'
+    // },
     // // Google models
     // {
     //     provider: 'gemini',

@@ -9,13 +9,12 @@ import { gfm } from '@guyplusplus/turndown-plugin-gfm'
 import { RichTextToolbar } from './RichTextToolbar'
 import { RichTextBubbleMenu } from './RichTextBubbleMenu'
 import { useDebouncedCallback } from 'use-debounce'
-import { VoiceTranscriptionInput } from './components/voice/VoiceTranscriptionInput'
 import { UserSettings } from './types/settings'
 import Table from '@tiptap/extension-table'
 import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
 import TableRow from '@tiptap/extension-table-row'
-import { VoiceInput } from './components/voice/VoiceInput'
+import { AddContentButton } from './components/notes/AddContentButton'
 
 const md = MarkdownIt({
   html: true,
@@ -202,9 +201,10 @@ export function RichTextEditor({
         />
         {showVoiceInput && (
           <div className="absolute bottom-0 right-1 z-10">
-            <VoiceInput
+            <AddContentButton
               userSettings={userSettings}
               onTranscription={handleVoiceTranscription}
+              onImageMarkdown={handleVoiceTranscription}
               iconSize={16}
             />
           </div>

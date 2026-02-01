@@ -151,4 +151,82 @@ export class OpenRouterClient implements LLMProvider {
             reader.releaseLock()
         }
     }
-} 
+
+    /**
+     * Create a vision completion request with an image
+     * @param imageBase64 - Base64 encoded image data (without data URL prefix)
+     * @param prompt - Text prompt to accompany the image
+     * @param options - LLM options including modelId
+     * @param signal - Optional abort signal
+     * @returns The completion response
+     */
+    async createVisionCompletion(
+        imageBase64: string,
+        prompt: string,
+        options: LLMOptions,
+        signal?: AbortSignal
+    ): Promise<LLMResponse> {
+        const messages = [
+            ...(options.system ? [{
+                role: 'system',
+                content: options.system
+            }] : []),
+            {
+                role: 'user',
+                content: [
+                    { type: 'text', text: prompt },
+                    { 
+                        type: 'image_url', 
+                        image_url: { 
+                            url: imageBase64.startsWith('data:') 
+                                ? imageBase64 
+                                : `data:image/jpeg;base64,${imageBase64}` 
+                        } 
+                    }
+                ]
+            }
+        ]
+
+        const response = await fetch(`${OPENROUTER_API_BASE}/chat/completions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.apiKey}`,
+                'HTTP-Referer': window.location.origin,
+                'X-Title': 'Notelets'
+            },
+            body: JSON.stringify({
+                model: options.modelId,
+                messages,
+                max_tokens: options.maxTokens,
+                temperature: options.temperature
+            }),
+            signal
+        })
+
+        if (!response.ok) {
+            let errorBody
+            try {
+                errorBody = await response.json()
+            } catch {
+                errorBody = await response.text()
+            }
+            throw new Error(`OpenRouter API error: ${response.statusText} - ${JSON.stringify(errorBody)}`)
+        }
+
+        const data = await response.json()
+        const completion = data.choices[0]?.message?.content
+        if (!completion) {
+            throw new Error('No completion received from OpenRouter')
+        }
+
+        return {
+            content: completion,
+            model: data.model,
+            usage: {
+                inputTokens: data.usage?.prompt_tokens,
+                outputTokens: data.usage?.completion_tokens
+            }
+        }
+    }
+}

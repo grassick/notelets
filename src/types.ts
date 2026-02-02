@@ -131,4 +131,4 @@ export interface BoardTab {
 }
 
 /** View mode for the board layout */
-export type ViewMode = 'chat' | 'notes' | 'split'
+export type ViewMode = 'chat' | 'notes' | 'split' | 'quiz'

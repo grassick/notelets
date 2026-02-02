@@ -4,6 +4,7 @@ import { ListPanel } from '../notes/NoteList'
 import { NotesPanel } from '../notes/NotesPanel'
 import { ResizeHandle } from '../ui/ResizeHandle'
 import { BoardChatSystem } from '../BoardChatSystem'
+import { QuizSystem } from '../quiz/QuizSystem'
 import type { BoardViewProps, PanelState } from './BoardViewTypes'
 import type { RichTextCard } from '../../types'
 
@@ -103,6 +104,22 @@ export function DesktopBoardView(props: BoardViewProps) {
       document.body.style.cursor = 'default'
     }
   }, [isDragging, listPanelState.width, listPanelState.isExpanded, viewMode])
+
+  // Quiz mode is full screen - no sidebars
+  if (viewMode === 'quiz') {
+    return (
+      <div className="flex flex-col h-full">
+        <QuizSystem
+          store={store}
+          boardId={boardId}
+          cards={cards}
+          selectedCard={selectedCard}
+          onViewModeChange={onViewModeChange}
+          className="flex-1 min-h-0 overflow-hidden"
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col h-full">

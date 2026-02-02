@@ -3,6 +3,7 @@ import type { BoardViewProps } from './BoardViewTypes'
 import type { RichTextCard } from '../../types'
 import { NotesPanel } from '../notes/NotesPanel'
 import { BoardChatSystem } from '../BoardChatSystem'
+import { QuizSystem } from '../quiz/QuizSystem'
 import { MobileViewControls } from '../view-controls/MobileViewControls'
 
 /**
@@ -58,6 +59,20 @@ export function MobileBoardView(props: BoardViewProps) {
               cards={cards}
               setCard={setCard}
               selectedCard={selectedCard}
+            />
+          </div>
+        )}
+
+        {/* Quiz Panel - Show when quiz mode is active */}
+        {viewMode === 'quiz' && (
+          <div className="flex flex-col w-full">
+            <QuizSystem
+              store={store}
+              boardId={boardId}
+              cards={cards}
+              selectedCard={selectedCard}
+              onViewModeChange={onViewModeChange}
+              className="flex-1 min-h-0 overflow-hidden"
             />
           </div>
         )}

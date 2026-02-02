@@ -1,5 +1,8 @@
+import React from 'react'
 import { useState } from 'react'
 import type { QuizQuestion } from '../../types/quiz'
+import type { UserSettings } from '../../types/settings'
+import { VoiceInput } from '../voice/VoiceInput'
 
 /**
  * Props for the QuizActive component
@@ -19,6 +22,8 @@ interface QuizActiveProps {
   questionsAnswered: number
   /** Whether submission is in progress */
   isLoading: boolean
+  /** User settings for voice input */
+  userSettings: UserSettings
 }
 
 /**
@@ -31,7 +36,8 @@ export function QuizActive({
   onSubmit,
   onEndQuiz,
   questionsAnswered,
-  isLoading
+  isLoading,
+  userSettings
 }: QuizActiveProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(
     question.format === 'multiple-choice' && answer ? answer : null
@@ -96,6 +102,7 @@ export function QuizActive({
               value={answer}
               onChange={onAnswerChange}
               disabled={isLoading}
+              userSettings={userSettings}
             />
           )}
 
@@ -223,27 +230,45 @@ interface LongFormInputProps {
   onChange: (value: string) => void
   /** Whether input is disabled */
   disabled: boolean
+  /** User settings for voice input */
+  userSettings: UserSettings
 }
 
 /**
- * Long form text area input for written answers
+ * Long form text area input for written answers with voice input support
  */
-function LongFormInput({ value, onChange, disabled }: LongFormInputProps) {
+function LongFormInput({ value, onChange, disabled, userSettings }: LongFormInputProps) {
+  const handleVoiceTranscription = (text: string) => {
+    const newValue = value.trim() ? `${value.trim()} ${text}` : text
+    onChange(newValue)
+  }
+
   return (
-    <textarea
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      disabled={disabled}
-      placeholder="Type your answer here..."
-      rows={6}
-      className={`
-        w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 
-        bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
-        placeholder-gray-400 dark:placeholder-gray-500
-        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-        resize-none text-base leading-relaxed
-        ${disabled ? 'cursor-not-allowed opacity-60' : ''}
-      `}
-    />
+    <div className="relative">
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        placeholder="Type your answer here..."
+        rows={6}
+        className={`
+          w-full px-4 py-3 pb-12 rounded-lg border border-gray-200 dark:border-gray-700 
+          bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+          placeholder-gray-400 dark:placeholder-gray-500
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+          resize-none text-base leading-relaxed
+          ${disabled ? 'cursor-not-allowed opacity-60' : ''}
+        `}
+      />
+      <div className="absolute bottom-4 right-2">
+        <VoiceInput
+          userSettings={userSettings}
+          onTranscription={handleVoiceTranscription}
+          iconSize={20}
+          className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          onError={(error) => console.error('Voice input error:', error)}
+        />
+      </div>
+    </div>
   )
 }

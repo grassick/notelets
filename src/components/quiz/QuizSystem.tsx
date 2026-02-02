@@ -1,3 +1,4 @@
+import React from 'react'
 import type { Store } from '../../Store'
 import type { Card, RichTextCard, ViewMode } from '../../types'
 import { useQuiz } from '../../hooks/useQuiz'
@@ -62,8 +63,13 @@ export function QuizSystem({
   })
 
   // Calculate stats for feedback view
+  // When isLoading after clicking "Next", current question is already in history
+  // so we shouldn't add +1 for currentFeedback to avoid double counting
+  const isTransitioning = state.isLoading && (state.phase === 'feedback' || state.phase === 'clarifying')
   const correctAnswers = state.history.filter(a => a.feedback.isCorrect).length
-  const questionsAnswered = state.history.length + (state.currentFeedback ? 1 : 0)
+  const questionsAnswered = isTransitioning 
+    ? state.history.length 
+    : state.history.length + (state.currentFeedback ? 1 : 0)
 
   // Handle going back to notes
   const handleBackToNotes = () => {
@@ -144,6 +150,7 @@ export function QuizSystem({
           onEndQuiz={endQuiz}
           questionsAnswered={state.history.length}
           isLoading={state.isLoading}
+          userSettings={userSettings}
         />
       )}
 
@@ -158,10 +165,10 @@ export function QuizSystem({
           onNextQuestion={nextQuestion}
           onEndQuiz={endQuiz}
           questionsAnswered={questionsAnswered}
-          // When isLoading (transitioning to next question), current is already in history
-          // so don't add the +1 bonus to avoid double counting
-          correctAnswers={state.isLoading ? correctAnswers : correctAnswers + (state.currentFeedback.isCorrect ? 1 : 0)}
+          // When transitioning, current is already counted in history
+          correctAnswers={isTransitioning ? correctAnswers : correctAnswers + (state.currentFeedback.isCorrect ? 1 : 0)}
           isLoading={state.isLoading}
+          userSettings={userSettings}
         />
       )}
 

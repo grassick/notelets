@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import type { QuizQuestion, QuizFeedback as QuizFeedbackType, ClarificationMessage } from '../../types/quiz'
+import type { UserSettings } from '../../types/settings'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { VoiceInput } from '../voice/VoiceInput'
 
 /**
  * Props for the QuizFeedback component
@@ -27,6 +29,8 @@ interface QuizFeedbackProps {
   correctAnswers: number
   /** Whether a request is in progress */
   isLoading: boolean
+  /** User settings for voice input */
+  userSettings: UserSettings
 }
 
 /**
@@ -42,7 +46,8 @@ export function QuizFeedback({
   onEndQuiz,
   questionsAnswered,
   correctAnswers,
-  isLoading
+  isLoading,
+  userSettings
 }: QuizFeedbackProps) {
   const [clarificationInput, setClarificationInput] = useState('')
   const [showClarificationChat, setShowClarificationChat] = useState(clarifications.length > 0)
@@ -62,6 +67,13 @@ export function QuizFeedback({
       setClarificationInput('')
       setShowClarificationChat(true)
     }
+  }
+
+  const handleVoiceTranscription = (text: string) => {
+    const newInput = clarificationInput.trim()
+      ? `${clarificationInput.trim()} ${text}`
+      : text
+    setClarificationInput(newInput)
   }
 
   return (
@@ -163,48 +175,56 @@ export function QuizFeedback({
                 placeholder="Ask for clarification or help understanding..."
                 disabled={isLoading}
                 className={`
-                  w-full px-4 py-3 pr-12 rounded-lg border border-gray-200 dark:border-gray-700 
+                  w-full px-4 py-3 pr-24 rounded-lg border border-gray-200 dark:border-gray-700 
                   bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
                   placeholder-gray-400 dark:placeholder-gray-500
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
                   ${isLoading ? 'cursor-not-allowed opacity-60' : ''}
                 `}
               />
-              <button
-                type="submit"
-                disabled={!clarificationInput.trim() || isLoading}
-                className={`
-                  absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md
-                  transition-colors
-                  ${clarificationInput.trim() && !isLoading
-                    ? 'text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30'
-                    : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-                  }
-                `}
-              >
-                {isLoading ? (
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle 
-                      className="opacity-25" 
-                      cx="12" 
-                      cy="12" 
-                      r="10" 
-                      stroke="currentColor" 
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path 
-                      className="opacity-75" 
-                      fill="currentColor" 
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                  </svg>
-                )}
-              </button>
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                <VoiceInput
+                  userSettings={userSettings}
+                  onTranscription={handleVoiceTranscription}
+                  iconSize={18}
+                  className="p-1.5 opacity-60 hover:opacity-100"
+                  onError={(error) => console.error('Voice input error:', error)}
+                />
+                <button
+                  type="submit"
+                  disabled={!clarificationInput.trim() || isLoading}
+                  className={`
+                    p-2 rounded-md transition-colors
+                    ${clarificationInput.trim() && !isLoading
+                      ? 'text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30'
+                      : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  {isLoading ? (
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle 
+                        className="opacity-25" 
+                        cx="12" 
+                        cy="12" 
+                        r="10" 
+                        stroke="currentColor" 
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path 
+                        className="opacity-75" 
+                        fill="currentColor" 
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
           </form>
 

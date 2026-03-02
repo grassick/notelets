@@ -5,6 +5,7 @@ import { useAuth } from '../../modules/auth/AuthContext'
 import { AboutTab } from './AboutTab'
 import { ImportExportTab } from './ImportExportTab'
 import type { Store } from '../../Store'
+import type { TranscriptionProvider } from '../../types/settings'
 import { FaTimes } from 'react-icons/fa'
 import { clearStoredPassword } from '../../modules/encrypted/passwordStorage'
 
@@ -247,6 +248,31 @@ export function SettingsModal({ isOpen, onClose, store }: SettingsModalProps) {
                     />
                   </div>
                 </div>
+
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Voice Transcription</h4>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Transcription Provider
+                    </label>
+                    <select
+                      value={llmSettings.transcriptionProvider || 'whisper'}
+                      onChange={e => updateUserSettings('llm', { transcriptionProvider: e.target.value as TranscriptionProvider })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
+                               bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                               focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="whisper">OpenAI Whisper</option>
+                      <option value="openrouter">Gemini Flash 2.5 (via OpenRouter)</option>
+                    </select>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      {(llmSettings.transcriptionProvider || 'whisper') === 'whisper'
+                        ? 'Uses OpenAI Whisper for voice transcription. Requires an OpenAI API key.'
+                        : 'Uses Gemini Flash 2.5 via OpenRouter for voice transcription. Requires an OpenRouter API key.'}
+                    </p>
+                  </div>
+                </div>
+
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   You can get API keys from <a href="https://console.anthropic.com/" className="text-blue-600 dark:text-blue-400 hover:underline">Anthropic</a>, {' '}
                   <a href="https://aistudio.google.com/" className="text-blue-600 dark:text-blue-400 hover:underline">Google AI</a>, or {' '}

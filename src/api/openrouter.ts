@@ -153,6 +153,73 @@ export class OpenRouterClient implements LLMProvider {
     }
 
     /**
+     * Transcribe audio using Gemini Flash 2.5 via OpenRouter
+     * @param audioBlob - The audio blob to transcribe
+     * @param prompt - Optional prompt to guide the transcription
+     * @returns The transcribed text
+     */
+    async transcribeAudio(audioBlob: Blob, prompt?: string): Promise<string> {
+        const reader = new FileReader()
+        const base64Data = await new Promise<string>((resolve, reject) => {
+            reader.onload = () => {
+                const base64 = reader.result as string
+                resolve(base64.split(',')[1])
+            }
+            reader.onerror = () => reject(reader.error)
+            reader.readAsDataURL(audioBlob)
+        })
+
+        const response = await fetch(`${OPENROUTER_API_BASE}/chat/completions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.apiKey}`,
+                'HTTP-Referer': window.location.origin,
+                'X-Title': 'Notelets'
+            },
+            body: JSON.stringify({
+                model: 'google/gemini-2.5-flash-preview',
+                messages: [
+                    {
+                        role: 'user',
+                        content: [
+                            {
+                                type: 'text',
+                                text: prompt || 'Please transcribe this audio. Output only the transcribed text, nothing else.'
+                            },
+                            {
+                                type: 'input_audio',
+                                input_audio: {
+                                    data: base64Data,
+                                    format: 'wav'
+                                }
+                            }
+                        ]
+                    }
+                ]
+            })
+        })
+
+        if (!response.ok) {
+            let errorBody
+            try {
+                errorBody = await response.json()
+            } catch {
+                errorBody = await response.text()
+            }
+            throw new Error(`OpenRouter transcription error: ${response.statusText} - ${JSON.stringify(errorBody)}`)
+        }
+
+        const data = await response.json()
+        const transcription = data.choices[0]?.message?.content
+        if (!transcription) {
+            throw new Error('No transcription received from OpenRouter')
+        }
+
+        return transcription
+    }
+
+    /**
      * Create a vision completion request with an image
      * @param imageBase64 - Base64 encoded image data (without data URL prefix)
      * @param prompt - Text prompt to accompany the image

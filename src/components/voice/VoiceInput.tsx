@@ -18,20 +18,32 @@ interface VoiceInputProps {
 }
 
 /**
- * A smart voice input component that chooses between Fireworks AI (preferred) 
- * or OpenAI's Whisper based on available API keys
+ * A smart voice input component that chooses between Fireworks AI (preferred),
+ * OpenRouter with Gemini Flash 2.5, or OpenAI's Whisper based on settings and available API keys
  */
 export function VoiceInput(props: VoiceInputProps) {
+    const { llm } = props.userSettings
+
     // Prefer Fireworks AI if the API key is available
-    if (props.userSettings.llm.fireworksKey) {
+    if (llm.fireworksKey) {
         return <VoiceFireworksStreamingInput {...props} />
     }
-    
-    // Fall back to OpenAI's Whisper if that key is available
-    if (props.userSettings.llm.openaiKey) {
+
+    // If OpenRouter transcription is selected and the key is available, use it
+    if (llm.transcriptionProvider === 'openrouter' && llm.openrouterKey) {
         return <VoiceTranscriptionInput {...props} />
     }
-    
+
+    // Fall back to OpenAI's Whisper if that key is available
+    if (llm.openaiKey) {
+        return <VoiceTranscriptionInput {...props} />
+    }
+
+    // Last resort: if OpenRouter key is available, use it even if not explicitly selected
+    if (llm.openrouterKey) {
+        return <VoiceTranscriptionInput {...props} />
+    }
+
     // If no API keys are available, don't render anything
     return null
 }

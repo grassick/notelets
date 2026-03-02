@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { FaMicrophone } from 'react-icons/fa'
 import { AiOutlineLoading3Quarters } from 'react-icons/ai'
 import { OpenAIClient } from '../../api/openai'
+import { OpenRouterClient } from '../../api/openrouter'
 import { UserSettings } from '../../types/settings'
 import { GeminiClient } from '../../api/gemini'
 
@@ -30,6 +31,8 @@ export function VoiceTranscriptionInput({
     onTranscription,
     onError
 }: VoiceTranscriptionInputProps) {
+    const transcriptionProvider = userSettings.llm.transcriptionProvider || 'whisper'
+
     const openaiClient = useMemo(() => {
         if (!userSettings.llm.openaiKey) {
             return null
@@ -37,12 +40,24 @@ export function VoiceTranscriptionInput({
         return new OpenAIClient(userSettings.llm.openaiKey)
     }, [userSettings.llm.openaiKey])
 
+    const openrouterClient = useMemo(() => {
+        if (!userSettings.llm.openrouterKey) {
+            return null
+        }
+        return new OpenRouterClient(userSettings.llm.openrouterKey)
+    }, [userSettings.llm.openrouterKey])
+
     const geminiClient = useMemo(() => {
         if (!userSettings.llm.geminiKey) {
             return null
         }
         return new GeminiClient(userSettings.llm.geminiKey)
     }, [userSettings.llm.geminiKey])
+
+    /** Whether any transcription client is available */
+    const hasTranscriptionClient = transcriptionProvider === 'openrouter'
+        ? !!openrouterClient
+        : !!openaiClient
 
     const [isRecording, setIsRecording] = useState(false)
     const [isProcessing, setIsProcessing] = useState(false)
@@ -370,9 +385,10 @@ export function VoiceTranscriptionInput({
         e.preventDefault()
         e.stopPropagation()
 
-        if (!openaiClient) {
-            console.error('OpenAI client not configured')
-            onError?.('OpenAI API key not configured')
+        if (!hasTranscriptionClient) {
+            const providerName = transcriptionProvider === 'openrouter' ? 'OpenRouter' : 'OpenAI'
+            console.error(`${providerName} client not configured`)
+            onError?.(`${providerName} API key not configured`)
             return
         }
 
@@ -466,7 +482,7 @@ export function VoiceTranscriptionInput({
 
     async function stopRecording() {
         console.log('Stopping recording...')
-        if (!audioContext.current || !openaiClient || !audioWorkletNode.current) {
+        if (!audioContext.current || !hasTranscriptionClient || !audioWorkletNode.current) {
             console.error('Missing required audio components for stopping')
             return
         }
@@ -522,10 +538,16 @@ export function VoiceTranscriptionInput({
             const blob = createWavFile(audioData, audioSampleRate.current, 16000)
             console.log('WAV file size:', blob.size, 'bytes')
 
-            console.log('Starting transcription...')
+            console.log('Starting transcription via', transcriptionProvider, '...')
             try {
-                const transcription = await openaiClient.transcribeAudio(blob)
-                // const transcription = await geminiClient!.transcribeAudio(blob)
+                let transcription: string
+                if (transcriptionProvider === 'openrouter' && openrouterClient) {
+                    transcription = await openrouterClient.transcribeAudio(blob)
+                } else if (openaiClient) {
+                    transcription = await openaiClient.transcribeAudio(blob)
+                } else {
+                    throw new Error('No transcription client available')
+                }
                 if (!transcription || transcription.trim().length === 0) {
                     throw new Error('No speech detected in recording')
                 }
@@ -579,7 +601,7 @@ export function VoiceTranscriptionInput({
         }
     }
 
-    if (!openaiClient) {
+    if (!hasTranscriptionClient) {
         return null
     }
 

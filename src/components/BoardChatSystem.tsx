@@ -575,7 +575,9 @@ function PickedNotesPopover({
   onActivate
 }: PickedNotesPopoverProps) {
   const richtextCards = useMemo(
-    () => cards.filter((c): c is RichTextCard => c.type === 'richtext'),
+    () => cards
+      .filter((c): c is RichTextCard => c.type === 'richtext')
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
     [cards]
   )
 

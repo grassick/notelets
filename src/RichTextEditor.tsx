@@ -37,13 +37,11 @@ turndown.addRule('taskListItem', {
   filter: (node) => {
     return node.nodeName === 'LI' && node.getAttribute('data-type') === 'taskItem'
   },
-  replacement: (_content, node) => {
+  replacement: (content, node) => {
     const el = node as HTMLElement
     const checked = el.getAttribute('data-checked') === 'true'
     const prefix = checked ? '- [x] ' : '- [ ] '
-    const div = el.querySelector('div')
-    const text = div ? turndown.turndown(div.innerHTML).trim() : ''
-    return prefix + text + '\n'
+    return prefix + content.trim() + '\n'
   }
 })
 
@@ -51,13 +49,8 @@ turndown.addRule('taskList', {
   filter: (node) => {
     return node.nodeName === 'UL' && node.getAttribute('data-type') === 'taskList'
   },
-  replacement: (_content, node) => {
-    const el = node as HTMLElement
-    let result = ''
-    el.querySelectorAll(':scope > li').forEach(li => {
-      result += turndown.turndown(li.outerHTML)
-    })
-    return '\n' + result + '\n'
+  replacement: (content) => {
+    return '\n' + content + '\n'
   }
 })
 

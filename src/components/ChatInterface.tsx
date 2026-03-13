@@ -18,7 +18,7 @@ interface ChatInterfaceProps {
   selectedModel: ModelId
   error?: Error | null
   userSettings: UserSettings
-  contextMode: 'quick' | 'selected' | 'all'
+  contextMode: 'quick' | 'selected' | 'picked' | 'all'
   contextCards: Card[]
 }
 
@@ -93,12 +93,17 @@ export function ChatInterface({
 
     return (
       <div className="px-4 py-1.5 text-[10px] text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-gray-800 flex items-center gap-1">
-        <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-2.5 h-2.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
 
         {contextMode === 'selected' && contextCards[0] && (
           <span className="truncate">{getCardTitle(contextCards[0])}</span>
+        )}
+        {contextMode === 'picked' && (
+          <span className="truncate">
+            <PickedCardsTitleList cards={contextCards} />
+          </span>
         )}
         {contextMode === 'all' && (
           <span>{contextCards.length} note{contextCards.length === 1 ? '' : 's'} as context</span>
@@ -183,6 +188,28 @@ export function ChatInterface({
     </div>
   )
 } 
+
+/** Renders a comma-separated list of picked note titles, truncating with "+N more" if needed */
+function PickedCardsTitleList({ cards }: { cards: Card[] }) {
+  if (cards.length === 0) return <>No notes selected</>
+
+  const maxChars = 80
+  const titles: string[] = []
+  let totalLen = 0
+
+  for (const card of cards) {
+    const title = getCardTitle(card, 30)
+    const separatorLen = titles.length > 0 ? 2 : 0
+    if (totalLen + separatorLen + title.length > maxChars && titles.length > 0) {
+      const remaining = cards.length - titles.length
+      return <>{titles.join(', ')}, +{remaining} more</>
+    }
+    titles.push(title)
+    totalLen += separatorLen + title.length
+  }
+
+  return <>{titles.join(', ')}</>
+}
 
 function ChatMessage({ message, index, onEdit, onSaveToNotes }: { 
   message: ChatMessage, 

@@ -4,16 +4,16 @@ import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import MarkdownIt from 'markdown-it'
+import taskListPlugin from 'markdown-it-task-lists'
 import TurndownService from 'turndown'
 import { gfm } from '@guyplusplus/turndown-plugin-gfm'
 import { RichTextToolbar } from './RichTextToolbar'
 import { RichTextBubbleMenu } from './RichTextBubbleMenu'
 import { useDebouncedCallback } from 'use-debounce'
 import { UserSettings } from './types/settings'
-import Table from '@tiptap/extension-table'
-import TableCell from '@tiptap/extension-table-cell'
-import TableHeader from '@tiptap/extension-table-header'
-import TableRow from '@tiptap/extension-table-row'
+import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table'
+import { TaskList } from '@tiptap/extension-task-list'
+import { TaskItem } from '@tiptap/extension-task-item'
 import { AddContentButton } from './components/notes/AddContentButton'
 
 const md = MarkdownIt({
@@ -22,14 +22,73 @@ const md = MarkdownIt({
   linkify: true,
   // Enable GitHub-flavored Markdown features
   typographer: true
-})
+}).use(taskListPlugin)
 
 const turndown = new TurndownService({
   headingStyle: 'atx',
   codeBlockStyle: 'fenced'
 }).use(gfm)
 
+// Convert TipTap task list HTML back to GFM checkbox markdown
+turndown.addRule('taskListItem', {
+  filter: (node) => {
+    return node.nodeName === 'LI' && node.getAttribute('data-type') === 'taskItem'
+  },
+  replacement: (_content, node) => {
+    const el = node as HTMLElement
+    const checked = el.getAttribute('data-checked') === 'true'
+    const prefix = checked ? '- [x] ' : '- [ ] '
+    const div = el.querySelector('div')
+    const text = div ? turndown.turndown(div.innerHTML).trim() : ''
+    return prefix + text + '\n'
+  }
+})
+
+turndown.addRule('taskList', {
+  filter: (node) => {
+    return node.nodeName === 'UL' && node.getAttribute('data-type') === 'taskList'
+  },
+  replacement: (_content, node) => {
+    const el = node as HTMLElement
+    let result = ''
+    el.querySelectorAll(':scope > li').forEach(li => {
+      result += turndown.turndown(li.outerHTML)
+    })
+    return '\n' + result + '\n'
+  }
+})
+
 const debug = true // Set to true to enable debug logging
+
+/**
+ * Converts markdown-it-task-lists HTML into TipTap-compatible task list HTML.
+ * markdown-it generates class-based markup; TipTap expects data-attribute-based markup.
+ */
+function convertTaskListsForTiptap(html: string): string {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
+
+  doc.querySelectorAll('ul.contains-task-list').forEach(ul => {
+    ul.removeAttribute('class')
+    ul.setAttribute('data-type', 'taskList')
+  })
+
+  doc.querySelectorAll('li.task-list-item').forEach(li => {
+    const checkbox = li.querySelector('input[type="checkbox"]')
+    const checked = checkbox?.hasAttribute('checked') ?? false
+
+    li.removeAttribute('class')
+    li.setAttribute('data-type', 'taskItem')
+    li.setAttribute('data-checked', String(checked))
+
+    checkbox?.remove()
+
+    const content = li.innerHTML.trim()
+    li.innerHTML = `<label><input type="checkbox"${checked ? ' checked' : ''}><span></span></label><div><p>${content}</p></div>`
+  })
+
+  return doc.body.innerHTML
+}
 
 /**
  * Unwraps paragraph tags inside list items while preserving their content
@@ -39,8 +98,8 @@ function cleanupListItemParagraphs(html: string): string {
   const parser = new DOMParser()
   const doc = parser.parseFromString(html, 'text/html')
   
-  // Find all paragraphs inside list items
-  const paragraphsInLists = doc.querySelectorAll('li p')
+  // Find all paragraphs inside regular list items (skip task items which need their structure)
+  const paragraphsInLists = doc.querySelectorAll('li:not([data-type="taskItem"]) p')
   
   // Unwrap each paragraph (keep its contents but remove the p tag)
   paragraphsInLists.forEach(p => {
@@ -101,7 +160,7 @@ export function RichTextEditor({
   }, 150)
 
   const initialHtml = useMemo(() => {
-    const html = md.render(content)
+    const html = convertTaskListsForTiptap(md.render(content))
     if (debug) {
       console.log('=== DEBUG: Initial content ===')
       console.log(content)
@@ -134,6 +193,10 @@ export function RichTextEditor({
       TableRow,
       TableHeader,
       TableCell,
+      TaskList,
+      TaskItem.configure({
+        nested: true,
+      }),
     ],
     content: initialHtml,
     editorProps: {
@@ -175,7 +238,7 @@ export function RichTextEditor({
       }
       
       const selection = editor.state.selection
-      const renderedHtml = md.render(content)
+      const renderedHtml = convertTaskListsForTiptap(md.render(content))
       if (debug) {
         console.log('=== DEBUG: New HTML to set ===')
         console.log(renderedHtml)

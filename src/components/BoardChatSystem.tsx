@@ -469,7 +469,6 @@ function ChatHeader({
       <div className="flex items-center gap-2">
         {isEphemeral && (
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-gray-400 dark:text-gray-500">Ephemeral</span>
             <button
               onClick={onSaveChat}
               disabled={!chat || chat.messages.length === 0}

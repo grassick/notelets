@@ -68,6 +68,19 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
       >
         I
       </MenuButton>
+      <div className="w-px h-4 mx-1 bg-gray-200 dark:bg-gray-700" />
+      <MenuButton
+        isActive={editor.isActive('bulletList')}
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+      >
+        <span className="text-xs">•</span> List
+      </MenuButton>
+      <MenuButton
+        isActive={editor.isActive('taskList')}
+        onClick={() => editor.chain().focus().toggleTaskList().run()}
+      >
+        <span className="text-xs">☑</span> Tasks
+      </MenuButton>
     </div>
   )
 } 

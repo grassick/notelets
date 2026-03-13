@@ -11,9 +11,10 @@ import { ModelSelector } from './chat/ModelSelector'
 import { usePersist } from '../hooks/usePersist'
 import { SettingsModal } from './settings/SettingsModal'
 import { FaTimes, FaTrash } from 'react-icons/fa'
+import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react'
 import { getCardTitle } from '../modules/cards'
 
-type ChatContextMode = 'quick' | 'selected' | 'all'
+type ChatContextMode = 'quick' | 'selected' | 'picked' | 'all'
 
 interface BoardChatSystemProps {
   /** The data store instance */
@@ -52,7 +53,17 @@ export function BoardChatSystem({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isHistoryMode, setIsHistoryMode] = useState(false)
   const [contextMode, setContextMode] = usePersist<ChatContextMode>(`board_${boardId}_chatContext`, 'quick')
+  const [pickedCardIds, setPickedCardIds] = usePersist<string[]>(`board_${boardId}_pickedCardIds`, [])
   const [isEphemeral, setIsEphemeral] = useState(true)
+
+  // Prune picked IDs that no longer exist on the board
+  useEffect(() => {
+    const cardIdSet = new Set(cards.map(c => c.id))
+    const pruned = pickedCardIds.filter(id => cardIdSet.has(id))
+    if (pruned.length !== pickedCardIds.length) {
+      setPickedCardIds(pruned)
+    }
+  }, [cards, pickedCardIds, setPickedCardIds])
 
   // Filter cards based on context mode
   const contextCards = useMemo(() => {
@@ -61,12 +72,14 @@ export function BoardChatSystem({
         return []
       case 'selected':
         return selectedCard ? [selectedCard] : []
+      case 'picked':
+        return cards.filter((c): c is RichTextCard => c.type === 'richtext' && pickedCardIds.includes(c.id))
       case 'all':
         return cards.filter((c): c is RichTextCard => c.type === 'richtext')
       default:
         return []
     }
-  }, [contextMode, selectedCard, cards])
+  }, [contextMode, selectedCard, cards, pickedCardIds])
 
   // Validate selected model on settings change
   useEffect(() => {
@@ -329,6 +342,9 @@ export function BoardChatSystem({
           contextMode={contextMode}
           onContextModeChange={setContextMode}
           selectedCard={selectedCard}
+          cards={cards}
+          pickedCardIds={pickedCardIds}
+          onPickedCardIdsChange={setPickedCardIds}
           isEphemeral={isEphemeral}
           onSaveChat={handleSaveChat}
         />
@@ -389,6 +405,12 @@ interface ChatHeaderProps {
   onContextModeChange: (mode: ChatContextMode) => void
   /** Currently selected card */
   selectedCard: Card | null
+  /** All cards on the board */
+  cards: Card[]
+  /** IDs of cards manually picked for context */
+  pickedCardIds: string[]
+  /** Callback when picked card IDs change */
+  onPickedCardIdsChange: (ids: string[]) => void
   /** Whether the current chat is ephemeral (not saved to history) */
   isEphemeral: boolean
   /** Callback to save an ephemeral chat to history */
@@ -410,6 +432,9 @@ function ChatHeader({
   contextMode,
   onContextModeChange,
   selectedCard,
+  cards,
+  pickedCardIds,
+  onPickedCardIdsChange,
   isEphemeral,
   onSaveChat
 }: ChatHeaderProps) {
@@ -443,6 +468,14 @@ function ChatHeader({
             </svg>
           </button>
         )}
+
+        <PickedNotesPopover
+          cards={cards}
+          pickedCardIds={pickedCardIds}
+          onPickedCardIdsChange={onPickedCardIdsChange}
+          isActive={contextMode === 'picked'}
+          onActivate={() => onContextModeChange('picked')}
+        />
 
         <button
           onClick={() => onContextModeChange('all')}
@@ -517,5 +550,118 @@ function ChatHeader({
         </button>
       </div>
     </div>
+  )
+}
+
+interface PickedNotesPopoverProps {
+  /** All cards on the board */
+  cards: Card[]
+  /** IDs of cards currently picked for context */
+  pickedCardIds: string[]
+  /** Callback when picked card IDs change */
+  onPickedCardIdsChange: (ids: string[]) => void
+  /** Whether this context mode is currently active */
+  isActive: boolean
+  /** Callback to activate this context mode */
+  onActivate: () => void
+}
+
+/** Popover button that lets the user pick specific notes to include in chat context */
+function PickedNotesPopover({
+  cards,
+  pickedCardIds,
+  onPickedCardIdsChange,
+  isActive,
+  onActivate
+}: PickedNotesPopoverProps) {
+  const richtextCards = useMemo(
+    () => cards.filter((c): c is RichTextCard => c.type === 'richtext'),
+    [cards]
+  )
+
+  const toggleCard = (cardId: string) => {
+    if (!isActive) onActivate()
+    onPickedCardIdsChange(
+      pickedCardIds.includes(cardId)
+        ? pickedCardIds.filter(id => id !== cardId)
+        : [...pickedCardIds, cardId]
+    )
+  }
+
+  const allSelected = richtextCards.length > 0 && richtextCards.every(c => pickedCardIds.includes(c.id))
+
+  const toggleAll = () => {
+    if (!isActive) onActivate()
+    onPickedCardIdsChange(allSelected ? [] : richtextCards.map(c => c.id))
+  }
+
+  return (
+    <Popover className="relative flex items-center">
+      <PopoverButton
+        onClick={() => { if (!isActive) onActivate() }}
+        className={`p-1 rounded transition-colors text-xs
+          ${isActive
+            ? 'bg-blue-50 text-blue-500 dark:bg-blue-900/50 dark:text-blue-400'
+            : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+        title="Pick notes for context"
+      >
+        <svg className="w-4 h-4 block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M9 14l2 2 4-4" />
+        </svg>
+      </PopoverButton>
+
+      <PopoverPanel
+        anchor="bottom start"
+        className="z-50 mt-1 w-64 rounded-lg border border-gray-200 dark:border-gray-700 
+                   bg-white dark:bg-gray-800 shadow-lg"
+      >
+        <div className="p-2 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Notes in context</span>
+          <button
+            onClick={toggleAll}
+            className="text-[10px] text-blue-500 dark:text-blue-400 hover:underline"
+          >
+            {allSelected ? 'None' : 'All'}
+          </button>
+        </div>
+        <div className="max-h-72 overflow-y-auto p-1">
+          {richtextCards.length === 0 ? (
+            <div className="px-2 py-3 text-xs text-gray-400 dark:text-gray-500 text-center">
+              No notes on this board
+            </div>
+          ) : (
+            richtextCards.map(card => {
+              const checked = pickedCardIds.includes(card.id)
+              return (
+                <label
+                  key={card.id}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer
+                             hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleCard(card.id)}
+                    className="rounded border-gray-300 dark:border-gray-600 text-blue-500 
+                               focus:ring-blue-500 dark:focus:ring-blue-400 
+                               dark:bg-gray-700 h-3.5 w-3.5"
+                  />
+                  <span className={`text-xs truncate ${
+                    checked
+                      ? 'text-gray-900 dark:text-gray-100'
+                      : 'text-gray-500 dark:text-gray-400'
+                  }`}>
+                    {getCardTitle(card, 40)}
+                  </span>
+                </label>
+              )
+            })
+          )}
+        </div>
+      </PopoverPanel>
+    </Popover>
   )
 }

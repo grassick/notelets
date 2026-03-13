@@ -2,9 +2,9 @@
   "include": ["src", "types"],
   "exclude": ["node_modules"],
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "esnext",
     "target": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "jsx": "react",
     "baseUrl": "./",
     /* paths - If you configure Snowpack import aliases, add them here. */
@@ -17,7 +17,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true,
-    "importsNotUsedAsValues": "error"
+    "allowSyntheticDefaultImports": true
   }
 }

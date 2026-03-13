@@ -36,7 +36,7 @@ export function RichTextBubbleMenu({ editor }: RichTextBubbleMenuProps) {
   return (
     <BubbleMenu 
       editor={editor} 
-      tippyOptions={{ duration: 100 }}
+      options={{ placement: 'top', offset: 6 }}
       className="flex items-center gap-0.5 p-1 rounded-lg border border-gray-200 dark:border-gray-700 
                  bg-white dark:bg-gray-800 shadow-lg"
     >
@@ -82,6 +82,14 @@ export function RichTextBubbleMenu({ editor }: RichTextBubbleMenuProps) {
         title="Italic (⌘+I)"
       >
         I
+      </MenuButton>
+      <div className="w-px h-4 mx-0.5 bg-gray-200 dark:bg-gray-700" />
+      <MenuButton
+        isActive={editor.isActive('taskList')}
+        onClick={() => editor.chain().focus().toggleTaskList().run()}
+        title="Task list"
+      >
+        ☑
       </MenuButton>
     </BubbleMenu>
   )

@@ -32,29 +32,7 @@ const turndown = new TurndownService({
   codeBlockStyle: 'fenced'
 }).use(gfm)
 
-// Convert TipTap task list HTML back to GFM checkbox markdown
-turndown.addRule('taskListItem', {
-  filter: (node) => {
-    return node.nodeName === 'LI' && node.getAttribute('data-type') === 'taskItem'
-  },
-  replacement: (content, node) => {
-    const el = node as HTMLElement
-    const checked = el.getAttribute('data-checked') === 'true'
-    const prefix = checked ? '- [x] ' : '- [ ] '
-    return prefix + content.trim() + '\n'
-  }
-})
-
-turndown.addRule('taskList', {
-  filter: (node) => {
-    return node.nodeName === 'UL' && node.getAttribute('data-type') === 'taskList'
-  },
-  replacement: (content) => {
-    return '\n' + content + '\n'
-  }
-})
-
-const debug = true // Set to true to enable debug logging
+const debug = false
 
 /**
  * Converts markdown-it-task-lists HTML into TipTap-compatible task list HTML.
@@ -70,7 +48,7 @@ function convertTaskListsForTiptap(html: string): string {
   })
 
   doc.querySelectorAll('li.task-list-item').forEach(li => {
-    const checkbox = li.querySelector('input[type="checkbox"]')
+    const checkbox = li.querySelector(':scope > input[type="checkbox"]')
     const checked = checkbox?.hasAttribute('checked') ?? false
 
     li.removeAttribute('class')
@@ -79,23 +57,88 @@ function convertTaskListsForTiptap(html: string): string {
 
     checkbox?.remove()
 
-    const content = li.innerHTML.trim()
-    li.innerHTML = `<label><input type="checkbox"${checked ? ' checked' : ''}><span></span></label><div><p>${content}</p></div>`
+    const label = doc.createElement('label')
+    const input = doc.createElement('input')
+    const checkboxStyler = doc.createElement('span')
+    const content = doc.createElement('div')
+    const paragraph = doc.createElement('p')
+
+    input.setAttribute('type', 'checkbox')
+    if (checked) {
+      input.setAttribute('checked', 'checked')
+    }
+
+    label.append(input, checkboxStyler)
+
+    while (li.firstChild) {
+      const child = li.firstChild
+      const isBlockElement = child.nodeType === Node.ELEMENT_NODE
+        && ['P', 'UL', 'OL', 'TABLE', 'PRE', 'BLOCKQUOTE', 'DIV'].includes((child as HTMLElement).tagName)
+
+      if (isBlockElement) {
+        break
+      }
+
+      paragraph.append(child)
+    }
+
+    content.append(paragraph)
+
+    while (li.firstChild) {
+      content.append(li.firstChild)
+    }
+
+    li.replaceChildren(label, content)
   })
 
   return doc.body.innerHTML
 }
 
 /**
- * Unwraps paragraph tags inside list items while preserving their content
+ * Converts TipTap task list HTML back into checkbox list HTML that Turndown's
+ * GFM plugin already understands.
+ */
+function convertTaskListsForTurndown(html: string): string {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
+
+  doc.querySelectorAll('ul[data-type="taskList"]').forEach(ul => {
+    ul.removeAttribute('data-type')
+  })
+
+  doc.querySelectorAll('li[data-type="taskItem"]').forEach(li => {
+    const checked = li.getAttribute('data-checked') === 'true'
+    const input = doc.createElement('input')
+    const content = li.querySelector(':scope > div')
+    const replacementChildren: ChildNode[] = [input]
+
+    input.setAttribute('type', 'checkbox')
+    if (checked) {
+      input.setAttribute('checked', 'checked')
+    }
+
+    if (content) {
+      replacementChildren.push(...Array.from(content.childNodes))
+    }
+
+    li.removeAttribute('data-type')
+    li.removeAttribute('data-checked')
+    li.replaceChildren(...replacementChildren)
+  })
+
+  return doc.body.innerHTML
+}
+
+/**
+ * Unwraps paragraph tags inside list items while preserving their content.
  */
 function cleanupListItemParagraphs(html: string): string {
   // Create a DOM parser
   const parser = new DOMParser()
   const doc = parser.parseFromString(html, 'text/html')
   
-  // Find all paragraphs inside regular list items (skip task items which need their structure)
-  const paragraphsInLists = doc.querySelectorAll('li:not([data-type="taskItem"]) p')
+  // Find all paragraphs inside list items
+  const paragraphsInLists = doc.querySelectorAll('li p')
   
   // Unwrap each paragraph (keep its contents but remove the p tag)
   paragraphsInLists.forEach(p => {
@@ -108,6 +151,16 @@ function cleanupListItemParagraphs(html: string): string {
   
   // Return the cleaned HTML
   return doc.body.innerHTML
+}
+
+/**
+ * Converts the editor's HTML back into markdown, normalizing task lists first
+ * so empty items and checked states survive round-tripping.
+ */
+function convertEditorHtmlToMarkdown(html: string): string {
+  const normalizedHtml = convertTaskListsForTurndown(html)
+  const cleanedHtml = cleanupListItemParagraphs(normalizedHtml)
+  return turndown.turndown(cleanedHtml)
 }
 
 interface RichTextEditorProps {
@@ -139,18 +192,28 @@ export function RichTextEditor({
       console.log(html)
     }
     
-    const cleanedHtml = cleanupListItemParagraphs(html)
+    const normalizedHtml = convertTaskListsForTurndown(html)
+    if (debug) {
+      console.log('=== DEBUG: HTML after task list normalization ===')
+      console.log(normalizedHtml)
+    }
+
+    const cleanedHtml = cleanupListItemParagraphs(normalizedHtml)
     if (debug) {
       console.log('=== DEBUG: HTML after cleanup ===')
       console.log(cleanedHtml)
     }
-    
+
     const markdown = turndown.turndown(cleanedHtml)
     if (debug) {
       console.log('=== DEBUG: Markdown after turndown ===')
       console.log(markdown)
     }
-    
+
+    if (markdown === lastPushedContent.current) {
+      return
+    }
+
     lastPushedContent.current = markdown
     onChange(markdown)
   }, 150)
@@ -223,8 +286,9 @@ export function RichTextEditor({
   // Update editor content when content prop changes significantly and differs from what we last pushed
   useEffect(() => {
     if (!editor) return
+    if (hasFocus) return
 
-    const currentContent = turndown.turndown(editor.getHTML())
+    const currentContent = convertEditorHtmlToMarkdown(editor.getHTML())
     if (content !== currentContent && content !== lastPushedContent.current) {
       if (debug) {
         console.log('=== DEBUG: External content change detected ===')
@@ -243,7 +307,7 @@ export function RichTextEditor({
       editor.commands.setContent(renderedHtml)
       editor.commands.setTextSelection(selection)
     }
-  }, [editor, content])
+  }, [editor, content, hasFocus])
 
   if (!editor) {
     return null

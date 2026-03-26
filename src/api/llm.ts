@@ -38,7 +38,7 @@ export interface ModelInfo {
     /** Number of thinking tokens for models that support thinking mode (optional) */
     thinkingTokens?: number
     /** Reasoning effort for models that support reasoning effort (optional) */
-    reasoningEffort?: "high" | "medium" | "low"
+    reasoningEffort?: "xhigh" | "high" | "medium" | "low" | "minimal" | "none"
 }
 
 /** Settings interface for LLM API keys */
@@ -338,7 +338,7 @@ export interface LLMOptions {
     /** Thinking tokens */
     thinkingTokens?: number
     /** Reasoning effort */
-    reasoningEffort?: "high" | "medium" | "low"
+    reasoningEffort?: "xhigh" | "high" | "medium" | "low" | "minimal" | "none"
 }
 
 /** Common response format for all LLMs */
@@ -379,8 +379,8 @@ export class LLMFactory {
                 return new GeminiClient(apiKey, model.modelId)
             }
             case 'openrouter': {
-                const { OpenAIClient } = await import('./openai')
-                return new OpenAIClient(apiKey, model.baseURL)
+                const { OpenRouterClient } = await import('./openrouter')
+                return new OpenRouterClient(apiKey)
             }
             default:
                 throw new Error(`Provider ${model.provider} not implemented`)

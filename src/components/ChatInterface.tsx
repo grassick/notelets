@@ -220,6 +220,7 @@ function ChatMessage({ message, index, onEdit, onSaveToNotes }: {
   const isUser = message.role === 'user'
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(message.content)
+  const [saved, setSaved] = useState(false)
   const editInputRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
@@ -332,27 +333,48 @@ function ChatMessage({ message, index, onEdit, onSaveToNotes }: {
             </div>
             {!isUser && onSaveToNotes && (
               <button
-                onClick={() => onSaveToNotes(message.content)}
-                className="absolute -bottom-2 -right-2 p-1.5 rounded-full bg-white dark:bg-gray-800 
-                         shadow-sm border border-gray-200 dark:border-gray-700
-                         opacity-0 group-hover:opacity-100 transition-opacity
-                         hover:bg-gray-50 dark:hover:bg-gray-700"
-                title="Save as note"
+                onClick={async () => {
+                  await onSaveToNotes(message.content)
+                  setSaved(true)
+                }}
+                disabled={saved}
+                className={`absolute -bottom-2 -right-2 p-1.5 rounded-full 
+                         shadow-sm border transition-opacity
+                         ${saved 
+                           ? 'opacity-100 bg-blue-50 dark:bg-blue-900/40 border-blue-300 dark:border-blue-700 cursor-default' 
+                           : 'opacity-0 group-hover:opacity-100 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                title={saved ? 'Saved to notes' : 'Save as note'}
               >
-                <svg 
-                  width="14" 
-                  height="14" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round"
-                  className="text-gray-500 dark:text-gray-400"
-                >
-                  <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  <path d="M12 4v3m0 0v3m0-3h3m-3 0H9" />
-                </svg>
+                {saved ? (
+                  <svg 
+                    width="14" 
+                    height="14" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2.5" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    className="text-blue-500 dark:text-blue-400"
+                  >
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                ) : (
+                  <svg 
+                    width="14" 
+                    height="14" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    className="text-gray-500 dark:text-gray-400"
+                  >
+                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <path d="M12 4v3m0 0v3m0-3h3m-3 0H9" />
+                  </svg>
+                )}
               </button>
             )}
           </div>

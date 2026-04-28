@@ -29,6 +29,8 @@ interface BoardChatSystemProps {
   setCard: (card: Card) => void
   /** Currently selected card */
   selectedCard: Card | null
+  /** Board-level custom instructions for chat */
+  boardInstructions?: string
 }
 
 /**
@@ -43,7 +45,8 @@ export function BoardChatSystem({
   className = '',
   cards,
   setCard,
-  selectedCard
+  selectedCard,
+  boardInstructions
 }: BoardChatSystemProps) {
   const { settings: userSettings, loading: userSettingsLoading } = useUserSettings(store)
   const { chats, setChat: storeSetChat, removeChat } = useChats(store, boardId)
@@ -96,15 +99,15 @@ export function BoardChatSystem({
   }, [])
 
   const { sendMessage, editMessage, stopStreaming, isLoading, error: chatError } = useChat({
-    cards: contextCards, // Pass filtered cards based on context mode
+    cards: contextCards,
     onChatUpdate: (updatedChat) => {
-      // Only persist if not ephemeral
       if (!isEphemeral) {
         storeSetChat(updatedChat)
       }
       setChat(updatedChat)
     },
-    userSettings
+    userSettings,
+    boardInstructions
   })
 
   // Add chat selection handler

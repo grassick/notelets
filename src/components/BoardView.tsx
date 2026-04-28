@@ -152,7 +152,8 @@ export function BoardView(props: {
     onUpdateCard: handleUpdateCard,
     onUpdateCardTitle: handleUpdateCardTitle,
     onDeleteCard: handleDeleteCard,
-    setCard
+    setCard,
+    boardInstructions: board.customInstructions
   }
 
   return isMobile ? (

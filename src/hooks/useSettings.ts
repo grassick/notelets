@@ -63,7 +63,7 @@ export function useUserSettings(store: Store) {
     })
   }, [store])
 
-  const updateSettings = useCallback(<K extends keyof UserSettings>(
+  const updateSettings = useCallback(<K extends 'llm'>(
     category: K,
     updates: Partial<UserSettings[K]>
   ) => {
@@ -79,9 +79,20 @@ export function useUserSettings(store: Store) {
     setSettings(newSettings)
   }, [store, settings])
 
+  /** Directly set a top-level field on user settings */
+  const setField = useCallback(<K extends keyof UserSettings>(
+    key: K,
+    value: UserSettings[K]
+  ) => {
+    const newSettings = { ...settings, [key]: value }
+    store.setUserSettings(newSettings)
+    setSettings(newSettings)
+  }, [store, settings])
+
   return {
     settings,
     updateSettings,
+    setField,
     loading
   }
 } 

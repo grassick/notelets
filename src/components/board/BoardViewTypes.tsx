@@ -41,4 +41,6 @@ export interface BoardViewProps {
   onDeleteCard: (cardId: string) => void
   /** Function to set a card's data */
   setCard: (card: Card) => void
+  /** Board-level custom instructions for chat */
+  boardInstructions?: string
 } 

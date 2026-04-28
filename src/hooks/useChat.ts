@@ -11,6 +11,8 @@ interface UseChatOptions {
     onChatUpdate: (chat: Chat) => void
     /** User settings */
     userSettings: UserSettings
+    /** Board-level custom instructions to inject into the system prompt */
+    boardInstructions?: string
 }
 
 interface UseChatResult {
@@ -29,7 +31,7 @@ interface UseChatResult {
 /**
  * Hook to manage chat state and API interactions
  */
-export function useChat({ cards, onChatUpdate, userSettings }: UseChatOptions): UseChatResult {
+export function useChat({ cards, onChatUpdate, userSettings, boardInstructions }: UseChatOptions): UseChatResult {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<Error | null>(null)
     const [providerCache] = useState<Map<string, LLMProvider>>(new Map())
@@ -131,8 +133,11 @@ export function useChat({ cards, onChatUpdate, userSettings }: UseChatOptions): 
             const context = buildContext(cards)
             
             const currentDate = formatDate(new Date().toISOString())
+            const userInstructions = userSettings.customInstructions?.trim()
+            const boardInstructionsTrimmed = boardInstructions?.trim()
+
             const systemPrompt = `You are a helpful AI assistant. Today's date is ${currentDate}. Treat the user as an expert - avoid unnecessary disclaimers, warnings, or over-explanation unless specifically asked. Provide direct, sophisticated answers assuming deep domain knowledge.
-${context ? `You have access to the following notes that may provide helpful context:
+${userInstructions ? `\nThe user has provided the following instructions for all conversations:\n\n${userInstructions}\n` : ''}${boardInstructionsTrimmed ? `\nThe user has provided the following instructions specific to this board:\n\n${boardInstructionsTrimmed}\n` : ''}${context ? `You have access to the following notes that may provide helpful context:
 
 ${context}
 
@@ -198,7 +203,7 @@ Use markdown formatting in your responses.`
             setIsLoading(false)
             abortControllerRef.current = null
         }
-    }, [cards, getProvider, onChatUpdate, buildContext])
+    }, [cards, getProvider, onChatUpdate, buildContext, userSettings.customInstructions, boardInstructions])
 
     /**
      * Sends a message to the LLM

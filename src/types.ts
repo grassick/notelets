@@ -113,6 +113,8 @@ export interface Board {
         // /** For vertical/sidebar views: store display order */
         // linear?: string[] // Array of card IDs in display order
     }
+    /** Free-text instructions applied to all chats on this board */
+    customInstructions?: string
     /** Timestamp when the board was created in ISO 8601 format */
     createdAt: string
     /** Timestamp when the board was last updated in ISO 8601 format */

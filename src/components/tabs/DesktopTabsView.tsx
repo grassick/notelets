@@ -1,14 +1,15 @@
-import React, { useState, useMemo } from "react";
-import { v4 as uuidv4 } from "uuid";
-import { FaPlus, FaTimes, FaFolder, FaSearch, FaTrash } from 'react-icons/fa';
-import type { Board } from "../../types";
-import type { Store } from "../../Store";
-import { useBoards } from "../../Store";
-import { BoardView } from "../BoardView";
-import { usePersist } from "../../hooks/usePersist";
-import { SettingsModal } from "../settings/SettingsModal";
-import { BoardNameModal } from "../BoardNameModal";
-import { DeleteBoardModal } from "../DeleteBoardModal";
+import React, { useState, useMemo, useEffect, useRef } from "react"
+import { v4 as uuidv4 } from "uuid"
+import { FaPlus, FaTimes, FaFolder, FaSearch, FaTrash } from 'react-icons/fa'
+import type { Board } from "../../types"
+import type { Store } from "../../Store"
+import { useBoards } from "../../Store"
+import { BoardView } from "../BoardView"
+import { usePersist } from "../../hooks/usePersist"
+import { SettingsModal } from "../settings/SettingsModal"
+import { BoardNameModal } from "../BoardNameModal"
+import { DeleteBoardModal } from "../DeleteBoardModal"
+import { BoardInstructionsModal } from "../BoardInstructionsModal"
 
 export function DesktopTabsView(props: {
   store: Store
@@ -26,6 +27,30 @@ export function DesktopTabsView(props: {
   }>({
     isOpen: false,
     type: 'create'
+  })
+  const [instructionsModal, setInstructionsModal] = useState<{
+    isOpen: boolean
+    boardId: string
+    boardTitle: string
+    initialValue: string
+  }>({
+    isOpen: false,
+    boardId: '',
+    boardTitle: '',
+    initialValue: ''
+  })
+  const [contextMenu, setContextMenu] = useState<{
+    isOpen: boolean
+    x: number
+    y: number
+    boardId: string
+    pageIndex: number
+  }>({
+    isOpen: false,
+    x: 0,
+    y: 0,
+    boardId: '',
+    pageIndex: -1
   })
 
   // Only show pages that correspond to existing boards
@@ -83,6 +108,36 @@ export function DesktopTabsView(props: {
       if (board) {
         setBoard({ ...board, title: name })
       }
+    }
+  }
+
+  function handleTabContextMenu(e: React.MouseEvent, pageId: string, index: number) {
+    e.preventDefault()
+    setContextMenu({
+      isOpen: true,
+      x: e.clientX,
+      y: e.clientY,
+      boardId: pageId,
+      pageIndex: index
+    })
+  }
+
+  function handleOpenInstructions(boardId: string) {
+    const board = boards.find(b => b.id === boardId)
+    if (board) {
+      setInstructionsModal({
+        isOpen: true,
+        boardId: board.id,
+        boardTitle: board.title,
+        initialValue: board.customInstructions || ''
+      })
+    }
+  }
+
+  function handleSaveInstructions(instructions: string | undefined) {
+    const board = boards.find(b => b.id === instructionsModal.boardId)
+    if (board) {
+      setBoard({ ...board, customInstructions: instructions, updatedAt: new Date().toISOString() })
     }
   }
 
@@ -146,6 +201,7 @@ export function DesktopTabsView(props: {
                 isSelected={index === currentTabIndex}
                 onClick={() => handleTabClick(index)}
                 onRemove={(ev) => handleRemoveTab(pageId, index, ev)}
+                onContextMenu={(ev) => handleTabContextMenu(ev, pageId, index)}
               >
                 {board ? board.title : "Loading..."}
               </Tab>
@@ -194,6 +250,46 @@ export function DesktopTabsView(props: {
         submitText={boardNameModal.type === 'create' ? 'Create' : 'Save'}
         onSubmit={handleBoardNameSubmit}
       />
+
+      <BoardInstructionsModal
+        isOpen={instructionsModal.isOpen}
+        onClose={() => setInstructionsModal(prev => ({ ...prev, isOpen: false }))}
+        boardTitle={instructionsModal.boardTitle}
+        initialValue={instructionsModal.initialValue}
+        onSave={handleSaveInstructions}
+      />
+
+      {contextMenu.isOpen && (
+        <TabContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(prev => ({ ...prev, isOpen: false }))}
+          onRename={() => {
+            const board = boards.find(b => b.id === contextMenu.boardId)
+            if (board) {
+              setBoardNameModal({
+                isOpen: true,
+                type: 'edit',
+                initialValue: board.title,
+                boardId: board.id
+              })
+            }
+            setContextMenu(prev => ({ ...prev, isOpen: false }))
+          }}
+          onInstructions={() => {
+            handleOpenInstructions(contextMenu.boardId)
+            setContextMenu(prev => ({ ...prev, isOpen: false }))
+          }}
+          onCloseTab={() => {
+            const newPages = validPages.filter(id => id !== contextMenu.boardId)
+            setPages(newPages)
+            if (contextMenu.pageIndex <= activeTabIndex) {
+              setActiveTabIndex(Math.max(-1, activeTabIndex - 1))
+            }
+            setContextMenu(prev => ({ ...prev, isOpen: false }))
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -202,14 +298,16 @@ interface TabProps {
   isSelected: boolean
   onClick: () => void
   onRemove?: (ev: React.MouseEvent) => void
+  onContextMenu?: (ev: React.MouseEvent) => void
   children: React.ReactNode
   className?: string
 }
 
-function Tab({ isSelected, onClick, onRemove, children, className = '' }: TabProps) {
+function Tab({ isSelected, onClick, onRemove, onContextMenu, children, className = '' }: TabProps) {
   return (
     <div 
       onClick={onClick}
+      onContextMenu={onContextMenu}
       className={`
         group relative pl-4 pr-3 py-2 cursor-pointer font-medium flex items-center text-sm
         transition-all duration-200 ease-in-out rounded-lg
@@ -377,6 +475,68 @@ function BoardList(props: BoardListProps) {
         boardId={deleteBoardModal.boardId}
         boardTitle={deleteBoardModal.boardTitle}
       />
+    </div>
+  )
+}
+
+interface TabContextMenuProps {
+  /** X position in viewport */
+  x: number
+  /** Y position in viewport */
+  y: number
+  /** Called to close the menu */
+  onClose: () => void
+  /** Called when Rename is selected */
+  onRename: () => void
+  /** Called when Board Instructions is selected */
+  onInstructions: () => void
+  /** Called when Close Tab is selected */
+  onCloseTab: () => void
+}
+
+/** Right-click context menu for board tabs */
+function TabContextMenu({ x, y, onClose, onRename, onInstructions, onCloseTab }: TabContextMenuProps) {
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        onClose()
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [onClose])
+
+  return (
+    <div
+      ref={menuRef}
+      style={{ position: 'fixed', left: x, top: y }}
+      className="z-50 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 
+                 ring-1 ring-black/5 dark:ring-white/10 py-1"
+    >
+      <button
+        onClick={onRename}
+        className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 
+                   hover:bg-gray-100 dark:hover:bg-gray-700"
+      >
+        Rename
+      </button>
+      <button
+        onClick={onInstructions}
+        className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 
+                   hover:bg-gray-100 dark:hover:bg-gray-700"
+      >
+        Board Instructions
+      </button>
+      <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
+      <button
+        onClick={onCloseTab}
+        className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 
+                   hover:bg-gray-100 dark:hover:bg-gray-700"
+      >
+        Close Tab
+      </button>
     </div>
   )
 }

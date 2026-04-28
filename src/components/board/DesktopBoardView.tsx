@@ -26,7 +26,8 @@ export function DesktopBoardView(props: BoardViewProps) {
     onUpdateCard,
     onUpdateCardTitle,
     onDeleteCard,
-    setCard
+    setCard,
+    boardInstructions
   } = props
 
   const [isDragging, setIsDragging] = useState(false)
@@ -178,6 +179,7 @@ export function DesktopBoardView(props: BoardViewProps) {
               cards={cards}
               setCard={setCard}
               selectedCard={selectedCard}
+              boardInstructions={boardInstructions}
             />
           </div>
         )}

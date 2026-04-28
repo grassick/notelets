@@ -18,13 +18,13 @@ interface SettingsModalProps {
   store: Store
 }
 
-type SettingsTab = 'appearance' | 'llm' | 'account' | 'storage' | 'about' | 'import-export'
+type SettingsTab = 'appearance' | 'llm' | 'instructions' | 'account' | 'storage' | 'about' | 'import-export'
 
 export function SettingsModal({ isOpen, onClose, store }: SettingsModalProps) {
   // Use device settings for appearance and storage type
   const { settings: deviceSettings, updateSettings: updateDeviceSettings } = useDeviceSettings()
   // Use user settings with store for LLM settings when available
-  const { settings: userSettings, updateSettings: updateUserSettings, loading: userSettingsLoading } = useUserSettings(store)
+  const { settings: userSettings, updateSettings: updateUserSettings, setField: setUserField, loading: userSettingsLoading } = useUserSettings(store)
   const { logout, user } = useAuth()
   const [activeTab, setActiveTab] = useState<SettingsTab>('llm')
 
@@ -97,6 +97,16 @@ export function SettingsModal({ isOpen, onClose, store }: SettingsModalProps) {
                   }`}
               >
                 LLM Settings
+              </button>
+              <button
+                onClick={() => setActiveTab('instructions')}
+                className={`w-full px-3 py-2 text-sm rounded-md text-left
+                  ${activeTab === 'instructions'
+                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}
+              >
+                Custom Instructions
               </button>
               <button
                 onClick={() => setActiveTab('appearance')}
@@ -277,6 +287,25 @@ export function SettingsModal({ isOpen, onClose, store }: SettingsModalProps) {
                   You can get API keys from <a href="https://console.anthropic.com/" className="text-blue-600 dark:text-blue-400 hover:underline">Anthropic</a>, {' '}
                   <a href="https://aistudio.google.com/" className="text-blue-600 dark:text-blue-400 hover:underline">Google AI</a>, or {' '}
                   <a href="https://platform.openai.com/" className="text-blue-600 dark:text-blue-400 hover:underline">OpenAI</a>. Your keys are never leave your device except for the API calls.
+                </p>
+              </div>
+            ) : activeTab === 'instructions' ? (
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Custom Instructions</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  These instructions are included in every chat across all boards. Use this to set your
+                  preferred response style, background context, or any preferences the AI should always follow.
+                </p>
+                <textarea
+                  value={userSettings.customInstructions || ''}
+                  onChange={e => setUserField('customInstructions', e.target.value || undefined)}
+                  className="w-full h-48 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
+                           bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y text-sm"
+                  placeholder={"e.g., Always respond in British English. Use metric units.\nI'm a software engineer with 10 years of experience.\nKeep responses concise and technical."}
+                />
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  {(userSettings.customInstructions || '').length} / 1500 characters
                 </p>
               </div>
             ) : activeTab === 'appearance' ? (

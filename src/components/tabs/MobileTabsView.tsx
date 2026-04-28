@@ -6,6 +6,7 @@ import type { Store } from '../../Store'
 import { useBoards } from '../../Store'
 import { BoardView } from '../BoardView'
 import { BoardNameModal } from '../BoardNameModal'
+import { BoardInstructionsModal } from '../BoardInstructionsModal'
 import { SettingsModal } from '../settings/SettingsModal'
 import { DeleteBoardModal } from '../DeleteBoardModal'
 import { usePersist } from '../../hooks/usePersist'
@@ -104,6 +105,7 @@ function SingleBoardView({ store, boardId, onBack }: SingleBoardViewProps) {
   const { boards, setBoard, removeBoard } = useBoards(store)
   const [showMenu, setShowMenu] = useState(false)
   const [showRenameModal, setShowRenameModal] = useState(false)
+  const [showInstructionsModal, setShowInstructionsModal] = useState(false)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
 
@@ -146,6 +148,15 @@ function SingleBoardView({ store, boardId, onBack }: SingleBoardViewProps) {
                   <button
                     onClick={() => {
                       setShowMenu(false)
+                      setShowInstructionsModal(true)
+                    }}
+                    className="block w-full text-left px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    Board Instructions
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowMenu(false)
                       setShowSettingsModal(true)
                     }}
                     className="block w-full text-left px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -182,6 +193,16 @@ function SingleBoardView({ store, boardId, onBack }: SingleBoardViewProps) {
         onSubmit={(newTitle) => {
           setBoard({ ...currentBoard, title: newTitle })
           setShowRenameModal(false)
+        }}
+      />
+
+      <BoardInstructionsModal
+        isOpen={showInstructionsModal}
+        onClose={() => setShowInstructionsModal(false)}
+        boardTitle={currentBoard.title}
+        initialValue={currentBoard.customInstructions || ''}
+        onSave={(instructions) => {
+          setBoard({ ...currentBoard, customInstructions: instructions, updatedAt: new Date().toISOString() })
         }}
       />
 

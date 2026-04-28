@@ -39,4 +39,6 @@ export interface UserSettings {
     /** Which provider to use for voice transcription */
     transcriptionProvider?: TranscriptionProvider
   }
+  /** Free-text instructions injected into every chat system prompt across all boards */
+  customInstructions?: string
 } 

@@ -24,7 +24,8 @@ export function MobileBoardView(props: BoardViewProps) {
     onUpdateCard,
     onUpdateCardTitle,
     onDeleteCard,
-    setCard
+    setCard,
+    boardInstructions
   } = props
 
   return (
@@ -59,6 +60,7 @@ export function MobileBoardView(props: BoardViewProps) {
               cards={cards}
               setCard={setCard}
               selectedCard={selectedCard}
+              boardInstructions={boardInstructions}
             />
           </div>
         )}

@@ -121,9 +121,9 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     },
     {
         provider: 'openrouter',
-        id: 'openai/gpt-5.4-high',
-        modelId: 'openai/gpt-5.4',
-        name: 'GPT-5.4 High',
+        id: 'openai/gpt-5.5-high',
+        modelId: 'openai/gpt-5.5',
+        name: 'GPT-5.5 High',
         baseURL: 'https://openrouter.ai/api/v1',
         reasoningEffort: "high"
     },
@@ -167,9 +167,9 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     },
     {
         provider: 'openrouter',
-        id: 'anthropic/claude-opus-4.6-high',
-        modelId: 'anthropic/claude-opus-4.6',
-        name: 'Claude Opus 4.6 High',
+        id: 'anthropic/claude-opus-4.7-high',
+        modelId: 'anthropic/claude-opus-4.7',
+        name: 'Claude Opus 4.7 High',
         baseURL: 'https://openrouter.ai/api/v1',
         reasoningEffort: "high"
     },

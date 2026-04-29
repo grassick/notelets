@@ -9,7 +9,7 @@ describe('OpenRouterClient', () => {
         vi.unstubAllGlobals()
     })
 
-    it('sends adaptive reasoning and verbosity for Claude Opus 4.7 chat completions', async () => {
+    it('sends adaptive reasoning for Claude Opus 4.7 chat completions', async () => {
         vi.stubGlobal('window', {
             location: {
                 origin: 'https://notelets.example'
@@ -54,14 +54,14 @@ describe('OpenRouterClient', () => {
             model: 'anthropic/claude-opus-4.7',
             reasoning: {
                 enabled: true
-            },
-            verbosity: 'high'
+            }
         })
         expect(request).not.toHaveProperty('temperature')
+        expect(request).not.toHaveProperty('verbosity')
         expect(request.reasoning).not.toHaveProperty('effort')
     })
 
-    it('sends adaptive reasoning and verbosity for Claude Opus 4.7 streaming completions', async () => {
+    it('sends adaptive reasoning for Claude Opus 4.7 streaming completions', async () => {
         vi.stubGlobal('window', {
             location: {
                 origin: 'https://notelets.example'
@@ -102,10 +102,10 @@ describe('OpenRouterClient', () => {
             stream: true,
             reasoning: {
                 enabled: true
-            },
-            verbosity: 'high'
+            }
         })
         expect(request).not.toHaveProperty('temperature')
+        expect(request).not.toHaveProperty('verbosity')
         expect(request.reasoning).not.toHaveProperty('effort')
     })
 })

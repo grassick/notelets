@@ -21,6 +21,12 @@ export interface LLMProvider {
 /** Available LLM providers */
 export type LLMProviderType = 'anthropic' | 'gemini' | 'openai' | 'deepseek' | 'openrouter'
 
+/** Normalized reasoning effort levels supported by OpenRouter */
+export type ReasoningEffort = "xhigh" | "high" | "medium" | "low" | "minimal" | "none"
+
+/** OpenRouter verbosity levels for models with output effort controls */
+export type ModelVerbosity = "max" | "xhigh" | "high" | "medium" | "low"
+
 /** Model information */
 export interface ModelInfo {
     /** Unique identifier for the model in our application */
@@ -37,8 +43,14 @@ export interface ModelInfo {
     noTemperature?: boolean
     /** Number of thinking tokens for models that support thinking mode (optional) */
     thinkingTokens?: number
+    /** Whether to enable adaptive reasoning without a fixed token budget */
+    reasoningEnabled?: boolean
     /** Reasoning effort for models that support reasoning effort (optional) */
-    reasoningEffort?: "xhigh" | "high" | "medium" | "low" | "minimal" | "none"
+    reasoningEffort?: ReasoningEffort
+    /** Maximum reasoning tokens for models that support explicit reasoning budgets */
+    reasoningMaxTokens?: number
+    /** Output effort control for models that support OpenRouter verbosity */
+    verbosity?: ModelVerbosity
 }
 
 /** Settings interface for LLM API keys */
@@ -171,7 +183,9 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         modelId: 'anthropic/claude-opus-4.7',
         name: 'Claude Opus 4.7 High',
         baseURL: 'https://openrouter.ai/api/v1',
-        reasoningEffort: "high"
+        noTemperature: true,
+        reasoningEnabled: true,
+        verbosity: "high"
     },
     // {
     //     provider: 'openrouter',
@@ -337,8 +351,14 @@ export interface LLMOptions {
     system?: string
     /** Thinking tokens */
     thinkingTokens?: number
+    /** Whether to enable adaptive reasoning without a fixed token budget */
+    reasoningEnabled?: boolean
     /** Reasoning effort */
-    reasoningEffort?: "xhigh" | "high" | "medium" | "low" | "minimal" | "none"
+    reasoningEffort?: ReasoningEffort
+    /** Maximum reasoning tokens */
+    reasoningMaxTokens?: number
+    /** Output effort control */
+    verbosity?: ModelVerbosity
 }
 
 /** Common response format for all LLMs */

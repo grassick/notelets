@@ -4,6 +4,7 @@ import type { LLMProvider, LLMOptions, LLMResponse } from './llm'
 /** Base URL for OpenRouter's API */
 const OPENROUTER_API_BASE = 'https://openrouter.ai/api/v1'
 
+/** Reasoning configuration accepted by OpenRouter chat completions */
 interface OpenRouterReasoningConfig {
     /** Enables adaptive reasoning when no specific budget or effort applies */
     enabled?: boolean

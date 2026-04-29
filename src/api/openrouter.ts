@@ -4,6 +4,15 @@ import type { LLMProvider, LLMOptions, LLMResponse } from './llm'
 /** Base URL for OpenRouter's API */
 const OPENROUTER_API_BASE = 'https://openrouter.ai/api/v1'
 
+interface OpenRouterReasoningConfig {
+    /** Enables adaptive reasoning when no specific budget or effort applies */
+    enabled?: boolean
+    /** Provider-normalized reasoning effort level */
+    effort?: LLMOptions['reasoningEffort']
+    /** Explicit reasoning token budget */
+    max_tokens?: number
+}
+
 /** OpenRouter API client implementation */
 export class OpenRouterClient implements LLMProvider {
     private apiKey: string
@@ -32,6 +41,31 @@ export class OpenRouterClient implements LLMProvider {
         return converted
     }
 
+    /**
+     * Builds OpenRouter's reasoning object from normalized LLM options
+     */
+    private buildReasoningConfig(options: LLMOptions): OpenRouterReasoningConfig | undefined {
+        if (options.reasoningMaxTokens !== undefined) {
+            return {
+                max_tokens: options.reasoningMaxTokens
+            }
+        }
+
+        if (options.reasoningEffort !== undefined) {
+            return {
+                effort: options.reasoningEffort
+            }
+        }
+
+        if (options.reasoningEnabled) {
+            return {
+                enabled: true
+            }
+        }
+
+        return undefined
+    }
+
     async createChatCompletion(
         messages: ChatMessage[],
         options: LLMOptions,
@@ -50,9 +84,8 @@ export class OpenRouterClient implements LLMProvider {
                 messages: this.convertMessages(messages, options.system),
                 max_tokens: options.maxTokens,
                 temperature: options.temperature,
-                reasoning: options.reasoningEffort ? {
-                    effort: options.reasoningEffort
-                } : undefined
+                reasoning: this.buildReasoningConfig(options),
+                verbosity: options.verbosity
             }),
             signal
         })
@@ -102,9 +135,8 @@ export class OpenRouterClient implements LLMProvider {
                 max_tokens: options.maxTokens,
                 temperature: options.temperature,
                 stream: true,
-                reasoning: options.reasoningEffort ? {
-                    effort: options.reasoningEffort
-                } : undefined
+                reasoning: this.buildReasoningConfig(options),
+                verbosity: options.verbosity
             }),
             signal
         })

@@ -153,7 +153,10 @@ export function useQuiz({ cards, selectedCard, userSettings, modelId }: UseQuizO
         system: systemPrompt,
         temperature: model.noTemperature ? undefined : 0.7,
         thinkingTokens: model.thinkingTokens,
-        reasoningEffort: model.reasoningEffort
+        reasoningEnabled: model.reasoningEnabled,
+        reasoningEffort: model.reasoningEffort,
+        reasoningMaxTokens: model.reasoningMaxTokens,
+        verbosity: model.verbosity
       },
       signal
     )

@@ -4,6 +4,8 @@ import { LLMFactory, type ModelId, type LLMProvider, getProviderForModel, getMod
 import { useDeviceSettings, useUserSettings } from './useSettings'
 import { UserSettings } from '../types/settings'
 
+const STREAMING_UPDATE_INTERVAL_MS = 100
+
 interface UseChatOptions {
     /** Cards to use for context */
     cards: Card[]
@@ -163,35 +165,95 @@ Use markdown formatting in your responses.`
             )
 
             let streamedContent = ''
+            let lastEmittedContent = ''
+            let lastStreamingUpdateAt = Date.now()
+            let pendingStreamingUpdate: ReturnType<typeof setTimeout> | null = null
+
+            /**
+             * Builds a chat object containing the current streamed assistant content.
+             */
+            const buildStreamingChat = (content: string): Chat => {
+                const streamedMessage: ChatMessage = {
+                    ...assistantMessage,
+                    content
+                }
+
+                return {
+                    ...streamingChat,
+                    messages: [...currentChat.messages, streamedMessage],
+                    updatedAt: new Date().toISOString()
+                }
+            }
+
+            /**
+             * Emits the latest streamed content to React and persistence listeners.
+             */
+            const emitStreamingUpdate = () => {
+                if (streamedContent === lastEmittedContent) {
+                    return
+                }
+
+                lastEmittedContent = streamedContent
+                lastStreamingUpdateAt = Date.now()
+                onChatUpdate(buildStreamingChat(streamedContent))
+            }
+
+            /**
+             * Cancels any pending batched streaming update.
+             */
+            const cancelPendingStreamingUpdate = () => {
+                if (!pendingStreamingUpdate) {
+                    return
+                }
+
+                clearTimeout(pendingStreamingUpdate)
+                pendingStreamingUpdate = null
+            }
+
+            /**
+             * Schedules a throttled streaming update so long responses do not re-render on every token.
+             */
+            const scheduleStreamingUpdate = () => {
+                const elapsed = Date.now() - lastStreamingUpdateAt
+
+                if (elapsed >= STREAMING_UPDATE_INTERVAL_MS) {
+                    cancelPendingStreamingUpdate()
+                    emitStreamingUpdate()
+                    return
+                }
+
+                if (pendingStreamingUpdate) {
+                    return
+                }
+
+                pendingStreamingUpdate = setTimeout(() => {
+                    pendingStreamingUpdate = null
+                    emitStreamingUpdate()
+                }, STREAMING_UPDATE_INTERVAL_MS - elapsed)
+            }
+
+            /**
+             * Forces the latest streamed content through before completing or stopping.
+             */
+            const flushStreamingUpdate = () => {
+                cancelPendingStreamingUpdate()
+                emitStreamingUpdate()
+            }
+
             try {
                 for await (const chunk of stream) {
                     streamedContent += chunk
-                    const streamedMessage: ChatMessage = {
-                        ...assistantMessage,
-                        content: streamedContent
-                    }
-                    const updatedStreamingChat: Chat = {
-                        ...streamingChat,
-                        messages: [...currentChat.messages, streamedMessage],
-                        updatedAt: new Date().toISOString()
-                    }
-                    onChatUpdate(updatedStreamingChat)
+                    scheduleStreamingUpdate()
                 }
+
+                flushStreamingUpdate()
             } catch (error: any) {
                 // If this is an AbortError, add a note that generation was stopped
                 if (error.name === 'AbortError' || signal.aborted) {
                     streamedContent += "\n\n*Generation stopped.*"
-                    const streamedMessage: ChatMessage = {
-                        ...assistantMessage,
-                        content: streamedContent
-                    }
-                    const updatedStreamingChat: Chat = {
-                        ...streamingChat,
-                        messages: [...currentChat.messages, streamedMessage],
-                        updatedAt: new Date().toISOString()
-                    }
-                    onChatUpdate(updatedStreamingChat)
+                    flushStreamingUpdate()
                 } else {
+                    cancelPendingStreamingUpdate()
                     throw error
                 }
             }

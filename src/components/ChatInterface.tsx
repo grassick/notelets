@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { memo, useState, useRef, useEffect } from 'react'
 import type { Card, Chat, ChatMessage, RichTextCard } from '../types'
 import type { ModelId } from '../api/llm'
 import ReactMarkdown from 'react-markdown'
@@ -133,6 +133,7 @@ export function ChatInterface({
             key={i} 
             message={msg} 
             index={i}
+            isStreaming={isLoading && i === chat.messages.length - 1 && msg.role === 'assistant'}
             onEdit={onEditMessage}
             onSaveToNotes={!msg.role || msg.role === 'assistant' ? onSaveToNotes : undefined}
           />
@@ -211,12 +212,24 @@ function PickedCardsTitleList({ cards }: { cards: Card[] }) {
   return <>{titles.join(', ')}</>
 }
 
-function ChatMessage({ message, index, onEdit, onSaveToNotes }: { 
-  message: ChatMessage, 
-  index: number, 
-  onEdit: (index: number, content: string) => Promise<void>,
+/** Props for a rendered chat message */
+interface ChatMessageProps {
+  /** Message to render */
+  message: ChatMessage
+  /** Index of the message in the chat */
+  index: number
+  /** Whether this message is currently receiving streamed content */
+  isStreaming: boolean
+  /** Callback to edit a user message */
+  onEdit: (index: number, content: string) => Promise<void>
+  /** Optional callback to save an assistant message as a note */
   onSaveToNotes?: (content: string) => Promise<void>
-}) {
+}
+
+/**
+ * Renders a single chat message.
+ */
+function ChatMessageComponent({ message, index, isStreaming, onEdit, onSaveToNotes }: ChatMessageProps) {
   const isUser = message.role === 'user'
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(message.content)
@@ -327,9 +340,13 @@ function ChatMessage({ message, index, onEdit, onSaveToNotes }: {
           <div>
             <div className={`prose dark:prose-invert max-w-none text-base
                           ${isUser ? 'text-gray-900 dark:text-gray-100' : 'text-gray-900 dark:text-gray-100'}`}>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {message.content}
-              </ReactMarkdown>
+              {isStreaming ? (
+                <StreamingPlainText content={message.content} />
+              ) : (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {message.content}
+                </ReactMarkdown>
+              )}
             </div>
             {!isUser && onSaveToNotes && (
               <button
@@ -382,6 +399,21 @@ function ChatMessage({ message, index, onEdit, onSaveToNotes }: {
       </div>
     </div>
   )
+}
+
+const ChatMessage = memo(ChatMessageComponent)
+
+/** Props for lightweight streamed text rendering */
+interface StreamingPlainTextProps {
+    /** The streamed content to render without markdown parsing */
+    content: string
+}
+
+/**
+ * Renders in-progress assistant output without reparsing markdown on every chunk.
+ */
+function StreamingPlainText({ content }: StreamingPlainTextProps) {
+    return <div className="whitespace-pre-wrap break-words">{content}</div>
 }
 
 /** Props for the ChatInput component */

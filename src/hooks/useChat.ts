@@ -1,13 +1,21 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import type { Chat, ChatMessage, Card, RichTextCard } from '../types'
 import { LLMFactory, type ModelId, type LLMProvider, getProviderForModel, getModelById } from '../api/llm'
 import { useDeviceSettings, useUserSettings } from './useSettings'
 import { UserSettings } from '../types/settings'
 
+/**
+ * Options for the {@link useChat} hook.
+ */
 interface UseChatOptions {
     /** Cards to use for context */
     cards: Card[]
-    /** Callback when chat is updated */
+    /**
+     * Callback when the persisted chat is updated. This is called only at
+     * turn boundaries (after the user message is added, and after the assistant
+     * response completes or is aborted), never per streamed token, so callers
+     * can safely write to a remote store from this callback.
+     */
     onChatUpdate: (chat: Chat) => void
     /** User settings */
     userSettings: UserSettings
@@ -15,6 +23,9 @@ interface UseChatOptions {
     boardInstructions?: string
 }
 
+/**
+ * Result of the {@link useChat} hook.
+ */
 interface UseChatResult {
     /** Send a message to the LLM */
     sendMessage: (chat: Chat, content: string, modelId: ModelId) => Promise<void>
@@ -26,6 +37,16 @@ interface UseChatResult {
     isLoading: boolean
     /** Any error that occurred */
     error: Error | null
+    /**
+     * The in-flight streamed content for the current assistant turn.
+     * Updates are throttled to one flush per animation frame so the UI does
+     * not re-render on every token. Empty string when no stream is active.
+     */
+    streamingContent: string
+    /** Whether the assistant is currently streaming a response */
+    isStreaming: boolean
+    /** The model id of the currently streaming assistant response */
+    streamingModelId: ModelId | null
 }
 
 /**
@@ -36,6 +57,47 @@ export function useChat({ cards, onChatUpdate, userSettings, boardInstructions }
     const [error, setError] = useState<Error | null>(null)
     const [providerCache] = useState<Map<string, LLMProvider>>(new Map())
     const abortControllerRef = useRef<AbortController | null>(null)
+
+    // Streaming state. The ref holds the latest streamed text so we can append
+    // synchronously per token without paying the cost of a React state update;
+    // a single rAF-coalesced flush propagates the value to React state.
+    const streamingContentRef = useRef('')
+    const [streamingContent, setStreamingContent] = useState('')
+    const [isStreaming, setIsStreaming] = useState(false)
+    const [streamingModelId, setStreamingModelId] = useState<ModelId | null>(null)
+    const rafIdRef = useRef<number | null>(null)
+
+    /**
+     * Cancels any pending rAF flush of the streaming content.
+     */
+    const cancelStreamingFlush = useCallback(() => {
+        if (rafIdRef.current !== null) {
+            cancelAnimationFrame(rafIdRef.current)
+            rafIdRef.current = null
+        }
+    }, [])
+
+    /**
+     * Schedules a single rAF flush that copies the latest streamed text from
+     * the ref into React state. Repeated calls within a frame are coalesced.
+     */
+    const scheduleStreamingFlush = useCallback(() => {
+        if (rafIdRef.current !== null) return
+        rafIdRef.current = requestAnimationFrame(() => {
+            rafIdRef.current = null
+            setStreamingContent(streamingContentRef.current)
+        })
+    }, [])
+
+    // Make sure a backgrounded rAF callback can never fire after unmount.
+    useEffect(() => {
+        return () => {
+            if (rafIdRef.current !== null) {
+                cancelAnimationFrame(rafIdRef.current)
+                rafIdRef.current = null
+            }
+        }
+    }, [])
 
     /**
      * Stops the current streaming response
@@ -103,27 +165,21 @@ export function useChat({ cards, onChatUpdate, userSettings, boardInstructions }
         // Create a new AbortController for this request
         abortControllerRef.current = new AbortController()
         const signal = abortControllerRef.current.signal
-        
+
         setIsLoading(true)
         setError(null)
 
+        // Reset streaming buffer and mark stream as active. The streaming bubble
+        // (rendered by the chat UI) will pick up updates from `streamingContent`
+        // without us touching the persisted `chat.messages` array.
+        streamingContentRef.current = ''
+        setStreamingContent('')
+        setIsStreaming(true)
+        setStreamingModelId(modelId)
+
+        const startedAt = new Date().toISOString()
+
         try {
-            // Create assistant message placeholder
-            const assistantMessage: ChatMessage = {
-                role: 'assistant',
-                content: '',
-                llm: modelId,
-                createdAt: new Date().toISOString()
-            }
-
-            // Add empty assistant message that we'll stream into
-            const streamingChat: Chat = {
-                ...currentChat,
-                messages: [...currentChat.messages, assistantMessage],
-                updatedAt: new Date().toISOString()
-            }
-            onChatUpdate(streamingChat)
-
             // Get response from LLM
             const model = getModelById(modelId)
             if (!model) {
@@ -163,38 +219,41 @@ Use markdown formatting in your responses.`
             )
 
             let streamedContent = ''
+            let aborted = false
             try {
                 for await (const chunk of stream) {
                     streamedContent += chunk
-                    const streamedMessage: ChatMessage = {
-                        ...assistantMessage,
-                        content: streamedContent
-                    }
-                    const updatedStreamingChat: Chat = {
-                        ...streamingChat,
-                        messages: [...currentChat.messages, streamedMessage],
-                        updatedAt: new Date().toISOString()
-                    }
-                    onChatUpdate(updatedStreamingChat)
+                    streamingContentRef.current = streamedContent
+                    scheduleStreamingFlush()
                 }
             } catch (error: any) {
-                // If this is an AbortError, add a note that generation was stopped
+                // If this is an AbortError, append a note that generation was stopped
                 if (error.name === 'AbortError' || signal.aborted) {
+                    aborted = true
                     streamedContent += "\n\n*Generation stopped.*"
-                    const streamedMessage: ChatMessage = {
-                        ...assistantMessage,
-                        content: streamedContent
-                    }
-                    const updatedStreamingChat: Chat = {
-                        ...streamingChat,
-                        messages: [...currentChat.messages, streamedMessage],
-                        updatedAt: new Date().toISOString()
-                    }
-                    onChatUpdate(updatedStreamingChat)
                 } else {
                     throw error
                 }
             }
+
+            // Stream is done (or aborted). Cancel any pending flush so the React
+            // state doesn't briefly snap back to a stale partial value, then
+            // commit the full assistant message to the persisted chat in one
+            // single onChatUpdate call (one Firestore write per turn).
+            cancelStreamingFlush()
+
+            const assistantMessage: ChatMessage = {
+                role: 'assistant',
+                content: streamedContent,
+                llm: modelId,
+                createdAt: startedAt
+            }
+            const finalChat: Chat = {
+                ...currentChat,
+                messages: [...currentChat.messages, assistantMessage],
+                updatedAt: new Date().toISOString()
+            }
+            onChatUpdate(finalChat)
 
         } catch (error: any) {
             // Don't set error state for aborted requests
@@ -203,10 +262,15 @@ Use markdown formatting in your responses.`
                 throw error
             }
         } finally {
+            cancelStreamingFlush()
+            streamingContentRef.current = ''
+            setStreamingContent('')
+            setIsStreaming(false)
+            setStreamingModelId(null)
             setIsLoading(false)
             abortControllerRef.current = null
         }
-    }, [cards, getProvider, onChatUpdate, buildContext, userSettings.customInstructions, boardInstructions])
+    }, [cards, getProvider, onChatUpdate, buildContext, userSettings.customInstructions, boardInstructions, scheduleStreamingFlush, cancelStreamingFlush])
 
     /**
      * Sends a message to the LLM
@@ -287,6 +351,9 @@ Use markdown formatting in your responses.`
         editMessage,
         stopStreaming,
         isLoading,
-        error
+        error,
+        streamingContent,
+        isStreaming,
+        streamingModelId
     }
-} 
+}

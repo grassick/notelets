@@ -98,9 +98,13 @@ export function BoardChatSystem({
     setError(null)  // Clear any existing errors
   }, [])
 
-  const { sendMessage, editMessage, stopStreaming, isLoading, error: chatError } = useChat({
+  const { sendMessage, editMessage, stopStreaming, isLoading, error: chatError, streamingContent, isStreaming } = useChat({
     cards: contextCards,
     onChatUpdate: (updatedChat) => {
+      // useChat now only calls this at turn boundaries (after the user message
+      // is added and after the assistant response completes or is aborted),
+      // so writing to the persistent store here is at most a couple of writes
+      // per turn instead of one per streamed token.
       if (!isEphemeral) {
         storeSetChat(updatedChat)
       }
@@ -367,6 +371,8 @@ export function BoardChatSystem({
             userSettings={userSettings}
             contextMode={contextMode}
             contextCards={contextCards}
+            streamingContent={streamingContent}
+            isStreaming={isStreaming}
           />
         )}
       </div>

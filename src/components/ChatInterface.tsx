@@ -20,6 +20,14 @@ interface ChatInterfaceProps {
   userSettings: UserSettings
   contextMode: 'quick' | 'selected' | 'picked' | 'all'
   contextCards: Card[]
+  /**
+   * The in-flight streamed assistant content. While {@link isStreaming} is true
+   * this is rendered as a separate plain-text bubble after the persisted
+   * messages so that the chat list itself does not re-render per token.
+   */
+  streamingContent?: string
+  /** Whether the assistant is currently streaming a response */
+  isStreaming?: boolean
 }
 
 /**
@@ -29,19 +37,21 @@ interface ChatInterfaceProps {
  * It displays messages, allows the user to send messages, and has a text input for typing messages.
  * 
  */
-export function ChatInterface({ 
-  chat, 
+export function ChatInterface({
+  chat,
   onSendMessage,
   onEditMessage,
   onSaveToNotes,
   onStopStreaming,
-  className = '', 
+  className = '',
   isLoading = false,
   selectedModel,
   error,
   userSettings,
   contextMode,
-  contextCards
+  contextCards,
+  streamingContent = '',
+  isStreaming = false
 }: ChatInterfaceProps) {
   const [message, setMessage] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -129,14 +139,17 @@ export function ChatInterface({
                     dark:hover:[::-webkit-scrollbar-thumb]:bg-slate-500/30
                     [::-webkit-scrollbar-track]:bg-transparent">
         {chat?.messages.map((msg, i) => (
-          <ChatMessage 
-            key={i} 
-            message={msg} 
+          <ChatMessage
+            key={`${msg.createdAt ?? ''}-${msg.role}-${i}`}
+            message={msg}
             index={i}
             onEdit={onEditMessage}
             onSaveToNotes={!msg.role || msg.role === 'assistant' ? onSaveToNotes : undefined}
           />
         ))}
+        {isStreaming && (
+          <StreamingChatMessage content={streamingContent} />
+        )}
         {error && (
           <div className="flex flex-col items-center gap-2 mb-4">
             <div className="bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-200 rounded-lg p-3 text-sm">
@@ -211,12 +224,21 @@ function PickedCardsTitleList({ cards }: { cards: Card[] }) {
   return <>{titles.join(', ')}</>
 }
 
-function ChatMessage({ message, index, onEdit, onSaveToNotes }: { 
-  message: ChatMessage, 
-  index: number, 
-  onEdit: (index: number, content: string) => Promise<void>,
+/**
+ * Props for the ChatMessage component.
+ */
+interface ChatMessageItemProps {
+  /** The chat message to render */
+  message: ChatMessage
+  /** Index of the message in the chat history */
+  index: number
+  /** Called when the user finishes editing this message */
+  onEdit: (index: number, content: string) => Promise<void>
+  /** Optional callback to save this message's content to notes */
   onSaveToNotes?: (content: string) => Promise<void>
-}) {
+}
+
+const ChatMessage = React.memo(function ChatMessage({ message, index, onEdit, onSaveToNotes }: ChatMessageItemProps) {
   const isUser = message.role === 'user'
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(message.content)
@@ -379,6 +401,43 @@ function ChatMessage({ message, index, onEdit, onSaveToNotes }: {
             )}
           </div>
         )}
+      </div>
+    </div>
+  )
+})
+
+/**
+ * Props for the {@link StreamingChatMessage} component.
+ */
+interface StreamingChatMessageProps {
+  /** The current in-flight streamed text */
+  content: string
+}
+
+/**
+ * Renders the assistant's in-flight streaming response as plain pre-wrapped
+ * text rather than parsed markdown. ReactMarkdown is intentionally avoided
+ * here because re-parsing a growing markdown string on every animation frame
+ * is the dominant CPU/memory cost during streaming. Once the stream completes
+ * the persisted chat picks up the message and renders it through the regular
+ * markdown-aware {@link ChatMessage} path.
+ */
+function StreamingChatMessage(props: StreamingChatMessageProps) {
+  const { content } = props
+  return (
+    <div className="group mb-6">
+      <div className="relative">
+        <div
+          className="max-w-none text-base whitespace-pre-wrap break-words
+                     text-gray-900 dark:text-gray-100"
+        >
+          {content}
+          <span
+            className="inline-block w-1.5 h-4 align-text-bottom ml-0.5
+                       bg-gray-400 dark:bg-gray-500 animate-pulse"
+            aria-hidden="true"
+          />
+        </div>
       </div>
     </div>
   )

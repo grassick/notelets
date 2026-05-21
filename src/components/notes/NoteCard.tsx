@@ -2,11 +2,264 @@ import React, { useState, useRef, useEffect, forwardRef } from 'react'
 import { RichTextEditor } from '../../RichTextEditor'
 import { Card, RichTextCard } from '../../types'
 import MarkdownIt from 'markdown-it'
-import { FaTrash, FaExpandAlt, FaCompressAlt, FaEllipsisV, FaMarkdown, FaCopy, FaFileAlt } from 'react-icons/fa'
+import taskListPlugin from 'markdown-it-task-lists'
+import { FaTrash, FaExpandAlt, FaCompressAlt, FaEllipsisV, FaMarkdown, FaCopy, FaFileAlt, FaPrint } from 'react-icons/fa'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { UserSettings } from '../../types/settings'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { AddContentButton } from './AddContentButton'
+
+const printableMarkdown = new MarkdownIt({
+  html: true,
+  breaks: true,
+  linkify: true,
+  typographer: true
+}).use(taskListPlugin)
+
+/**
+ * Escapes plain text before inserting it into the generated print document.
+ */
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+/**
+ * Gets a human-readable title for printed notes.
+ */
+function getPrintableNoteTitle(card: RichTextCard) {
+  return card.title.trim() || 'Untitled note'
+}
+
+/**
+ * Builds a standalone HTML document for printing a single note.
+ */
+function createPrintableNoteHtml(card: RichTextCard) {
+  const title = getPrintableNoteTitle(card)
+  const escapedTitle = escapeHtml(title)
+  const noteHtml = printableMarkdown.render(card.content.markdown)
+
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>${escapedTitle}</title>
+    <style>
+      @page {
+        margin: 0.65in;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #ffffff;
+        color: #111827;
+        font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+      }
+
+      .print-note {
+        max-width: 760px;
+        margin: 0 auto;
+        font-size: 18px;
+        line-height: 1.65;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+
+      .print-note-title {
+        margin: 0 0 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #d1d5db;
+        color: #111827;
+        font-size: 30px;
+        line-height: 1.2;
+      }
+
+      .print-note-content > :first-child {
+        margin-top: 0;
+      }
+
+      .print-note-content > :last-child {
+        margin-bottom: 0;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 1.45em 0 0.55em;
+        color: #111827;
+        line-height: 1.25;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      h2 {
+        font-size: 24px;
+      }
+
+      h3 {
+        font-size: 21px;
+      }
+
+      p,
+      ul,
+      ol,
+      blockquote,
+      pre,
+      table {
+        margin: 0 0 1em;
+      }
+
+      ul,
+      ol {
+        padding-left: 1.35em;
+      }
+
+      li + li {
+        margin-top: 0.25em;
+      }
+
+      blockquote {
+        padding-left: 1em;
+        border-left: 4px solid #d1d5db;
+        color: #374151;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 16px;
+      }
+
+      img {
+        max-width: 100%;
+        height: auto;
+      }
+
+      hr {
+        margin: 1.5rem 0;
+        border: 0;
+        border-top: 1px solid #d1d5db;
+      }
+
+      th,
+      td {
+        padding: 0.45rem 0.55rem;
+        border: 1px solid #d1d5db;
+        vertical-align: top;
+      }
+
+      th {
+        background: #f3f4f6;
+        text-align: left;
+      }
+
+      code {
+        padding: 0.1rem 0.25rem;
+        border-radius: 0.25rem;
+        background: #f3f4f6;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 0.9em;
+      }
+
+      pre {
+        padding: 0.85rem;
+        overflow-wrap: break-word;
+        white-space: pre-wrap;
+        border-radius: 0.5rem;
+        background: #f3f4f6;
+      }
+
+      pre code {
+        padding: 0;
+        background: transparent;
+      }
+
+      a {
+        color: #1d4ed8;
+        text-decoration: underline;
+      }
+
+      input[type="checkbox"] {
+        width: 1.05em;
+        height: 1.05em;
+        margin-right: 0.45em;
+        vertical-align: -0.12em;
+      }
+
+      .contains-task-list {
+        padding-left: 0;
+        list-style: none;
+      }
+
+      .task-list-item {
+        list-style: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="print-note">
+      <h1 class="print-note-title">${escapedTitle}</h1>
+      <section class="print-note-content">
+        ${noteHtml}
+      </section>
+    </main>
+  </body>
+</html>`
+}
+
+/**
+ * Opens the browser print dialog for a standalone rendering of a note.
+ */
+function printNote(card: RichTextCard) {
+  const iframe = document.createElement('iframe')
+  iframe.title = `Print ${getPrintableNoteTitle(card)}`
+  iframe.style.position = 'fixed'
+  iframe.style.right = '0'
+  iframe.style.bottom = '0'
+  iframe.style.width = '1px'
+  iframe.style.height = '1px'
+  iframe.style.border = '0'
+  iframe.style.opacity = '0'
+
+  document.body.appendChild(iframe)
+
+  const printWindow = iframe.contentWindow
+  const printDocument = iframe.contentDocument ?? printWindow?.document
+
+  if (!printWindow || !printDocument) {
+    iframe.remove()
+    return
+  }
+
+  const cleanup = () => {
+    window.setTimeout(() => iframe.remove(), 500)
+  }
+
+  printWindow.onafterprint = cleanup
+  printDocument.open()
+  printDocument.write(createPrintableNoteHtml(card))
+  printDocument.close()
+
+  window.setTimeout(() => {
+    try {
+      printWindow.focus()
+      printWindow.print()
+    } catch (error) {
+      console.error('Failed to print note:', error)
+      cleanup()
+    }
+  }, 100)
+}
 
 /** Props for the NoteCardHeader component */
 interface NoteCardHeaderProps {
@@ -147,6 +400,10 @@ function NoteCardHeader({
     }
   }
 
+  const handlePrintNote = () => {
+    printNote(card)
+  }
+
   return (
     <div className={`flex justify-between items-center ${className}`}>
       {extraStartControls}
@@ -223,6 +480,15 @@ function NoteCardHeader({
               >
                 <FaCopy size={14} />
                 Copy as formatted text
+              </button>
+            </MenuItem>
+            <MenuItem>
+              <button
+                onClick={handlePrintNote}
+                className="w-full px-2 py-1 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
+              >
+                <FaPrint size={14} />
+                Print note
               </button>
             </MenuItem>
             <MenuItem>

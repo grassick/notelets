@@ -1,4 +1,4 @@
-import React, { useState, FormEvent, MouseEvent } from 'react'
+import React, { useState, useEffect, FormEvent, MouseEvent } from 'react'
 import { FaTimes } from 'react-icons/fa'
 
 interface BoardNameModalProps {
@@ -21,6 +21,15 @@ interface BoardNameModalProps {
  */
 export function BoardNameModal({ isOpen, onClose, initialValue = '', title, submitText, onSubmit }: BoardNameModalProps) {
   const [name, setName] = useState(initialValue)
+
+  // Re-sync local state from the prop each time the modal opens, since this
+  // component stays mounted (it returns null when closed) and useState only
+  // reads initialValue on first mount.
+  useEffect(() => {
+    if (isOpen) {
+      setName(initialValue)
+    }
+  }, [isOpen, initialValue])
 
   if (!isOpen) return null
 

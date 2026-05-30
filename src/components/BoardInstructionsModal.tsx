@@ -1,4 +1,4 @@
-import React, { useState, FormEvent, MouseEvent } from 'react'
+import React, { useState, useEffect, FormEvent, MouseEvent } from 'react'
 import { FaTimes } from 'react-icons/fa'
 
 interface BoardInstructionsModalProps {
@@ -20,6 +20,15 @@ interface BoardInstructionsModalProps {
  */
 export function BoardInstructionsModal({ isOpen, onClose, boardTitle, initialValue = '', onSave }: BoardInstructionsModalProps) {
   const [instructions, setInstructions] = useState(initialValue)
+
+  // Re-sync local state from the prop each time the modal opens, since this
+  // component stays mounted (it returns null when closed) and useState only
+  // reads initialValue on first mount.
+  useEffect(() => {
+    if (isOpen) {
+      setInstructions(initialValue)
+    }
+  }, [isOpen, initialValue])
 
   if (!isOpen) return null
 

@@ -179,9 +179,9 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     },
     {
         provider: 'openrouter',
-        id: 'anthropic/claude-opus-4.7-high',
-        modelId: 'anthropic/claude-opus-4.7',
-        name: 'Claude Opus 4.7',
+        id: 'anthropic/claude-opus-4.8-high',
+        modelId: 'anthropic/claude-opus-4.8',
+        name: 'Claude Opus 4.8',
         baseURL: 'https://openrouter.ai/api/v1',
         noTemperature: true,
         reasoningEnabled: true

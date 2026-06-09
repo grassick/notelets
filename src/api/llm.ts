@@ -172,10 +172,10 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     // },
     {
         provider: 'openrouter',
-        id: 'anthropic/claude-sonnet-4.5',
-        modelId: 'anthropic/claude-sonnet-4.5',
-        name: 'Claude Sonnet 4.5',
-        baseURL: 'https://openrouter.ai/api/v1'
+        id: 'anthropic/claude-sonnet-4.6',
+        modelId: 'anthropic/claude-sonnet-4.6',
+        name: 'Claude Sonnet 4.6',
+        baseURL: 'https://openrouter.ai/api/v1',
     },
     {
         provider: 'openrouter',
@@ -186,6 +186,15 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         noTemperature: true,
         reasoningEnabled: true
     },
+    {
+        provider: 'openrouter',
+        id: 'anthropic/claude-fable-latest',
+        modelId: 'anthropic/claude-fable-latest',
+        name: 'Claude Fable Latest',
+        baseURL: 'https://openrouter.ai/api/v1',
+        noTemperature: true,
+        reasoningEnabled: true
+    }
     // {
     //     provider: 'openrouter',
     //     id: 'anthropic/claude-opus-4.1-medium',

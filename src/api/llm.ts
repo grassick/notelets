@@ -188,9 +188,9 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     },
     {
         provider: 'openrouter',
-        id: 'anthropic/claude-fable-latest',
-        modelId: 'anthropic/claude-fable-latest',
-        name: 'Claude Fable Latest',
+        id: 'anthropic/claude-fable-5',
+        modelId: 'anthropic/claude-fable-5',
+        name: 'Claude Fable 5',
         baseURL: 'https://openrouter.ai/api/v1',
         noTemperature: true,
         reasoningEnabled: true

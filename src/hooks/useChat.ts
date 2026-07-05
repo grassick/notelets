@@ -3,6 +3,7 @@ import type { Chat, ChatMessage, Card, RichTextCard } from '../types'
 import { LLMFactory, type ModelId, type LLMProvider, getProviderForModel, getModelById } from '../api/llm'
 import { useDeviceSettings, useUserSettings } from './useSettings'
 import { UserSettings } from '../types/settings'
+import { noteVault } from '../modules/encrypted/noteVault'
 
 /**
  * Options for the {@link useChat} hook.
@@ -125,9 +126,18 @@ export function useChat({ cards, onChatUpdate, userSettings, boardInstructions }
         cards.forEach(card => {
             if (card.type === 'richtext') {
                 const richTextCard = card as RichTextCard
+                let body = richTextCard.content.markdown
+                if (richTextCard.encryption) {
+                    // Only include an encrypted note if it is currently unlocked;
+                    // read its plaintext from the in-memory vault. Locked notes
+                    // are omitted from LLM context entirely.
+                    if (!noteVault.isUnlocked(card.id)) return
+                    body = noteVault.getPlaintext(card.id) ?? ''
+                }
                 const createdDate = formatDate(card.createdAt)
                 const updatedDate = formatDate(card.updatedAt)
-                contextParts.push(`<note title="${card.title}" created="${createdDate}" updated="${updatedDate}">\n${richTextCard.content.markdown}\n</note>`)
+                const encryptedAttr = richTextCard.encryption ? ' encrypted="true"' : ''
+                contextParts.push(`<note title="${card.title}" created="${createdDate}" updated="${updatedDate}"${encryptedAttr}>\n${body}\n</note>`)
             }
         })
 

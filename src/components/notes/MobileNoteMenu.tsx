@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { FaLock } from 'react-icons/fa'
 import { Card, RichTextCard } from '../../types'
 import { SearchModal } from '../search/SearchModal'
 import { getCardTitle } from '../../modules/cards'
@@ -95,8 +96,13 @@ export function MobileNoteMenu({ isOpen, onClose, cards, selectedCardId, onCardS
                   ? 'bg-blue-50 dark:bg-blue-900/50' 
                   : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
             >
-              <div className="text-sm text-gray-800 dark:text-gray-200">
-                {card.title || getCardTitle(card).slice(0, 100) || <span className="text-gray-400 dark:text-gray-500">Untitled</span>}
+              <div className="flex items-center gap-1.5 text-sm text-gray-800 dark:text-gray-200">
+                {card.type === 'richtext' && card.encryption && (
+                  <FaLock size={11} className="flex-none text-gray-400 dark:text-gray-500" />
+                )}
+                <span>
+                  {card.title || getCardTitle(card).slice(0, 100) || <span className="text-gray-400 dark:text-gray-500">Untitled</span>}
+                </span>
               </div>
             </div>
           ))}

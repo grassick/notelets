@@ -1,3 +1,5 @@
+import type { NoteEncryption } from './modules/encrypted/EncryptedTypes'
+
 /**
  * Base interface for all card types
  * Contains common properties shared across all cards
@@ -22,9 +24,15 @@ interface BaseCard {
 export interface RichTextCard extends BaseCard {
     type: 'richtext'
     content: {
-        /** Markdown formatted text content */
+        /** Markdown formatted text content. Empty string when the note is encrypted (see `encryption`). */
         markdown: string
     }
+    /**
+     * Present only when the note body is encrypted at rest with a per-note password.
+     * When set, `content.markdown` is persisted as `''` and the plaintext exists only
+     * in memory (via the note lock vault) while the note is unlocked.
+     */
+    encryption?: NoteEncryption
 }
 
 /**

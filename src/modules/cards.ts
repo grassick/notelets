@@ -13,6 +13,9 @@ export function getCardTitle(card: Card, maxLength: number = 60): string {
   // Generate title based on card type and content
   switch (card.type) {
     case 'richtext': {
+      // Encrypted notes have no readable body to derive a title from.
+      if (card.encryption) return 'Locked note'
+
       const firstLine = card.content.markdown
         .split('\n')[0] // Get first line
         .replace(/^[#*]+\s*/, '') // Remove leading hashes and asterisks
@@ -42,6 +45,9 @@ export function getCardTitle(card: Card, maxLength: number = 60): string {
 export function getCardSearchableContent(card: Card): string {
   switch (card.type) {
     case 'richtext':
+      // Never expose an encrypted note's body to search, even when unlocked
+      // (the decrypted plaintext lives only in the in-memory vault).
+      if (card.encryption) return ''
       return card.content.markdown
     case 'file':
       return card.content.filename

@@ -9,6 +9,20 @@ export interface EncryptedBlob {
 }
 
 /**
+ * Per-note encryption metadata attached to a sensitive note.
+ * When present on a card, the plaintext body lives only in memory while unlocked
+ * and the persisted `content.markdown` is an empty string.
+ */
+export interface NoteEncryption {
+    /** Per-note PBKDF2 salt (base64). Each note has its own salt so its password is independent. */
+    salt: string
+    /** AES-GCM ciphertext + IV of the markdown body */
+    blob: EncryptedBlob
+    /** Schema version for future migrations */
+    v: 1
+}
+
+/**
  * Encrypted version of a Card
  */
 export interface EncryptedCard {

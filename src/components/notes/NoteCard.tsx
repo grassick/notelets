@@ -3,11 +3,14 @@ import { RichTextEditor } from '../../RichTextEditor'
 import { Card, RichTextCard } from '../../types'
 import MarkdownIt from 'markdown-it'
 import taskListPlugin from 'markdown-it-task-lists'
-import { FaTrash, FaExpandAlt, FaCompressAlt, FaEllipsisV, FaMarkdown, FaCopy, FaFileAlt, FaPrint } from 'react-icons/fa'
+import { FaTrash, FaExpandAlt, FaCompressAlt, FaEllipsisV, FaMarkdown, FaCopy, FaFileAlt, FaPrint, FaLock, FaLockOpen, FaKey } from 'react-icons/fa'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { UserSettings } from '../../types/settings'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { AddContentButton } from './AddContentButton'
+import { useNoteLock } from '../../modules/encrypted/NoteLockContext'
+import { NoteEncryptModal } from '../../modules/encrypted/components/NoteEncryptModal'
+import { NoteUnlockModal } from '../../modules/encrypted/components/NoteUnlockModal'
 
 const printableMarkdown = new MarkdownIt({
   html: true,
@@ -265,6 +268,18 @@ function printNote(card: RichTextCard) {
 interface NoteCardHeaderProps {
   /** The card being displayed */
   card: RichTextCard
+  /** Whether this note is encrypted */
+  encrypted: boolean
+  /** Whether this encrypted note is currently unlocked */
+  unlocked: boolean
+  /** The effective body markdown (decrypted plaintext when unlocked, else the stored markdown) */
+  bodyMarkdown: string
+  /** Callback to start encrypting this note */
+  onEncrypt: () => void
+  /** Callback to relock this note */
+  onRelock: () => void
+  /** Callback to permanently remove encryption from this note */
+  onRemoveEncryption: () => void
   /** Callback when the title is updated */
   onUpdateTitle: (title: string) => void
   /** Callback when the card is deleted */
@@ -294,12 +309,18 @@ interface NoteCardHeaderProps {
 }
 
 /** Header component for a note card with title editing and actions */
-function NoteCardHeader({ 
-  card, 
-  onUpdateTitle, 
-  onDelete, 
-  isMarkdownMode, 
-  onMarkdownModeChange, 
+function NoteCardHeader({
+  card,
+  encrypted,
+  unlocked,
+  bodyMarkdown,
+  onEncrypt,
+  onRelock,
+  onRemoveEncryption,
+  onUpdateTitle,
+  onDelete,
+  isMarkdownMode,
+  onMarkdownModeChange,
   alwaysShowActions,
   className = '',
   extraStartControls,
@@ -351,9 +372,12 @@ function NoteCardHeader({
     }
   }
 
+  // Whether the note's body is readable (unencrypted, or unlocked)
+  const canReadBody = !encrypted || unlocked
+
   const handleCopyText = (format: 'markdown' | 'html') => {
     if (format === 'markdown') {
-      navigator.clipboard.writeText(card.content.markdown)
+      navigator.clipboard.writeText(bodyMarkdown)
         .then(() => console.log('Copied as markdown'))
         .catch(err => console.error('Failed to copy text:', err))
     } else {
@@ -362,7 +386,7 @@ function NoteCardHeader({
         breaks: true,
         linkify: true
       })
-      const html = md.render(card.content.markdown)
+      const html = md.render(bodyMarkdown)
       const tempDiv = document.createElement('div')
       tempDiv.innerHTML = html
       const plainText = tempDiv.innerText
@@ -401,12 +425,20 @@ function NoteCardHeader({
   }
 
   const handlePrintNote = () => {
-    printNote(card)
+    printNote({ ...card, content: { markdown: bodyMarkdown } })
   }
 
   return (
     <div className={`flex justify-between items-center ${className}`}>
       {extraStartControls}
+      {encrypted && (
+        <span
+          className={`mr-1.5 flex-none ${unlocked ? 'text-green-500 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}
+          title={unlocked ? 'Unlocked (encrypted note)' : 'Locked (encrypted note)'}
+        >
+          {unlocked ? <FaLockOpen size={12} /> : <FaLock size={12} />}
+        </span>
+      )}
       <div className="flex-1">
         {isEditingTitle ? (
           <input
@@ -455,42 +487,83 @@ function NoteCardHeader({
             <FaEllipsisV size={14} />
           </MenuButton>
           <MenuItems className="absolute right-0 mt-1 py-1 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-10 focus:outline-none">
-            <MenuItem>
-              <button
-                onClick={() => onMarkdownModeChange(!isMarkdownMode)}
-                className="w-full px-2 py-1 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
-              >
-                {isMarkdownMode ? <FaFileAlt size={14} /> : <FaMarkdown size={14} />}
-                {isMarkdownMode ? "Switch to rich text" : "Switch to markdown"}
-              </button>
-            </MenuItem>
-            <MenuItem>
-              <button
-                onClick={() => handleCopyText('markdown')}
-                className="w-full px-2 py-1 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
-              >
-                <FaCopy size={14} />
-                Copy as markdown
-              </button>
-            </MenuItem>
-            <MenuItem>
-              <button
-                onClick={() => handleCopyText('html')}
-                className="w-full px-2 py-1 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
-              >
-                <FaCopy size={14} />
-                Copy as formatted text
-              </button>
-            </MenuItem>
-            <MenuItem>
-              <button
-                onClick={handlePrintNote}
-                className="w-full px-2 py-1 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
-              >
-                <FaPrint size={14} />
-                Print note
-              </button>
-            </MenuItem>
+            {canReadBody && (
+              <MenuItem>
+                <button
+                  onClick={() => onMarkdownModeChange(!isMarkdownMode)}
+                  className="w-full px-2 py-1 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
+                >
+                  {isMarkdownMode ? <FaFileAlt size={14} /> : <FaMarkdown size={14} />}
+                  {isMarkdownMode ? "Switch to rich text" : "Switch to markdown"}
+                </button>
+              </MenuItem>
+            )}
+            {canReadBody && (
+              <MenuItem>
+                <button
+                  onClick={() => handleCopyText('markdown')}
+                  className="w-full px-2 py-1 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
+                >
+                  <FaCopy size={14} />
+                  Copy as markdown
+                </button>
+              </MenuItem>
+            )}
+            {canReadBody && (
+              <MenuItem>
+                <button
+                  onClick={() => handleCopyText('html')}
+                  className="w-full px-2 py-1 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
+                >
+                  <FaCopy size={14} />
+                  Copy as formatted text
+                </button>
+              </MenuItem>
+            )}
+            {canReadBody && (
+              <MenuItem>
+                <button
+                  onClick={handlePrintNote}
+                  className="w-full px-2 py-1 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
+                >
+                  <FaPrint size={14} />
+                  Print note
+                </button>
+              </MenuItem>
+            )}
+            {!encrypted && (
+              <MenuItem>
+                <button
+                  onClick={onEncrypt}
+                  className="w-full px-2 py-1 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
+                >
+                  <FaLock size={14} />
+                  Lock note
+                </button>
+              </MenuItem>
+            )}
+            {encrypted && unlocked && (
+              <MenuItem>
+                <button
+                  onClick={onRelock}
+                  className="w-full px-2 py-1 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
+                >
+                  <FaLock size={14} />
+                  Relock note
+                </button>
+              </MenuItem>
+            )}
+            {encrypted && unlocked && (
+              <MenuItem>
+                <button
+                  onClick={onRemoveEncryption}
+                  className="w-full px-2 py-1 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
+                >
+                  <FaKey size={14} />
+                  Remove encryption
+                </button>
+              </MenuItem>
+            )}
             <MenuItem>
               <button
                 onClick={onDelete}
@@ -598,12 +671,12 @@ interface NoteCardProps {
 }
 
 /** A component that renders a note card in either single or multi view mode */
-export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({ 
-  card, 
-  isSingleView = false, 
-  onUpdateCard, 
-  onUpdateCardTitle, 
-  onDelete, 
+export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
+  card,
+  isSingleView = false,
+  onUpdateCard,
+  onUpdateCardTitle,
+  onDelete,
   className = '',
   extraStartControls,
   extraControls,
@@ -612,42 +685,118 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
   onShowAllNotesChange,
 }, ref) => {
   const [isMarkdownMode, setIsMarkdownMode] = useState(false)
+  const [showEncryptModal, setShowEncryptModal] = useState(false)
+  const [showUnlockModal, setShowUnlockModal] = useState(false)
   const isMobile = useIsMobile()
-  const showVoiceInHeader = isMobile && isSingleView
+  const noteLock = useNoteLock()
+
+  const encrypted = !!card.encryption
+  const unlocked = noteLock.isUnlocked(card.id)
+  const canReadBody = !encrypted || unlocked
+
+  // Effective body: decrypted plaintext when unlocked, else the stored markdown
+  // (which is '' for an encrypted note). Plaintext lives only in the vault.
+  const bodyMarkdown = encrypted
+    ? (unlocked ? (noteLock.getPlaintext(card.id) ?? '') : '')
+    : card.content.markdown
+
+  const showVoiceInHeader = isMobile && isSingleView && canReadBody
+
+  // Persist an edit. Encrypted notes re-encrypt through the vault; plaintext
+  // never reaches the store.
+  const handleBodyChange = (text: string) => {
+    if (encrypted) {
+      if (unlocked) noteLock.updatePlaintext(card, text)
+    } else {
+      onUpdateCard(text)
+    }
+  }
 
   const handleVoiceTranscription = (text: string) => {
-    const newContent = card.content.markdown.trim() 
-      ? `${card.content.markdown.trim()}\n\n${text}`
-      : text
-    onUpdateCard(newContent)
+    const base = bodyMarkdown.trim()
+    const newContent = base ? `${base}\n\n${text}` : text
+    handleBodyChange(newContent)
   }
+
+  const handleRemoveEncryption = () => {
+    if (window.confirm('Remove encryption from this note? Its contents will be stored unencrypted.')) {
+      noteLock.removeEncryption(card)
+    }
+  }
+
+  const headerProps = {
+    card,
+    encrypted,
+    unlocked,
+    bodyMarkdown,
+    onEncrypt: () => setShowEncryptModal(true),
+    onRelock: () => noteLock.lock(card.id),
+    onRemoveEncryption: handleRemoveEncryption,
+    onUpdateTitle: onUpdateCardTitle,
+    onDelete,
+    isMarkdownMode,
+    onMarkdownModeChange: setIsMarkdownMode,
+    extraStartControls,
+    extraControls,
+    userSettings,
+    showVoiceInHeader,
+    onVoiceTranscription: handleVoiceTranscription,
+    showAllNotes,
+    onShowAllNotesChange
+  }
+
+  const renderBody = (bodyClassName?: string) => {
+    if (encrypted && !unlocked) {
+      return <LockedNotePlaceholder className={bodyClassName} onUnlock={() => setShowUnlockModal(true)} />
+    }
+    return (
+      <NoteCardBody
+        key={encrypted ? 'encrypted' : 'plain'}
+        content={bodyMarkdown}
+        onChange={handleBodyChange}
+        isMarkdownMode={isMarkdownMode}
+        className={bodyClassName}
+        userSettings={userSettings}
+        isSingleView={isSingleView}
+      />
+    )
+  }
+
+  const modals = (
+    <>
+      {showEncryptModal && (
+        <NoteEncryptModal
+          onConfirm={async (password) => {
+            await noteLock.encryptNote(card, password)
+            setShowEncryptModal(false)
+          }}
+          onCancel={() => setShowEncryptModal(false)}
+        />
+      )}
+      {showUnlockModal && (
+        <NoteUnlockModal
+          onUnlock={async (password) => {
+            await noteLock.unlock(card, password)
+            setShowUnlockModal(false)
+          }}
+          onCancel={() => setShowUnlockModal(false)}
+        />
+      )}
+    </>
+  )
 
   if (isSingleView) {
     return (
-      <div 
+      <div
         ref={ref}
         className="flex flex-col h-full"
       >
         <div className="flex-none px-3 py-1 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-          <NoteCardHeader
-            card={card}
-            onUpdateTitle={onUpdateCardTitle}
-            onDelete={onDelete}
-            isMarkdownMode={isMarkdownMode}
-            onMarkdownModeChange={setIsMarkdownMode}
-            alwaysShowActions={true}
-            extraStartControls={extraStartControls}
-            extraControls={extraControls}
-            userSettings={userSettings}
-            showVoiceInHeader={showVoiceInHeader}
-            onVoiceTranscription={handleVoiceTranscription}
-            showAllNotes={showAllNotes}
-            onShowAllNotesChange={onShowAllNotesChange}
-          />
+          <NoteCardHeader {...headerProps} alwaysShowActions={true} />
         </div>
         <div className="flex-1 min-h-0 overflow-auto px-4 py-4
-                    [scrollbar-width:thin] 
-                    [scrollbar-color:rgba(148,163,184,0.2)_transparent] 
+                    [scrollbar-width:thin]
+                    [scrollbar-color:rgba(148,163,184,0.2)_transparent]
                     dark:[scrollbar-color:rgba(148,163,184,0.15)_transparent]
                     [::-webkit-scrollbar]:w-1.5
                     [::-webkit-scrollbar-thumb]:rounded-full
@@ -656,53 +805,50 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
                     dark:[::-webkit-scrollbar-thumb]:bg-slate-500/25
                     dark:hover:[::-webkit-scrollbar-thumb]:bg-slate-400/25
                     [::-webkit-scrollbar-track]:bg-transparent">
-          <NoteCardBody
-            content={card.content.markdown}
-            onChange={onUpdateCard}
-            isMarkdownMode={isMarkdownMode}
-            userSettings={userSettings}
-            isSingleView={isSingleView}
-          />
+          {renderBody()}
         </div>
+        {modals}
       </div>
     )
   }
 
   return (
     <div className={`flex flex-col bg-white dark:bg-gray-800 shadow-sm mb-4 last:mb-0 min-h-[60px] border border-gray-200 dark:border-gray-700 group ${className}`}>
-      <div 
+      <div
         ref={ref}
         className="pt-4 -mt-4"
       >
         <div className={`px-4 py-1 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50`}>
-          <NoteCardHeader
-            card={card}
-            onUpdateTitle={onUpdateCardTitle}
-            onDelete={onDelete}
-            isMarkdownMode={isMarkdownMode}
-            onMarkdownModeChange={setIsMarkdownMode}
-            alwaysShowActions={false}
-            extraStartControls={extraStartControls}
-            extraControls={extraControls}
-            userSettings={userSettings}
-            showVoiceInHeader={showVoiceInHeader}
-            onVoiceTranscription={handleVoiceTranscription}
-            showAllNotes={showAllNotes}
-            onShowAllNotesChange={onShowAllNotesChange}
-          />
+          <NoteCardHeader {...headerProps} alwaysShowActions={false} />
         </div>
-        <NoteCardBody
-          content={card.content.markdown}
-          onChange={onUpdateCard}
-          isMarkdownMode={isMarkdownMode}
-          className="px-4 py-3 flex-1"
-          userSettings={userSettings}
-          isSingleView={isSingleView}
-        />
+        {renderBody("px-4 py-3 flex-1")}
       </div>
+      {modals}
     </div>
   )
-}) 
+})
+
+/** Placeholder shown in place of the editor when an encrypted note is locked */
+function LockedNotePlaceholder({ onUnlock, className = '' }: {
+  onUnlock: () => void
+  className?: string
+}) {
+  return (
+    <div className={`flex flex-col items-center justify-center text-center gap-3 py-10 ${className}`}>
+      <div className="text-gray-300 dark:text-gray-600">
+        <FaLock size={28} />
+      </div>
+      <p className="text-sm text-gray-600 dark:text-gray-400">This note is locked</p>
+      <button
+        onClick={onUnlock}
+        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm"
+      >
+        <FaLockOpen size={12} />
+        Unlock
+      </button>
+    </div>
+  )
+}
 
 /** Simple markdown editor component */
 function MarkdownEditor({ content, onChange, placeholder }: { 

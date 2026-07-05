@@ -7,6 +7,8 @@ import { usePersist } from '../hooks/usePersist'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { DesktopBoardView } from './board/DesktopBoardView'
 import { MobileBoardView } from './board/MobileBoardView'
+import { NoteLockProvider } from '../modules/encrypted/NoteLockContext'
+import { noteVault } from '../modules/encrypted/noteVault'
 
 /**
  * Displays a board with a sidebar for notes and a chat system.
@@ -102,6 +104,10 @@ export function BoardView(props: {
   const handleUpdateCard = async (cardId: string, content: string) => {
     const card = cards.find(c => c.id === cardId)
     if (card && card.type === 'richtext') {
+      // Encrypted notes must never be persisted as plaintext through this path.
+      // Their edits are routed through the note lock vault (see NoteCard), which
+      // re-encrypts the body before calling setCard. Guard defensively here.
+      if (card.encryption) return
       const updatedCard: RichTextCard = {
         ...card,
         content: {
@@ -129,6 +135,8 @@ export function BoardView(props: {
     if (!window.confirm('Are you sure you want to delete this note?')) return
 
     await removeCard(cardId)
+    // Drop any in-memory key/plaintext for the deleted note.
+    noteVault.delete(cardId)
     if (selectedCardId === cardId) {
       const remainingCards = cards.filter(c => c.id !== cardId)
       setSelectedCardId(remainingCards.length > 0 ? remainingCards[0].id : null)
@@ -156,9 +164,13 @@ export function BoardView(props: {
     boardInstructions: board.customInstructions
   }
 
-  return isMobile ? (
-    <MobileBoardView {...sharedProps} />
-  ) : (
-    <DesktopBoardView {...sharedProps} />
+  return (
+    <NoteLockProvider setCard={setCard}>
+      {isMobile ? (
+        <MobileBoardView {...sharedProps} />
+      ) : (
+        <DesktopBoardView {...sharedProps} />
+      )}
+    </NoteLockProvider>
   )
 } 

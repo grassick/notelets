@@ -60,6 +60,53 @@ export function generateMasterSalt(): Uint8Array {
 }
 
 /**
+ * Encodes bytes as a base64 string (mirrors the encoding used by `encrypt`)
+ */
+export function base64FromBytes(bytes: Uint8Array): string {
+    return btoa(String.fromCharCode(...bytes))
+}
+
+/**
+ * Decodes a base64 string back into bytes
+ */
+export function bytesFromBase64(value: string): Uint8Array {
+    return Uint8Array.from(atob(value), c => c.charCodeAt(0))
+}
+
+/**
+ * Derives an AES-GCM key for a single note from its base64 salt and a password.
+ * The salt is stored per-note, so each note's password is fully independent.
+ */
+export async function deriveNoteKey(salt: string, password: string): Promise<CryptoKey> {
+    return deriveMasterKey(password, bytesFromBase64(salt))
+}
+
+/**
+ * Encrypts a note's markdown body under a freshly generated per-note salt.
+ * Returns the base64 salt and the AES-GCM blob to persist on the card.
+ */
+export async function encryptNoteBody(
+    markdown: string,
+    password: string
+): Promise<{ salt: string; blob: EncryptedBlob }> {
+    const saltBytes = generateMasterSalt()
+    const key = await deriveMasterKey(password, saltBytes)
+    const blob = await encrypt(markdown, key)
+    return { salt: base64FromBytes(saltBytes), blob }
+}
+
+/**
+ * Decrypts a note body. Throws if the password is incorrect (AES-GCM auth failure).
+ */
+export async function decryptNoteBody(
+    enc: { salt: string; blob: EncryptedBlob },
+    password: string
+): Promise<string> {
+    const key = await deriveNoteKey(enc.salt, password)
+    return decrypt(enc.blob, key)
+}
+
+/**
  * Encrypts data using AES-GCM with the provided key
  */
 export async function encrypt(data: string, key: CryptoKey): Promise<EncryptedBlob> {

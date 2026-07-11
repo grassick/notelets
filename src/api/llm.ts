@@ -67,14 +67,14 @@ export interface LLMSettings {
 export function getDefaultModel(settings: LLMSettings): ModelId {
     // Try to find first available model in order of preference
     const modelPreference: ModelId[] = [
-        'openai/gpt-5-high',
-        'gemini-2.5-pro-exp-03-25',
-        'anthropic/claude-3.7-sonnet',
-        'claude-3-7-sonnet-latest',
-        'claude-3-7-sonnet-thinking-latest',
-        'claude-3-5-sonnet-latest',
-        'gemini-2.0-pro-exp-02-05',
-        'gpt-4o'
+        'openai/gpt-5.6-sol-high',
+        'anthropic/claude-sonnet-5',
+        'openai/gpt-5.6-terra-medium',
+        'openai/gpt-5.5-high',
+        'google/gemini-3.1-pro-preview',
+        'anthropic/claude-opus-4.8-high',
+        'anthropic/claude-sonnet-4.6',
+        'anthropic/claude-fable-5'
     ]
 
     for (const modelId of modelPreference) {
@@ -84,7 +84,7 @@ export function getDefaultModel(settings: LLMSettings): ModelId {
     }
 
     // If no preferred models are available, return first model with available key
-    if (settings.openrouterKey) return 'anthropic/claude-sonnet-4.5'
+    if (settings.openrouterKey) return 'anthropic/claude-sonnet-5'
     if (settings.anthropicKey) return 'claude-3-7-sonnet-latest'
     if (settings.geminiKey) return 'gemini-2.0-pro-exp-02-05'
     if (settings.openaiKey) return 'gpt-4o'
@@ -133,43 +133,37 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     },
     {
         provider: 'openrouter',
+        id: 'openai/gpt-5.6-sol-high',
+        modelId: 'openai/gpt-5.6-sol',
+        name: 'GPT-5.6 Sol High',
+        baseURL: 'https://openrouter.ai/api/v1',
+        reasoningEffort: "high"
+    },
+    {
+        provider: 'openrouter',
+        id: 'openai/gpt-5.6-terra-medium',
+        modelId: 'openai/gpt-5.6-terra',
+        name: 'GPT-5.6 Terra Medium',
+        baseURL: 'https://openrouter.ai/api/v1',
+        reasoningEffort: "medium"
+    },
+    {
+        provider: 'openrouter',
         id: 'openai/gpt-5.5-high',
         modelId: 'openai/gpt-5.5',
         name: 'GPT-5.5 High',
         baseURL: 'https://openrouter.ai/api/v1',
         reasoningEffort: "high"
     },
-    // {
-    //     provider: 'openrouter',
-    //     id: 'openai/gpt-5-high',
-    //     modelId: 'openai/gpt-5',
-    //     name: 'OR: GPT-5 High',
-    //     baseURL: 'https://openrouter.ai/api/v1',
-    //     reasoningEffort: "high"
-    // },
-    // {
-    //     provider: 'openrouter',
-    //     id: 'openai/gpt-5-medium',
-    //     modelId: 'openai/gpt-5',
-    //     name: 'OR: GPT-5 Medium',
-    //     baseURL: 'https://openrouter.ai/api/v1',
-    //     reasoningEffort: "medium"
-    // },
-    // {
-    //     provider: 'openrouter',
-    //     id: 'openai/gpt-5-low',
-    //     modelId: 'openai/gpt-5',
-    //     name: 'OR: GPT-5 Low',
-    //     baseURL: 'https://openrouter.ai/api/v1',
-    //     reasoningEffort: "low"
-    // },
-    // {
-    //     provider: 'openrouter',
-    //     id: 'google/gemini-2.5-pro-preview',
-    //     modelId: 'google/gemini-2.5-pro-preview',
-    //     name: 'OR: Gemini 2.5 Pro',
-    //     baseURL: 'https://openrouter.ai/api/v1'
-    // },
+    {
+        provider: 'openrouter',
+        id: 'anthropic/claude-sonnet-5',
+        modelId: 'anthropic/claude-sonnet-5',
+        name: 'Claude Sonnet 5',
+        baseURL: 'https://openrouter.ai/api/v1',
+        noTemperature: true,
+        reasoningEffort: "high"
+    },
     {
         provider: 'openrouter',
         id: 'anthropic/claude-sonnet-4.6',

@@ -1,8 +1,9 @@
 import React, { useRef, useState } from 'react'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
-import { FaPlus, FaMicrophone, FaCamera, FaImage, FaSpinner } from 'react-icons/fa'
+import { FaPlus, FaMicrophone, FaCamera, FaImage, FaSpinner, FaMagic } from 'react-icons/fa'
 import { VoiceInput } from '../voice/VoiceInput'
 import { imageToMarkdown, isImageToMarkdownAvailable } from '../../api/imageToMarkdown'
+import { isSmartVoiceEditAvailable } from '../../api/smartVoiceEdit'
 import { UserSettings } from '../../types/settings'
 import { useIsMobile } from '../../hooks/useIsMobile'
 
@@ -14,6 +15,13 @@ interface AddContentButtonProps {
     onTranscription: (text: string) => void
     /** Callback when markdown is extracted from an image */
     onImageMarkdown: (markdown: string) => void
+    /**
+     * Callback when a transcription should be interpreted as an edit to the note
+     * rather than appended. Omit to hide the smart voice edit option.
+     */
+    onSmartTranscription?: (text: string) => void
+    /** Whether a smart voice edit is currently being processed */
+    smartBusy?: boolean
     /** Optional callback for errors */
     onError?: (error: string) => void
     /** Optional class name for the button */
@@ -22,11 +30,15 @@ interface AddContentButtonProps {
     iconSize?: number
 }
 
+/** Which voice capture flow is currently active */
+type VoiceMode = 'append' | 'smart'
+
 /**
- * Check if voice input is available based on user settings
+ * Check if voice input is available based on user settings.
+ * Mirrors the provider selection in VoiceInput.
  */
 function isVoiceAvailable(userSettings: UserSettings): boolean {
-    return !!(userSettings.llm.fireworksKey || userSettings.llm.openaiKey)
+    return !!(userSettings.llm.fireworksKey || userSettings.llm.openaiKey || userSettings.llm.openrouterKey)
 }
 
 /**
@@ -37,6 +49,8 @@ export function AddContentButton({
     userSettings,
     onTranscription,
     onImageMarkdown,
+    onSmartTranscription,
+    smartBusy = false,
     onError,
     className = '',
     iconSize = 16
@@ -44,11 +58,12 @@ export function AddContentButton({
     const cameraInputRef = useRef<HTMLInputElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [isProcessingImage, setIsProcessingImage] = useState(false)
-    const [showVoiceInput, setShowVoiceInput] = useState(false)
+    const [voiceMode, setVoiceMode] = useState<VoiceMode | null>(null)
     const isMobile = useIsMobile()
 
     const voiceAvailable = isVoiceAvailable(userSettings)
     const imageAvailable = isImageToMarkdownAvailable(userSettings)
+    const smartVoiceAvailable = voiceAvailable && !!onSmartTranscription && isSmartVoiceEditAvailable(userSettings)
 
     // If neither option is available, don't render anything
     if (!voiceAvailable && !imageAvailable) {
@@ -112,33 +127,40 @@ export function AddContentButton({
     }
 
     /**
-     * Handle voice transcription completion
+     * Handle voice transcription completion, routing to the append or smart
+     * handler depending on which menu option started the capture
      */
     const handleVoiceTranscription = (text: string) => {
-        setShowVoiceInput(false)
-        onTranscription(text)
+        const mode = voiceMode
+        setVoiceMode(null)
+        if (mode === 'smart' && onSmartTranscription) {
+            onSmartTranscription(text)
+        } else {
+            onTranscription(text)
+        }
     }
 
-    // If voice input is active, show the voice input component instead
-    if (showVoiceInput && voiceAvailable) {
+    // If voice input is active, show the voice input component instead.
+    // Smart mode gets a ring so it stays distinguishable from plain dictation.
+    if (voiceMode && voiceAvailable) {
         return (
             <VoiceInput
                 userSettings={userSettings}
                 onTranscription={handleVoiceTranscription}
                 onError={onError}
                 iconSize={iconSize}
-                className={className}
+                className={`${className} ${voiceMode === 'smart' ? 'ring-2 ring-purple-400 dark:ring-purple-500' : ''}`}
             />
         )
     }
 
-    // Show processing spinner when image is being processed
-    if (isProcessingImage) {
+    // Show processing spinner when an image or a smart voice edit is being processed
+    if (isProcessingImage || smartBusy) {
         return (
             <button
                 disabled
                 className={`p-1.5 rounded text-blue-500 dark:text-blue-400 cursor-wait ${className}`}
-                title="Processing image..."
+                title={smartBusy ? 'Applying voice edit...' : 'Processing image...'}
             >
                 <FaSpinner size={iconSize} className="animate-spin" />
             </button>
@@ -157,16 +179,28 @@ export function AddContentButton({
                 <MenuItems 
                     portal
                     anchor="top end"
-                    className="py-1 w-40 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-50 focus:outline-none"
+                    className="py-1 w-44 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-50 focus:outline-none"
                 >
                     {voiceAvailable && (
                         <MenuItem>
                             <button
-                                onClick={() => setShowVoiceInput(true)}
+                                onClick={() => setVoiceMode('append')}
                                 className="w-full px-3 py-2 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
                             >
                                 <FaMicrophone size={14} />
                                 Voice input
+                            </button>
+                        </MenuItem>
+                    )}
+                    {smartVoiceAvailable && (
+                        <MenuItem>
+                            <button
+                                onClick={() => setVoiceMode('smart')}
+                                className="w-full px-3 py-2 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap data-[focus]:bg-gray-100 dark:data-[focus]:bg-gray-700"
+                                title="Dictate an instruction or a new entry and let the AI edit the note"
+                            >
+                                <FaMagic size={14} />
+                                Smart voice edit
                             </button>
                         </MenuItem>
                     )}

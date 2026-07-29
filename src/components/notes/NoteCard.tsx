@@ -3,11 +3,12 @@ import { RichTextEditor } from '../../RichTextEditor'
 import { Card, RichTextCard } from '../../types'
 import MarkdownIt from 'markdown-it'
 import taskListPlugin from 'markdown-it-task-lists'
-import { FaTrash, FaExpandAlt, FaCompressAlt, FaEllipsisV, FaMarkdown, FaCopy, FaFileAlt, FaPrint, FaLock, FaLockOpen, FaKey } from 'react-icons/fa'
+import { FaTrash, FaExpandAlt, FaCompressAlt, FaEllipsisV, FaMarkdown, FaCopy, FaFileAlt, FaPrint, FaLock, FaLockOpen, FaKey, FaUndo, FaTimes } from 'react-icons/fa'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { UserSettings } from '../../types/settings'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { AddContentButton } from './AddContentButton'
+import { smartVoiceEdit } from '../../api/smartVoiceEdit'
 import { useNoteLock } from '../../modules/encrypted/NoteLockContext'
 import { NoteEncryptModal } from '../../modules/encrypted/components/NoteEncryptModal'
 import { NoteUnlockModal } from '../../modules/encrypted/components/NoteUnlockModal'
@@ -302,6 +303,10 @@ interface NoteCardHeaderProps {
   showVoiceInHeader?: boolean
   /** Callback when voice input provides transcription */
   onVoiceTranscription?: (text: string) => void
+  /** Callback when voice input should be interpreted as an edit to the note */
+  onSmartVoiceTranscription?: (text: string) => void
+  /** Whether a smart voice edit is currently being processed */
+  smartVoiceBusy?: boolean
   /** Whether all notes are currently shown */
   showAllNotes: boolean
   /** Callback when show all notes changes */
@@ -328,6 +333,8 @@ function NoteCardHeader({
   userSettings,
   showVoiceInHeader,
   onVoiceTranscription,
+  onSmartVoiceTranscription,
+  smartVoiceBusy,
   showAllNotes,
   onShowAllNotesChange
 }: NoteCardHeaderProps) {
@@ -466,6 +473,8 @@ function NoteCardHeader({
             userSettings={userSettings}
             onTranscription={onVoiceTranscription}
             onImageMarkdown={onVoiceTranscription}
+            onSmartTranscription={onSmartVoiceTranscription}
+            smartBusy={smartVoiceBusy}
             iconSize={16}
             className="text-gray-400 hover:text-blue-500 dark:text-gray-500 dark:hover:text-blue-400 p-1"
           />
@@ -594,16 +603,22 @@ interface NoteCardBodyProps {
   userSettings: UserSettings
   /** Whether this is single view mode */
   isSingleView: boolean
+  /** Callback when voice input should be interpreted as an edit to the note */
+  onSmartVoiceTranscription?: (text: string) => void
+  /** Whether a smart voice edit is currently being processed */
+  smartVoiceBusy?: boolean
 }
 
 /** Body component for a note card containing the rich text editor */
-function NoteCardBody({ 
-  content, 
-  onChange, 
-  isMarkdownMode, 
-  className = '', 
+function NoteCardBody({
+  content,
+  onChange,
+  isMarkdownMode,
+  className = '',
   userSettings,
-  isSingleView
+  isSingleView,
+  onSmartVoiceTranscription,
+  smartVoiceBusy
 }: NoteCardBodyProps) {
   const isMobile = useIsMobile()
   const showVoiceInEditor = !isMobile || !isSingleView
@@ -632,8 +647,60 @@ function NoteCardBody({
           userSettings={userSettings}
           showVoiceInput={showVoiceInEditor}
           onVoiceTranscription={handleVoiceTranscription}
+          onSmartVoiceTranscription={onSmartVoiceTranscription}
+          smartVoiceBusy={smartVoiceBusy}
         />
       )}
+    </div>
+  )
+}
+
+/** How long the smart voice edit notice stays visible, in milliseconds */
+const SMART_EDIT_NOTICE_MS = 8000
+
+/** Transient status shown after a smart voice edit */
+interface SmartEditNoticeState {
+  /** Which kind of outcome is being reported */
+  kind: 'undo' | 'info' | 'error'
+  /** Message shown to the user */
+  message: string
+  /** Content to restore when undoing, for the 'undo' kind */
+  previousMarkdown?: string
+}
+
+/** Transient notice shown after a smart voice edit, with an undo affordance */
+function SmartEditNotice({ notice, onUndo, onDismiss }: {
+  notice: SmartEditNoticeState
+  onUndo: () => void
+  onDismiss: () => void
+}) {
+  const tone = notice.kind === 'error'
+    ? 'bg-red-600 border-red-500 text-white'
+    : 'bg-gray-800 dark:bg-gray-700 border-gray-600 text-gray-100'
+
+  return (
+    <div
+      className={`absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 px-3 py-2
+                  rounded-md border shadow-lg text-sm max-w-[90%] ${tone}`}
+      role="status"
+    >
+      <span className="min-w-0 truncate">{notice.message}</span>
+      {notice.kind === 'undo' && (
+        <button
+          onClick={onUndo}
+          className="flex-none inline-flex items-center gap-1.5 font-medium text-blue-300 hover:text-blue-200"
+        >
+          <FaUndo size={11} />
+          Undo
+        </button>
+      )}
+      <button
+        onClick={onDismiss}
+        className="flex-none opacity-60 hover:opacity-100"
+        title="Dismiss"
+      >
+        <FaTimes size={12} />
+      </button>
     </div>
   )
 }
@@ -687,6 +754,8 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
   const [isMarkdownMode, setIsMarkdownMode] = useState(false)
   const [showEncryptModal, setShowEncryptModal] = useState(false)
   const [showUnlockModal, setShowUnlockModal] = useState(false)
+  const [smartEditBusy, setSmartEditBusy] = useState(false)
+  const [smartEditNotice, setSmartEditNotice] = useState<SmartEditNoticeState | null>(null)
   const isMobile = useIsMobile()
   const noteLock = useNoteLock()
 
@@ -718,6 +787,66 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
     handleBodyChange(newContent)
   }
 
+  // Tracks the live body so a slow edit can tell if the note moved under it
+  const bodyMarkdownRef = useRef(bodyMarkdown)
+  useEffect(() => {
+    bodyMarkdownRef.current = bodyMarkdown
+  }, [bodyMarkdown])
+
+  useEffect(() => {
+    if (!smartEditNotice) return
+    const timer = setTimeout(() => setSmartEditNotice(null), SMART_EDIT_NOTICE_MS)
+    return () => clearTimeout(timer)
+  }, [smartEditNotice])
+
+  /**
+   * Interpret dictated text as an instruction to edit this note, then apply the
+   * resulting edits. Keeps the pre-edit content around so it can be undone.
+   */
+  const handleSmartVoiceTranscription = async (transcript: string) => {
+    if (!transcript.trim()) return
+
+    const before = bodyMarkdown
+    setSmartEditNotice(null)
+    setSmartEditBusy(true)
+    try {
+      const result = await smartVoiceEdit(transcript, before, userSettings)
+
+      // Line numbers are only valid against the content the model was given
+      if (bodyMarkdownRef.current !== before) {
+        setSmartEditNotice({ kind: 'error', message: 'Note changed while processing; voice edit was not applied' })
+        return
+      }
+
+      if (!result.changed) {
+        setSmartEditNotice({ kind: 'info', message: result.message || 'No changes were needed' })
+        return
+      }
+
+      handleBodyChange(result.markdown)
+      setSmartEditNotice({ kind: 'undo', message: 'Note updated', previousMarkdown: before })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to apply voice edit'
+      console.error('Smart voice edit error:', error)
+      setSmartEditNotice({ kind: 'error', message })
+    } finally {
+      setSmartEditBusy(false)
+    }
+  }
+
+  const smartEditNoticeElement = smartEditNotice && (
+    <SmartEditNotice
+      notice={smartEditNotice}
+      onUndo={() => {
+        if (smartEditNotice.previousMarkdown !== undefined) {
+          handleBodyChange(smartEditNotice.previousMarkdown)
+        }
+        setSmartEditNotice(null)
+      }}
+      onDismiss={() => setSmartEditNotice(null)}
+    />
+  )
+
   const handleRemoveEncryption = () => {
     if (window.confirm('Remove encryption from this note? Its contents will be stored unencrypted.')) {
       noteLock.removeEncryption(card)
@@ -741,6 +870,8 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
     userSettings,
     showVoiceInHeader,
     onVoiceTranscription: handleVoiceTranscription,
+    onSmartVoiceTranscription: handleSmartVoiceTranscription,
+    smartVoiceBusy: smartEditBusy,
     showAllNotes,
     onShowAllNotesChange
   }
@@ -758,6 +889,8 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
         className={bodyClassName}
         userSettings={userSettings}
         isSingleView={isSingleView}
+        onSmartVoiceTranscription={handleSmartVoiceTranscription}
+        smartVoiceBusy={smartEditBusy}
       />
     )
   }
@@ -789,7 +922,7 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
     return (
       <div
         ref={ref}
-        className="flex flex-col h-full"
+        className="relative flex flex-col h-full"
       >
         <div className="flex-none px-3 py-1 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
           <NoteCardHeader {...headerProps} alwaysShowActions={true} />
@@ -807,13 +940,14 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
                     [::-webkit-scrollbar-track]:bg-transparent">
           {renderBody()}
         </div>
+        {smartEditNoticeElement}
         {modals}
       </div>
     )
   }
 
   return (
-    <div className={`flex flex-col bg-white dark:bg-gray-800 shadow-sm mb-4 last:mb-0 min-h-[60px] border border-gray-200 dark:border-gray-700 group ${className}`}>
+    <div className={`relative flex flex-col bg-white dark:bg-gray-800 shadow-sm mb-4 last:mb-0 min-h-[60px] border border-gray-200 dark:border-gray-700 group ${className}`}>
       <div
         ref={ref}
         className="pt-4 -mt-4"
@@ -823,6 +957,7 @@ export const NoteCard = forwardRef<HTMLDivElement, NoteCardProps>(({
         </div>
         {renderBody("px-4 py-3 flex-1")}
       </div>
+      {smartEditNoticeElement}
       {modals}
     </div>
   )

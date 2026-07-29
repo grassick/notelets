@@ -171,16 +171,22 @@ interface RichTextEditorProps {
   userSettings: UserSettings
   showVoiceInput?: boolean
   onVoiceTranscription?: (text: string) => void
+  /** Callback when voice input should be interpreted as an edit to the content */
+  onSmartVoiceTranscription?: (text: string) => void
+  /** Whether a smart voice edit is currently being processed */
+  smartVoiceBusy?: boolean
 }
 
-export function RichTextEditor({ 
-  content, 
-  onChange, 
+export function RichTextEditor({
+  content,
+  onChange,
   placeholder,
   showToolbar = false,
   userSettings,
   showVoiceInput = true,
-  onVoiceTranscription
+  onVoiceTranscription,
+  onSmartVoiceTranscription,
+  smartVoiceBusy
 }: RichTextEditorProps) {
   const lastPushedContent = useRef(content)
   const [hasFocus, setHasFocus] = useState(false)
@@ -328,6 +334,8 @@ export function RichTextEditor({
               userSettings={userSettings}
               onTranscription={handleVoiceTranscription}
               onImageMarkdown={handleVoiceTranscription}
+              onSmartTranscription={onSmartVoiceTranscription}
+              smartBusy={smartVoiceBusy}
               iconSize={16}
             />
           </div>

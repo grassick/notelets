@@ -67,7 +67,7 @@ function ErrorScreen({ error, errorInfo }: ErrorScreenProps) {
   const [showDetails, setShowDetails] = useState(false)
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+    <div className="min-h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
       <div className="max-w-lg w-full space-y-8">
         <div className="text-center">
           <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-gray-100">

@@ -2,10 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
-html, 
-body, 
-#root {
+html {
   @apply h-[100dvh] w-full m-0;
+}
+
+/*
+ * body and #root fill their parent rather than the viewport, so the
+ * safe-area padding on body (below) shrinks #root instead of overflowing it.
+ */
+body,
+#root {
+  @apply h-full w-full m-0;
 }
 
 :root {

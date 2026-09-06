@@ -28,9 +28,10 @@ html, body {
 }
 
 /*
- * Installed (standalone) iOS web app: the page extends under the status bar
- * and home indicator, so pad the body by the safe-area insets and paint the
- * padded strips in the app's background colour.
+ * Installed (standalone) iOS web app: with the default status bar style the
+ * page starts below the status bar, but on devices with a home indicator it
+ * still extends under it, so pad the body by the safe-area insets and paint
+ * the padded strips in the app's background colour.
  */
 html {
   background-color: #ffffff;

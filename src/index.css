@@ -20,6 +20,26 @@ html, body {
   -webkit-overflow-scrolling: touch;
 }
 
+/*
+ * Installed (standalone) iOS web app: the page extends under the status bar
+ * and home indicator, so pad the body by the safe-area insets and paint the
+ * padded strips in the app's background colour.
+ */
+html {
+  background-color: #ffffff;
+}
+
+html.dark {
+  background-color: #111827;
+}
+
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;

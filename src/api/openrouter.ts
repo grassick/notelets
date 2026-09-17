@@ -167,13 +167,18 @@ export class OpenRouterClient implements LLMProvider {
                 const lines = buffer.split('\n')
                 buffer = lines.pop() || ''
 
-                for (const line of lines) {
-                    if (line.trim() === '') continue
-                    if (line.trim() === 'data: [DONE]') continue
+                for (const rawLine of lines) {
+                    const line = rawLine.trim()
+                    if (line === '') continue
+                    // SSE comment lines (e.g. ": OPENROUTER PROCESSING" keepalives) are not data
+                    if (line.startsWith(':')) continue
+                    if (!line.startsWith('data:')) continue
+                    const payload = line.slice('data:'.length).trim()
+                    if (payload === '[DONE]') continue
 
                     try {
-                        const data = JSON.parse(line.replace(/^data: /, ''))
-                        const content = data.choices[0]?.delta?.content
+                        const data = JSON.parse(payload)
+                        const content = data.choices?.[0]?.delta?.content
                         if (content) yield content
                     } catch (e) {
                         console.warn('Error parsing SSE message:', e)

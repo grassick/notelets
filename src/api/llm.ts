@@ -67,6 +67,7 @@ export interface LLMSettings {
 export function getDefaultModel(settings: LLMSettings): ModelId {
     // Try to find first available model in order of preference
     const modelPreference: ModelId[] = [
+        'anthropic/claude-opus-5.5-high',
         'openai/gpt-5.6-sol-high',
         'anthropic/claude-sonnet-5',
         'openai/gpt-5.6-terra-medium',
@@ -84,7 +85,7 @@ export function getDefaultModel(settings: LLMSettings): ModelId {
     }
 
     // If no preferred models are available, return first model with available key
-    if (settings.openrouterKey) return 'anthropic/claude-sonnet-5'
+    if (settings.openrouterKey) return 'anthropic/claude-opus-5.5-high'
     if (settings.anthropicKey) return 'claude-3-7-sonnet-latest'
     if (settings.geminiKey) return 'gemini-2.0-pro-exp-02-05'
     if (settings.openaiKey) return 'gpt-4o'
@@ -117,6 +118,15 @@ export function isModelAvailable(modelId: ModelId, settings: LLMSettings): boole
 /** Available models */
 export const AVAILABLE_MODELS: ModelInfo[] = [
     // OpenRouter models
+    {
+        provider: 'openrouter',
+        id: 'anthropic/claude-opus-5.5-high',
+        modelId: 'anthropic/claude-opus-5.5',
+        name: 'Claude Opus 5.5 High',
+        baseURL: 'https://openrouter.ai/api/v1',
+        noTemperature: true,
+        reasoningEffort: "high"
+    },
     {
          provider: 'openrouter',
          id: 'google/gemini-3.1-pro-preview',

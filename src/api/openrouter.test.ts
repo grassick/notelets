@@ -108,4 +108,61 @@ describe('OpenRouterClient', () => {
         expect(request).not.toHaveProperty('verbosity')
         expect(request.reasoning).not.toHaveProperty('effort')
     })
+
+    it('sends the web search server tool and appends streamed citations', async () => {
+        vi.stubGlobal('window', {
+            location: {
+                origin: 'https://notelets.example'
+            }
+        })
+
+        const sse = [
+            { choices: [{ delta: { content: 'It rained today.' } }] },
+            { choices: [{ delta: { annotations: [
+                { type: 'url_citation', url_citation: { url: 'https://weather.example/today', title: 'Weather [Today]' } },
+                { type: 'url_citation', url_citation: { url: 'https://weather.example/today', title: 'Weather [Today]' } }
+            ] } }] }
+        ].map(d => `data: ${JSON.stringify(d)}\n\n`).join('') + 'data: [DONE]\n\n'
+        const fetchMock = vi.fn(async () => new Response(sse))
+        vi.stubGlobal('fetch', fetchMock)
+
+        const model = getModelById('anthropic/claude-opus-5.5-high')
+        expect(model?.webSearch).toBe(true)
+
+        const client = new OpenRouterClient('test-key')
+        let output = ''
+        for await (const chunk of client.createStreamingChatCompletion(
+            [{ role: 'user', content: 'Weather?', createdAt: '2026-09-28T00:00:00.000Z' }],
+            { modelId: model!.modelId, webSearch: model!.webSearch }
+        )) {
+            output += chunk
+        }
+
+        const request = JSON.parse(fetchMock.mock.calls[0][1].body as string)
+        expect(request.tools).toEqual([{ type: 'openrouter:web_search' }])
+        expect(output).toBe('It rained today.\n\n**Sources**\n- [Weather Today](https://weather.example/today)')
+    })
+
+    it('omits tools when web search is disabled', async () => {
+        vi.stubGlobal('window', {
+            location: {
+                origin: 'https://notelets.example'
+            }
+        })
+
+        const fetchMock = vi.fn(async () => new Response(JSON.stringify({
+            choices: [{ message: { content: 'Done' } }],
+            model: 'anthropic/claude-opus-5.5'
+        })))
+        vi.stubGlobal('fetch', fetchMock)
+
+        const client = new OpenRouterClient('test-key')
+        await client.createChatCompletion(
+            [{ role: 'user', content: 'Hi', createdAt: '2026-09-28T00:00:00.000Z' }],
+            { modelId: 'anthropic/claude-opus-5.5' }
+        )
+
+        const request = JSON.parse(fetchMock.mock.calls[0][1].body as string)
+        expect(request).not.toHaveProperty('tools')
+    })
 })

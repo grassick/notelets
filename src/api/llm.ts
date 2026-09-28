@@ -51,6 +51,8 @@ export interface ModelInfo {
     reasoningMaxTokens?: number
     /** Output effort control for models that support OpenRouter verbosity */
     verbosity?: ModelVerbosity
+    /** Whether the model may search the web (OpenRouter web search server tool) */
+    webSearch?: boolean
 }
 
 /** Settings interface for LLM API keys */
@@ -124,6 +126,7 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         modelId: 'anthropic/claude-opus-5.5',
         name: 'Claude Opus 5.5 High',
         baseURL: 'https://openrouter.ai/api/v1',
+        webSearch: true,
         noTemperature: true,
         reasoningEffort: "high"
     },
@@ -132,7 +135,8 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
          id: 'google/gemini-3.1-pro-preview',
          modelId: 'google/gemini-3.1-pro-preview',
          name: 'Gemini 3.1 Pro',
-         baseURL: 'https://openrouter.ai/api/v1'
+         baseURL: 'https://openrouter.ai/api/v1',
+         webSearch: true,
     },
     // {
     //     provider: 'openrouter',
@@ -147,6 +151,7 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         modelId: 'openai/gpt-5.6-sol',
         name: 'GPT-5.6 Sol High',
         baseURL: 'https://openrouter.ai/api/v1',
+        webSearch: true,
         reasoningEffort: "high"
     },
     // {
@@ -196,6 +201,7 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         modelId: 'anthropic/claude-fable-5.1',
         name: 'Claude Fable 5.1',
         baseURL: 'https://openrouter.ai/api/v1',
+        webSearch: true,
         noTemperature: true,
         reasoningEnabled: true
     },
@@ -205,6 +211,7 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         modelId: 'openai/gpt-6-astra',
         name: 'GPT-6 Astra',
         baseURL: 'https://openrouter.ai/api/v1',
+        webSearch: true,
         reasoningEnabled: true,
         reasoningEffort: "xhigh"
     }
@@ -380,6 +387,8 @@ export interface LLMOptions {
     reasoningMaxTokens?: number
     /** Output effort control */
     verbosity?: ModelVerbosity
+    /** Let the model search the web when it decides it needs current information */
+    webSearch?: boolean
 }
 
 /** Common response format for all LLMs */

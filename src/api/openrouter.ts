@@ -14,6 +14,32 @@ interface OpenRouterReasoningConfig {
     max_tokens?: number
 }
 
+/** URL citation annotation returned when a model uses web search */
+interface OpenRouterUrlCitation {
+    type: 'url_citation'
+    url_citation: {
+        url: string
+        title?: string
+    }
+}
+
+/**
+ * Formats web search citations as a markdown "Sources" list, skipping URLs
+ * the model already linked in its answer
+ */
+export function formatCitations(annotations: any[] | undefined, content: string): string {
+    const seen = new Set<string>()
+    const lines: string[] = []
+    for (const annotation of annotations ?? []) {
+        if (annotation?.type !== 'url_citation') continue
+        const { url, title } = (annotation as OpenRouterUrlCitation).url_citation ?? {}
+        if (!url || seen.has(url) || content.includes(url)) continue
+        seen.add(url)
+        lines.push(`- [${(title || url).replace(/[[\]]/g, '')}](${url})`)
+    }
+    return lines.length > 0 ? `\n\n**Sources**\n${lines.join('\n')}` : ''
+}
+
 /** OpenRouter API client implementation */
 export class OpenRouterClient implements LLMProvider {
     private apiKey: string
@@ -67,6 +93,16 @@ export class OpenRouterClient implements LLMProvider {
         return undefined
     }
 
+    /**
+     * Builds the server tools array (web search) from normalized LLM options
+     */
+    private buildTools(options: LLMOptions): any[] | undefined {
+        if (options.webSearch) {
+            return [{ type: 'openrouter:web_search' }]
+        }
+        return undefined
+    }
+
     async createChatCompletion(
         messages: ChatMessage[],
         options: LLMOptions,
@@ -86,7 +122,8 @@ export class OpenRouterClient implements LLMProvider {
                 max_tokens: options.maxTokens,
                 temperature: options.temperature,
                 reasoning: this.buildReasoningConfig(options),
-                verbosity: options.verbosity
+                verbosity: options.verbosity,
+                tools: this.buildTools(options)
             }),
             signal
         })
@@ -102,13 +139,14 @@ export class OpenRouterClient implements LLMProvider {
         }
 
         const data = await response.json()
-        const completion = data.choices[0]?.message?.content
+        const message = data.choices[0]?.message
+        const completion = message?.content
         if (!completion) {
             throw new Error('No completion received from OpenRouter')
         }
 
         return {
-            content: completion,
+            content: completion + formatCitations(message.annotations, completion),
             model: data.model,
             usage: {
                 inputTokens: data.usage?.prompt_tokens,
@@ -137,7 +175,8 @@ export class OpenRouterClient implements LLMProvider {
                 temperature: options.temperature,
                 stream: true,
                 reasoning: this.buildReasoningConfig(options),
-                verbosity: options.verbosity
+                verbosity: options.verbosity,
+                tools: this.buildTools(options)
             }),
             signal
         })
@@ -157,6 +196,8 @@ export class OpenRouterClient implements LLMProvider {
 
         const decoder = new TextDecoder()
         let buffer = ''
+        let streamedContent = ''
+        const annotations: any[] = []
 
         try {
             while (true) {
@@ -178,13 +219,21 @@ export class OpenRouterClient implements LLMProvider {
 
                     try {
                         const data = JSON.parse(payload)
-                        const content = data.choices?.[0]?.delta?.content
-                        if (content) yield content
+                        const delta = data.choices?.[0]?.delta
+                        if (Array.isArray(delta?.annotations)) annotations.push(...delta.annotations)
+                        const content = delta?.content
+                        if (content) {
+                            streamedContent += content
+                            yield content
+                        }
                     } catch (e) {
                         console.warn('Error parsing SSE message:', e)
                     }
                 }
             }
+
+            const sources = formatCitations(annotations, streamedContent)
+            if (sources) yield sources
         } finally {
             reader.releaseLock()
         }

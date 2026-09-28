@@ -223,7 +223,8 @@ Use markdown formatting in your responses.`
                     reasoningEnabled: model.reasoningEnabled,
                     reasoningEffort: model.reasoningEffort,
                     reasoningMaxTokens: model.reasoningMaxTokens,
-                    verbosity: model.verbosity
+                    verbosity: model.verbosity,
+                    webSearch: model.webSearch
                 },
                 signal
             )

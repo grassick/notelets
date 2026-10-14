@@ -74,6 +74,7 @@ export function getDefaultModel(settings: LLMSettings): ModelId {
         'anthropic/claude-sonnet-5',
         'openai/gpt-5.6-terra-medium',
         'openai/gpt-5.5-high',
+        'google/gemini-4-argon',
         'google/gemini-3.1-pro-preview',
         'anthropic/claude-opus-4.8-high',
         'anthropic/claude-sonnet-4.6',
@@ -129,6 +130,14 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         webSearch: true,
         noTemperature: true,
         reasoningEffort: "high"
+    },
+    {
+        provider: 'openrouter',
+        id: 'google/gemini-4-argon',
+        modelId: 'google/gemini-4-argon',
+        name: 'Gemini 4 Argon',
+        baseURL: 'https://openrouter.ai/api/v1',
+        webSearch: true,
     },
     {
          provider: 'openrouter',

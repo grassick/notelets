@@ -240,12 +240,12 @@ export class OpenRouterClient implements LLMProvider {
     }
 
     /**
-     * Transcribe audio using Gemini Flash 2.5 via OpenRouter
-     * @param audioBlob - The audio blob to transcribe
-     * @param prompt - Optional prompt to guide the transcription
+     * Transcribe audio using Voxtral Small Transcribe 3 via OpenRouter's speech-to-text endpoint.
+     * Routing is restricted to zero data retention endpoints.
+     * @param audioBlob - The WAV audio blob to transcribe
      * @returns The transcribed text
      */
-    async transcribeAudio(audioBlob: Blob, prompt?: string): Promise<string> {
+    async transcribeAudio(audioBlob: Blob): Promise<string> {
         const reader = new FileReader()
         const base64Data = await new Promise<string>((resolve, reject) => {
             reader.onload = () => {
@@ -256,7 +256,7 @@ export class OpenRouterClient implements LLMProvider {
             reader.readAsDataURL(audioBlob)
         })
 
-        const response = await fetch(`${OPENROUTER_API_BASE}/chat/completions`, {
+        const response = await fetch(`${OPENROUTER_API_BASE}/audio/transcriptions`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -265,25 +265,12 @@ export class OpenRouterClient implements LLMProvider {
                 'X-Title': 'Notelets'
             },
             body: JSON.stringify({
-                model: 'google/gemini-2.5-flash',
-                messages: [
-                    {
-                        role: 'user',
-                        content: [
-                            {
-                                type: 'text',
-                                text: prompt || 'Please transcribe this audio. Output only the transcribed text, nothing else.'
-                            },
-                            {
-                                type: 'input_audio',
-                                input_audio: {
-                                    data: base64Data,
-                                    format: 'wav'
-                                }
-                            }
-                        ]
-                    }
-                ]
+                model: 'mistralai/voxtral-small-transcribe-3-0',
+                input_audio: {
+                    data: base64Data,
+                    format: 'wav'
+                },
+                provider: { zdr: true }
             })
         })
 
@@ -298,7 +285,7 @@ export class OpenRouterClient implements LLMProvider {
         }
 
         const data = await response.json()
-        const transcription = data.choices[0]?.message?.content
+        const transcription = data.text
         if (!transcription) {
             throw new Error('No transcription received from OpenRouter')
         }

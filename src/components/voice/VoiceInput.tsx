@@ -19,7 +19,7 @@ interface VoiceInputProps {
 
 /**
  * A smart voice input component that chooses between Fireworks AI (preferred),
- * OpenRouter with Gemini Flash 2.5, or OpenAI's Whisper based on settings and available API keys
+ * OpenRouter with Voxtral Small Transcribe 3, or OpenAI's Whisper based on settings and available API keys
  */
 export function VoiceInput(props: VoiceInputProps) {
     const { llm } = props.userSettings

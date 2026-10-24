@@ -17,7 +17,7 @@ export interface DeviceSettings {
 /**
  * Available transcription providers for voice input.
  * - 'whisper' uses OpenAI's Whisper API (requires openaiKey)
- * - 'openrouter' uses Gemini Flash 2.5 via OpenRouter (requires openrouterKey)
+ * - 'openrouter' uses Voxtral Small Transcribe 3 via OpenRouter (requires openrouterKey)
  */
 export type TranscriptionProvider = 'whisper' | 'openrouter'
 

@@ -273,12 +273,12 @@ export function SettingsModal({ isOpen, onClose, store }: SettingsModalProps) {
                                focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="whisper">OpenAI Whisper</option>
-                      <option value="openrouter">Gemini Flash 2.5 (via OpenRouter)</option>
+                      <option value="openrouter">Voxtral Small Transcribe 3 (via OpenRouter)</option>
                     </select>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                       {(llmSettings.transcriptionProvider || 'whisper') === 'whisper'
                         ? 'Uses OpenAI Whisper for voice transcription. Requires an OpenAI API key.'
-                        : 'Uses Gemini Flash 2.5 via OpenRouter for voice transcription. Requires an OpenRouter API key.'}
+                        : 'Uses Mistral Voxtral Small Transcribe 3 via OpenRouter for voice transcription. Requires an OpenRouter API key.'}
                     </p>
                   </div>
                 </div>

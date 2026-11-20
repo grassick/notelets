@@ -74,10 +74,13 @@ export function getDefaultModel(settings: LLMSettings): ModelId {
         'anthropic/claude-sonnet-5',
         'openai/gpt-5.6-terra-medium',
         'openai/gpt-5.5-high',
+        'google/gemini-4-carbon',
+        'google/gemini-4-neon',
         'google/gemini-4-argon',
         'google/gemini-3.1-pro-preview',
         'anthropic/claude-opus-4.8-high',
         'anthropic/claude-sonnet-4.6',
+        'anthropic/claude-fable-5.2',
         'anthropic/claude-fable-5'
     ]
 
@@ -130,6 +133,22 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         webSearch: true,
         noTemperature: true,
         reasoningEffort: "high"
+    },
+    {
+        provider: 'openrouter',
+        id: 'google/gemini-4-carbon',
+        modelId: 'google/gemini-4-carbon',
+        name: 'Gemini 4 Carbon',
+        baseURL: 'https://openrouter.ai/api/v1',
+        webSearch: true,
+    },
+    {
+        provider: 'openrouter',
+        id: 'google/gemini-4-neon',
+        modelId: 'google/gemini-4-neon',
+        name: 'Gemini 4 Neon',
+        baseURL: 'https://openrouter.ai/api/v1',
+        webSearch: true,
     },
     {
         provider: 'openrouter',
@@ -206,6 +225,16 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
     // },
     {
         provider: 'openrouter',
+        id: 'anthropic/claude-fable-5.2',
+        modelId: 'anthropic/claude-fable-5.2',
+        name: 'Claude Fable 5.2',
+        baseURL: 'https://openrouter.ai/api/v1',
+        webSearch: true,
+        noTemperature: true,
+        reasoningEnabled: true
+    },
+    {
+        provider: 'openrouter',
         id: 'anthropic/claude-fable-5.1',
         modelId: 'anthropic/claude-fable-5.1',
         name: 'Claude Fable 5.1',
@@ -219,6 +248,16 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         id: 'openai/gpt-6-astra',
         modelId: 'openai/gpt-6-astra',
         name: 'GPT-6 Astra',
+        baseURL: 'https://openrouter.ai/api/v1',
+        webSearch: true,
+        reasoningEnabled: true,
+        reasoningEffort: "xhigh"
+    },
+    {
+        provider: 'openrouter',
+        id: 'openai/gpt-6.2-astra',
+        modelId: 'openai/gpt-6.2-astra',
+        name: 'GPT-6.2 Astra',
         baseURL: 'https://openrouter.ai/api/v1',
         webSearch: true,
         reasoningEnabled: true,
